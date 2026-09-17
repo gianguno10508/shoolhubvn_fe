@@ -135,7 +135,7 @@ const DEFAULT_CONFIG = {
 
 const DEFAULT_CONSTRAINTS = {
   khongTietTrong: true,
-  gvToiDaTrenNgay: 5,
+  lopToiDaTietTrenBuoi: 5,
   uuTienMonChinhBuoiSang: false,
   chaoCoTiet1Thu2: true,
 };
@@ -774,7 +774,8 @@ function ClassesStep({ classes, setClasses, grades, campuses, assignments, confi
 function FrameworkView({
   scope, classes, grades, subjects, teachers, config,
   items, setItems, setClasses, effectiveSchedule, lessonById,
-  gradeAssignments, onClose, onNext, onSaved,
+  gradeAssignments, schedule, setSchedule, notify,
+  onClose, onNext, onSaved,
 }) {
   const isClass = scope.type === "class";
   const klass = isClass ? classes.find((c) => c.id === scope.id) : null;
@@ -825,6 +826,7 @@ function FrameworkView({
 
   function toggleOff(slot) {
     if (!isClass) return;
+    const turningOn = !offSlots.has(slot);
     setClasses((prev) =>
       prev.map((c) => {
         if (c.id !== scope.id) return c;
@@ -832,6 +834,20 @@ function FrameworkView({
         return { ...c, offSlots: list.includes(slot) ? list.filter((s) => s !== slot) : [...list, slot] };
       })
     );
+    if (turningOn) {
+      const key = `${slot}|${scope.id}`;
+      let hadLesson = false;
+      setSchedule((prev) => {
+        if (!prev[key]) return prev;
+        hadLesson = true;
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      if (hadLesson && notify) {
+        notify(`Đã gỡ tiết đang xếp ở ${slotLabel(slot)} về danh sách chưa xếp vì lớp nghỉ tiết này.`);
+      }
+    }
   }
 
   /* Ô chỉ hiện tiết của chính lớp này; lớp khác trong khối chỉ hiện tên lớp đang bận. */
@@ -1274,7 +1290,7 @@ function ConstraintsStep({ constraints, setConstraints }) {
   return (
     <div className="panel">
       <PanelTitle title="Cài đặt ràng buộc" />
-      <p className="hint">Các ràng buộc này áp dụng khi kiểm tra dữ liệu và khi xếp tiết.</p>
+      <p className="hint">Các ràng buộc này áp dụng khi kiểm tra dữ liệu và khi xếp tiết. Giáo viên không bị giới hạn số tiết trong ngày — chỉ lớp học mới bị giới hạn số tiết tối đa trong một buổi.</p>
       <div className="constraint-list">
         <label className="switch-row">
           <input type="checkbox" checked={constraints.khongTietTrong} onChange={(e) => set("khongTietTrong", e.target.checked)} />
@@ -1289,8 +1305,8 @@ function ConstraintsStep({ constraints, setConstraints }) {
           Ưu tiên xếp môn chính vào buổi sáng
         </label>
         <label className="switch-row number">
-          Số tiết tối đa một giáo viên dạy trong một ngày
-          <input type="number" min={1} max={12} value={constraints.gvToiDaTrenNgay} onChange={(e) => set("gvToiDaTrenNgay", e.target.value)} />
+          Số tiết tối đa của một lớp học trong một buổi
+          <input type="number" min={1} max={10} value={constraints.lopToiDaTietTrenBuoi} onChange={(e) => set("lopToiDaTietTrenBuoi", e.target.value)} />
         </label>
       </div>
     </div>
@@ -1325,6 +1341,23 @@ function TimetableView({
 
   const placedIds = useMemo(() => new Set(Object.values(effectiveSchedule)), [effectiveSchedule]);
   const unscheduled = useMemo(() => lessons.filter((l) => !placedIds.has(l.id)), [lessons, placedIds]);
+
+  /* Các ô đang thực sự trùng giáo viên trong lịch hiện tại — cả 2 (hoặc nhiều hơn) ô đều bị đánh dấu đỏ. */
+  const dupKeys = useMemo(() => {
+    const bySlotTeacher = {};
+    Object.entries(effectiveSchedule).forEach(([key, lessonId]) => {
+      const lesson = lessonById[lessonId];
+      if (!lesson || !lesson.teacherId) return;
+      const pos = parseCell(key);
+      const groupKey = `${pos.slot}|${lesson.teacherId}`;
+      (bySlotTeacher[groupKey] = bySlotTeacher[groupKey] || []).push(key);
+    });
+    const out = new Set();
+    Object.values(bySlotTeacher).forEach((keys) => {
+      if (keys.length > 1) keys.forEach((k) => out.add(k));
+    });
+    return out;
+  }, [effectiveSchedule, lessonById]);
 
   const filteredUnscheduled = useMemo(
     () => unscheduled.filter((l) => (!filterClass || l.classId === filterClass) && (!filterTeacher || l.teacherId === filterTeacher)),
@@ -1365,11 +1398,12 @@ function TimetableView({
     return null;
   }
 
-  function teacherDayLoad(day, tId) {
-    if (!tId) return 0;
-    return Object.entries(effectiveSchedule).filter(([key, lessonId]) => {
-      const lesson = lessonById[lessonId];
-      return lesson && lesson.teacherId === tId && parseCell(key).day === day;
+  /* Số tiết một lớp đã có trong đúng buổi này (không tính ô đang xét) — dùng để chặn theo Bước 8. */
+  function classSessionLoad(day, session, classId, excludeKey) {
+    return Object.keys(effectiveSchedule).filter((key) => {
+      if (key === excludeKey) return false;
+      const pos = parseCell(key);
+      return pos.day === day && pos.session === session && pos.classId === classId;
     }).length;
   }
 
@@ -1397,19 +1431,26 @@ function TimetableView({
         showFlash(`Vị trí này nằm trong danh sách tiết tránh của ${selectedItem.subjectName}.`, "error");
         return;
       }
-      const busy = teacherBusy(day, session, tiet, selectedItem.teacherId, key);
-      if (busy) {
-        showFlash(`Không xếp được: ${selectedItem.teacherName} đang dạy lớp ${busy.klass} vào tiết ${tiet} ${session} ${day}.`, "error");
+
+      const maxPerSession = Number(constraints.lopToiDaTietTrenBuoi) || tiets.length;
+      const sessionLoad = classSessionLoad(day, session, klass.id, key);
+      if (sessionLoad >= maxPerSession) {
+        showFlash(`${klass.name} đã đạt tối đa ${maxPerSession} tiết trong buổi ${session} ${day}.`, "error");
         return;
       }
-      const max = Number(constraints.gvToiDaTrenNgay) || 99;
-      if (selectedItem.teacherId && teacherDayLoad(day, selectedItem.teacherId) >= max) {
-        showFlash(`${selectedItem.teacherName} đã đạt ${max} tiết trong ${day}.`, "error");
-        return;
+
+      /* Trùng giáo viên: vẫn cho xếp, chỉ báo đỏ để người dùng tự cân nhắc. */
+      const busy = teacherBusy(day, session, tiet, selectedItem.teacherId, key);
+      if (busy) {
+        showFlash(
+          `Trùng lịch: ${selectedItem.teacherName} đang dạy lớp ${busy.klass} vào tiết ${tiet} ${session} ${day}. Đã xếp đè, hãy kiểm tra lại.`,
+          "error"
+        );
+      } else {
+        showFlash(`Đã xếp ${selectedItem.subjectName} vào ${klass.name} — ${day}, tiết ${tiet} ${session}.`);
       }
       setSchedule((prev) => ({ ...prev, [key]: selectedItem.id }));
       setSelectedId(null);
-      showFlash(`Đã xếp ${selectedItem.subjectName} vào ${klass.name} — ${day}, tiết ${tiet} ${session}.`);
       return;
     }
 
@@ -1438,11 +1479,17 @@ function TimetableView({
     const next = { ...schedule };
     const working = { ...effectiveSchedule };
     let placed = 0;
-    const max = Number(constraints.gvToiDaTrenNgay) || 99;
+    const maxPerSession = Number(constraints.lopToiDaTietTrenBuoi) || tiets.length;
 
     unscheduled.forEach((lesson) => {
       outer: for (const day of days) {
         for (const session of sessions) {
+          const sessionLoad = Object.keys(working).filter((k) => {
+            const pos = parseCell(k);
+            return pos.day === day && pos.session === session && pos.classId === lesson.classId;
+          }).length;
+          if (sessionLoad >= maxPerSession) continue;
+
           for (const tiet of tiets) {
             const slot = slotKey(day, session, tiet);
             const key = cellKey(day, session, tiet, lesson.classId);
@@ -1455,12 +1502,8 @@ function TimetableView({
                 const l = lessonById[id];
                 return l && l.teacherId === lesson.teacherId && pos.slot === slot;
               });
+              /* Xếp tự động vẫn cố tránh trùng giáo viên khi còn chỗ khác trống. */
               if (busy) continue;
-              const load = Object.entries(working).filter(([k, id]) => {
-                const l = lessonById[id];
-                return l && l.teacherId === lesson.teacherId && parseCell(k).day === day;
-              }).length;
-              if (load >= max) continue;
             }
             working[key] = lesson.id;
             next[key] = lesson.id;
@@ -1538,21 +1581,30 @@ function TimetableView({
                           const lesson = lessonById[effectiveSchedule[key]];
                           const isPinned = pinnedKeys.has(key);
                           const isOff = offByClass[c.id] && offByClass[c.id].has(slot);
+                          const isDup = dupKeys.has(key);
                           let cls = "cell";
                           if (isOff) cls += " off";
+                          else if (isDup) cls += " dup";
                           else if (isPinned) cls += " pinned";
                           else if (selectedItem && !lesson) {
                             if (selectedItem.classId !== c.id) cls += " blocked";
                             else if ((selectedItem.avoid || []).includes(slot) || teacherBusy(day, session, tiet, selectedItem.teacherId, key)) cls += " conflict";
                             else cls += " can-drop";
                           }
+                          if (isDup && isPinned) cls += " pinned";
                           return (
-                            <td key={key} className={cls} onClick={() => handleCellClick(day, session, tiet, c)}>
+                            <td
+                              key={key}
+                              className={cls}
+                              onClick={() => handleCellClick(day, session, tiet, c)}
+                              title={isDup ? `${lesson ? lesson.teacherName : ""} bị trùng lịch ở tiết này — kiểm tra lại.` : undefined}
+                            >
                               {isOff ? (
                                 <span className="lesson muted">Nghỉ</span>
                               ) : lesson ? (
                                 <span className="lesson">
                                   {isPinned && <span className="lock">🔒</span>}
+                                  {isDup && <span className="dup-mark">⚠</span>}
                                   {lesson.subjectName}{lesson.teacherName ? ` - ${lesson.teacherName}` : ""}
                                 </span>
                               ) : null}
@@ -1570,7 +1622,7 @@ function TimetableView({
 
         <aside className="tt-side">
           <h3>CÁC TIẾT CHƯA ĐƯỢC XẾP ({unscheduled.length})</h3>
-          <p className="side-note">Chọn một tiết rồi bấm vào ô trống trong bảng để xếp. Ô có 🔒 là tiết cố định.</p>
+          <p className="side-note">Chọn một tiết rồi bấm vào ô trống trong bảng để xếp. Ô có 🔒 là tiết cố định. Ô báo đỏ là trùng giáo viên — vẫn xếp được nhưng nên kiểm tra lại.</p>
           <div className="side-filters">
             <label>
               Lớp
@@ -1836,6 +1888,9 @@ export default function App() {
               effectiveSchedule={effectiveSchedule}
               lessonById={lessonById}
               gradeAssignments={gradeAssignments}
+              schedule={schedule}
+              setSchedule={setSchedule}
+              notify={notify}
               onClose={() => setView("steps")}
               onNext={nextClass}
               onSaved={() => notify("Đã lưu khung chương trình.")}
@@ -2098,12 +2153,15 @@ input.bad { border-color: var(--danger); background: #fff5f5; }
 td.cell { height: 38px; min-width: 150px; padding: 4px 8px; cursor: pointer; background: #fcfcff; }
 td.cell:hover { background: #f1f3ff; }
 td.cell.can-drop { box-shadow: inset 0 0 0 2px var(--green); }
-td.cell.conflict { box-shadow: inset 0 0 0 2px var(--danger); background: #fdeaea; cursor: not-allowed; }
+td.cell.conflict { box-shadow: inset 0 0 0 2px var(--danger); background: #fdeaea; }
 td.cell.blocked { background: #f4f5f9; cursor: not-allowed; }
 td.cell.off { background: #eceef5; cursor: not-allowed; }
 td.cell.pinned { background: #eef7ee; cursor: not-allowed; }
+td.cell.dup { background: #fde3e3; box-shadow: inset 0 0 0 2px var(--danger); }
+td.cell.dup .lesson { color: var(--danger-dark); font-weight: 700; }
 .lesson { display: block; font-size: 12.5px; line-height: 1.3; }
 .lock { margin-right: 3px; }
+.dup-mark { margin-right: 3px; }
 
 .tt-side { border: 1px solid var(--line); border-radius: 6px; padding: 12px; background: #fff; }
 .tt-side h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
