@@ -1,4 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import {
+  exportTimetableToExcel,
+  exportPerClassExcel,
+  exportPerTeacherExcel,
+} from "./excelExport";
 
 /* ================= helpers ================= */
 
@@ -9,7 +14,10 @@ function nextId(prefix) {
 }
 
 function abbreviateName(fullName) {
-  const parts = String(fullName || "").trim().split(/\s+/).filter(Boolean);
+  const parts = String(fullName || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
   if (parts.length === 0) return "";
   if (parts.length === 1) return parts[0];
   const last = parts[parts.length - 1];
@@ -20,7 +28,15 @@ function abbreviateName(fullName) {
   return initials + "." + last;
 }
 
-const ALL_DAY_LABELS = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"];
+const ALL_DAY_LABELS = [
+  "Thứ 2",
+  "Thứ 3",
+  "Thứ 4",
+  "Thứ 5",
+  "Thứ 6",
+  "Thứ 7",
+  "Chủ Nhật",
+];
 function getDays(soNgay) {
   const n = Math.min(Math.max(Number(soNgay) || 1, 1), 7);
   return ALL_DAY_LABELS.slice(0, n);
@@ -58,11 +74,34 @@ function allSlots(config) {
   const out = [];
   getDays(config.soNgay).forEach((d) =>
     getSessions(config.soBuoi).forEach((s) =>
-      getTiets(config.soTiet).forEach((t) => out.push(slotKey(d, s, t)))
-    )
+      getTiets(config.soTiet).forEach((t) => out.push(slotKey(d, s, t))),
+    ),
   );
   return out;
 }
+
+/* ================= xuất Excel ================= */
+
+function safeSheetName(name) {
+  return String(name)
+    .replace(/[\\/?*[\]:]/g, "-")
+    .slice(0, 31);
+}
+
+function slugify(text) {
+  return (
+    String(text || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D")
+      .replace(/[^a-zA-Z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .toLowerCase() || "thoi-khoa-bieu"
+  );
+}
+
+
 
 /* ================= dữ liệu mẫu ================= */
 
@@ -89,7 +128,10 @@ const SEED_SUBJECTS = [
   tietTranh: 0,
 }));
 
-const SEED_DEPARTMENTS = ["KHTN", "KHXH"].map((name) => ({ id: nextId("d"), name }));
+const SEED_DEPARTMENTS = ["KHTN", "KHXH"].map((name) => ({
+  id: nextId("d"),
+  name,
+}));
 
 const SEED_TEACHERS = [
   { fullName: "Đặng Thị Chuyên", dept: 0 },
@@ -114,13 +156,15 @@ const SEED_GRADES = ["KHỐI 10", "KHỐI 11", "KHỐI 12"].map((name) => ({
   laDiemTruong: false,
 }));
 
-const SEED_CLASSES = ["10A1", "10A2", "10A3", "10A4", "10A5", "10A6"].map((name) => ({
-  id: nextId("c"),
-  name,
-  gradeId: SEED_GRADES[0].id,
-  campusId: "",
-  offSlots: [],
-}));
+const SEED_CLASSES = ["10A1", "10A2", "10A3", "10A4", "10A5", "10A6"].map(
+  (name) => ({
+    id: nextId("c"),
+    name,
+    gradeId: SEED_GRADES[0].id,
+    campusId: "",
+    offSlots: [],
+  }),
+);
 
 const DEFAULT_CONFIG = {
   tenTKB: "TUẦN 01 NH 2025-2026",
@@ -140,7 +184,14 @@ const DEFAULT_CONSTRAINTS = {
   chaoCoTiet1Thu2: true,
 };
 
-const STATUS_STAGES = ["Khởi tạo", "Chỉnh sửa", "Khóa dữ liệu", "Thủ công", "Đang chạy", "Đã có kết quả"];
+const STATUS_STAGES = [
+  "Khởi tạo",
+  "Chỉnh sửa",
+  "Khóa dữ liệu",
+  "Thủ công",
+  "Đang chạy",
+  "Đã có kết quả",
+];
 
 const NAV_GROUPS = [
   {
@@ -161,7 +212,11 @@ const NAV_GROUPS = [
     title: "Khối / lớp",
     items: [
       { key: "grades", label: "Bước 5: Danh sách khối (nhóm lớp)" },
-      { key: "campuses", label: "Bước 5.1: Danh sách điểm trường", small: true },
+      {
+        key: "campuses",
+        label: "Bước 5.1: Danh sách điểm trường",
+        small: true,
+      },
       { key: "classes", label: "Bước 6: Danh sách lớp học" },
       { key: "assignments", label: "Bước 7: Thiết lập phân công giảng dạy" },
     ],
@@ -197,7 +252,9 @@ function StatusBar({ stage, onChangeStage, shareUrl }) {
         <span className="share-url">{shareUrl}</span>
         <button
           className="btn btn-danger btn-sm"
-          onClick={() => { if (navigator.clipboard) navigator.clipboard.writeText(shareUrl); }}
+          onClick={() => {
+            if (navigator.clipboard) navigator.clipboard.writeText(shareUrl);
+          }}
         >
           Copy Url
         </button>
@@ -206,7 +263,11 @@ function StatusBar({ stage, onChangeStage, shareUrl }) {
         <span className="stage-label">Trạng thái Thời khóa biểu:</span>
         <div className="stage-track">
           {STATUS_STAGES.map((s) => (
-            <button key={s} className={"stage" + (stage === s ? " active" : "")} onClick={() => onChangeStage(s)}>
+            <button
+              key={s}
+              className={"stage" + (stage === s ? " active" : "")}
+              onClick={() => onChangeStage(s)}
+            >
               {s}
             </button>
           ))}
@@ -218,7 +279,14 @@ function StatusBar({ stage, onChangeStage, shareUrl }) {
 
 /* ================= sidebar ================= */
 
-function Sidebar({ activeStep, onSelect, checkResult, onCheck, onViewResult }) {
+function Sidebar({
+  activeStep,
+  onSelect,
+  checkResult,
+  onCheck,
+  onViewResult,
+  onExport,
+}) {
   return (
     <aside className="sidebar">
       {NAV_GROUPS.map((group) => (
@@ -228,7 +296,11 @@ function Sidebar({ activeStep, onSelect, checkResult, onCheck, onViewResult }) {
             {group.items.map((item) => (
               <button
                 key={item.key}
-                className={"nav-item" + (activeStep === item.key ? " active" : "") + (item.small ? " small" : "")}
+                className={
+                  "nav-item" +
+                  (activeStep === item.key ? " active" : "") +
+                  (item.small ? " small" : "")
+                }
                 onClick={() => onSelect(item.key)}
               >
                 {item.label}
@@ -239,19 +311,28 @@ function Sidebar({ activeStep, onSelect, checkResult, onCheck, onViewResult }) {
       ))}
 
       <div className="nav-card check-card">
-        <button className="btn btn-check" onClick={onCheck}>Kiểm tra dữ liệu</button>
+        <button className="btn btn-check" onClick={onCheck}>
+          Kiểm tra dữ liệu
+        </button>
         {!checkResult && <p className="check-empty">Chưa kiểm tra lần nào</p>}
         {checkResult && checkResult.errors.length === 0 && (
           <p className="check-ok">Dữ liệu hợp lệ. Có thể xếp thời khóa biểu.</p>
         )}
         {checkResult && checkResult.errors.length > 0 && (
           <ul className="check-errors">
-            {checkResult.errors.map((e, i) => <li key={i}>{e}</li>)}
+            {checkResult.errors.map((e, i) => (
+              <li key={i}>{e}</li>
+            ))}
           </ul>
         )}
       </div>
 
-      <button className="btn btn-result" onClick={onViewResult}>Xem kết quả</button>
+      <button className="btn btn-result" onClick={onViewResult}>
+        Xem kết quả
+      </button>
+      <button className="btn btn-export" onClick={onExport}>
+        Xuất Excel
+      </button>
     </aside>
   );
 }
@@ -280,49 +361,98 @@ function PanelTitle({ title, actions }) {
 
 /* ================= Bước 1 ================= */
 
-function ConfigStep({ config, setConfig, onSaved, onOpenConstraints, onResetData }) {
+function ConfigStep({
+  config,
+  setConfig,
+  onSaved,
+  onOpenConstraints,
+  onResetData,
+}) {
   const days = getDays(config.soNgay);
   const sessions = getSessions(config.soBuoi);
   const tiets = getTiets(config.soTiet);
-  const set = (field, value) => setConfig((prev) => ({ ...prev, [field]: value }));
+  const set = (field, value) =>
+    setConfig((prev) => ({ ...prev, [field]: value }));
 
   return (
     <div className="panel">
       <PanelTitle title="Cài đặt" />
       <div className="config-grid">
         <Field label="Tên thời khóa biểu">
-          <input value={config.tenTKB} onChange={(e) => set("tenTKB", e.target.value)} />
+          <input
+            value={config.tenTKB}
+            onChange={(e) => set("tenTKB", e.target.value)}
+          />
         </Field>
         <Field label="Tên trường học">
-          <input value={config.tenTruong} onChange={(e) => set("tenTruong", e.target.value)} placeholder="Nhập tên trường học" />
+          <input
+            value={config.tenTruong}
+            onChange={(e) => set("tenTruong", e.target.value)}
+            placeholder="Nhập tên trường học"
+          />
         </Field>
         <Field label="Năm học">
-          <input value={config.namHoc} onChange={(e) => set("namHoc", e.target.value)} placeholder="Nhập năm học" />
+          <input
+            value={config.namHoc}
+            onChange={(e) => set("namHoc", e.target.value)}
+            placeholder="Nhập năm học"
+          />
         </Field>
         <Field label="Số ngày trong tuần (không nên sửa)" warn>
-          <select value={config.soNgay} onChange={(e) => set("soNgay", Number(e.target.value))}>
-            {[1, 2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>{n}</option>)}
+          <select
+            value={config.soNgay}
+            onChange={(e) => set("soNgay", Number(e.target.value))}
+          >
+            {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
           </select>
         </Field>
         <Field label="Số buổi trong ngày (không nên sửa)" warn>
-          <select value={config.soBuoi} onChange={(e) => set("soBuoi", Number(e.target.value))}>
+          <select
+            value={config.soBuoi}
+            onChange={(e) => set("soBuoi", Number(e.target.value))}
+          >
             <option value={1}>1</option>
             <option value={2}>2</option>
           </select>
         </Field>
         <Field label="Số tiết trong buổi (không nên sửa)" warn>
-          <select value={config.soTiet} onChange={(e) => set("soTiet", Number(e.target.value))}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => <option key={n} value={n}>{n}</option>)}
+          <select
+            value={config.soTiet}
+            onChange={(e) => set("soTiet", Number(e.target.value))}
+          >
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
           </select>
         </Field>
         <Field label="Phương sai">
           <div className="with-addon">
-            <input type="number" min={0} value={config.phuongSai} onChange={(e) => set("phuongSai", e.target.value)} />
-            <button className="addon-btn" title="Đặt lại phương sai" onClick={() => set("phuongSai", 1)}>⟳</button>
+            <input
+              type="number"
+              min={0}
+              value={config.phuongSai}
+              onChange={(e) => set("phuongSai", e.target.value)}
+            />
+            <button
+              className="addon-btn"
+              title="Đặt lại phương sai"
+              onClick={() => set("phuongSai", 1)}
+            >
+              ⟳
+            </button>
           </div>
         </Field>
         <Field label="Thuật toán">
-          <select value={config.thuatToan} onChange={(e) => set("thuatToan", e.target.value)}>
+          <select
+            value={config.thuatToan}
+            onChange={(e) => set("thuatToan", e.target.value)}
+          >
             <option>Thuật toán 1 (nhanh)</option>
             <option>Thuật toán 2</option>
             <option>Thuật toán 3</option>
@@ -333,16 +463,24 @@ function ConfigStep({ config, setConfig, onSaved, onOpenConstraints, onResetData
       </div>
 
       <div className="row-right">
-        <button className="btn btn-primary" onClick={onSaved}>Lưu cài đặt</button>
+        <button className="btn btn-primary" onClick={onSaved}>
+          Lưu cài đặt
+        </button>
       </div>
 
       <PanelTitle title="Chức năng nâng cao" />
       <div className="btn-row">
-        <button className="btn btn-info" onClick={onOpenConstraints}>Cài đặt ràng buộc thời khóa biểu</button>
-        <button className="btn btn-info" onClick={onOpenConstraints}>Cài đặt ràng buộc mới (thử nghiệm)</button>
+        <button className="btn btn-info" onClick={onOpenConstraints}>
+          Cài đặt ràng buộc thời khóa biểu
+        </button>
+        <button className="btn btn-info" onClick={onOpenConstraints}>
+          Cài đặt ràng buộc mới (thử nghiệm)
+        </button>
       </div>
       <div className="btn-row">
-        <button className="btn btn-danger" onClick={onResetData}>Xóa dữ liệu của thời khóa biểu</button>
+        <button className="btn btn-danger" onClick={onResetData}>
+          Xóa dữ liệu của thời khóa biểu
+        </button>
       </div>
 
       <PanelTitle title="Giao diện" />
@@ -351,18 +489,26 @@ function ConfigStep({ config, setConfig, onSaved, onOpenConstraints, onResetData
           <thead>
             <tr>
               <th colSpan={2} />
-              {days.map((d) => <th key={d}>{d}</th>)}
+              {days.map((d) => (
+                <th key={d}>{d}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {sessions.map((session) =>
               tiets.map((tiet, i) => (
                 <tr key={session + tiet}>
-                  {i === 0 && <td className="prev-session" rowSpan={tiets.length}>{session}</td>}
+                  {i === 0 && (
+                    <td className="prev-session" rowSpan={tiets.length}>
+                      {session}
+                    </td>
+                  )}
                   <td className="prev-tiet">Tiết {tiet}</td>
-                  {days.map((d) => <td key={d + tiet} />)}
+                  {days.map((d) => (
+                    <td key={d + tiet} />
+                  ))}
                 </tr>
-              ))
+              )),
             )}
           </tbody>
         </table>
@@ -375,12 +521,26 @@ function ConfigStep({ config, setConfig, onSaved, onOpenConstraints, onResetData
 
 function SubjectsStep({ subjects, setSubjects }) {
   const [draft, setDraft] = useState("");
-  const update = (id, patch) => setSubjects((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  const update = (id, patch) =>
+    setSubjects((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+    );
 
   function add() {
     const v = draft.trim();
     if (!v) return;
-    setSubjects((prev) => [...prev, { id: nextId("su"), name: v, short: "", gioiHan: "", tietLienTiep: 1, buoiToiDa: "", tietTranh: 0 }]);
+    setSubjects((prev) => [
+      ...prev,
+      {
+        id: nextId("su"),
+        name: v,
+        short: "",
+        gioiHan: "",
+        tietLienTiep: 1,
+        buoiToiDa: "",
+        tietTranh: 0,
+      },
+    ]);
     setDraft("");
   }
 
@@ -392,7 +552,9 @@ function SubjectsStep({ subjects, setSubjects }) {
           <div className="btn-row tight">
             <button className="btn btn-info btn-sm">Tiết tránh</button>
             <button className="btn btn-primary btn-sm">Chọn môn học</button>
-            <button className="btn btn-primary btn-sm">Nhập danh sách môn</button>
+            <button className="btn btn-primary btn-sm">
+              Nhập danh sách môn
+            </button>
           </div>
         }
       />
@@ -402,9 +564,15 @@ function SubjectsStep({ subjects, setSubjects }) {
             <th className="w-stt">STT</th>
             <th>Tên môn</th>
             <th>Rút gọn</th>
-            <th>Giới hạn <small>Giới hạn cùng thời điểm</small></th>
-            <th>Tiết liên tiếp <small>Số tiết liên tiếp tối đa</small></th>
-            <th>Buổi tối đa <small>Số buổi tối đa trong một ngày</small></th>
+            <th>
+              Giới hạn <small>Giới hạn cùng thời điểm</small>
+            </th>
+            <th>
+              Tiết liên tiếp <small>Số tiết liên tiếp tối đa</small>
+            </th>
+            <th>
+              Buổi tối đa <small>Số buổi tối đa trong một ngày</small>
+            </th>
             <th className="w-act">Tiết tránh</th>
             <th className="w-act" />
           </tr>
@@ -413,22 +581,76 @@ function SubjectsStep({ subjects, setSubjects }) {
           {subjects.map((s, i) => (
             <tr key={s.id}>
               <td className="stt">{i + 1}</td>
-              <td><input value={s.name} onChange={(e) => update(s.id, { name: e.target.value })} /></td>
-              <td><input value={s.short} placeholder="Tên môn rút gọn (nếu cần)" onChange={(e) => update(s.id, { short: e.target.value })} /></td>
-              <td><input value={s.gioiHan} placeholder="Không giới hạn" onChange={(e) => update(s.id, { gioiHan: e.target.value })} /></td>
-              <td><input type="number" min={1} value={s.tietLienTiep} onChange={(e) => update(s.id, { tietLienTiep: e.target.value })} /></td>
-              <td><input value={s.buoiToiDa} placeholder="Không giới hạn" onChange={(e) => update(s.id, { buoiToiDa: e.target.value })} /></td>
-              <td><button className="btn btn-primary btn-sm block">{s.tietTranh} tiết</button></td>
-              <td><button className="btn btn-danger btn-sm" onClick={() => setSubjects((prev) => prev.filter((x) => x.id !== s.id))}>Xóa</button></td>
+              <td>
+                <input
+                  value={s.name}
+                  onChange={(e) => update(s.id, { name: e.target.value })}
+                />
+              </td>
+              <td>
+                <input
+                  value={s.short}
+                  placeholder="Tên môn rút gọn (nếu cần)"
+                  onChange={(e) => update(s.id, { short: e.target.value })}
+                />
+              </td>
+              <td>
+                <input
+                  value={s.gioiHan}
+                  placeholder="Không giới hạn"
+                  onChange={(e) => update(s.id, { gioiHan: e.target.value })}
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  min={1}
+                  value={s.tietLienTiep}
+                  onChange={(e) =>
+                    update(s.id, { tietLienTiep: e.target.value })
+                  }
+                />
+              </td>
+              <td>
+                <input
+                  value={s.buoiToiDa}
+                  placeholder="Không giới hạn"
+                  onChange={(e) => update(s.id, { buoiToiDa: e.target.value })}
+                />
+              </td>
+              <td>
+                <button className="btn btn-primary btn-sm block">
+                  {s.tietTranh} tiết
+                </button>
+              </td>
+              <td>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() =>
+                    setSubjects((prev) => prev.filter((x) => x.id !== s.id))
+                  }
+                >
+                  Xóa
+                </button>
+              </td>
             </tr>
           ))}
           <tr className="add-row">
             <td className="stt">{subjects.length + 1}</td>
             <td>
-              <input value={draft} placeholder="Mời nhập tên môn học" onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} />
+              <input
+                value={draft}
+                placeholder="Mời nhập tên môn học"
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && add()}
+              />
             </td>
             <td colSpan={5} />
-            <td><button className="btn btn-add" onClick={add}>+</button></td>
+            <td>
+              <button className="btn btn-add" onClick={add}>
+                +
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -438,7 +660,12 @@ function SubjectsStep({ subjects, setSubjects }) {
 
 /* ================= Bước 3 ================= */
 
-function DepartmentsStep({ departments, setDepartments, teachers, onOpenTeachers }) {
+function DepartmentsStep({
+  departments,
+  setDepartments,
+  teachers,
+  onOpenTeachers,
+}) {
   const [draft, setDraft] = useState("");
   function add() {
     const v = draft.trim();
@@ -462,20 +689,55 @@ function DepartmentsStep({ departments, setDepartments, teachers, onOpenTeachers
             <tr key={d.id}>
               <td className="stt">{i + 1}</td>
               <td>
-                <input value={d.name} onChange={(e) => setDepartments((prev) => prev.map((x) => (x.id === d.id ? { ...x, name: e.target.value } : x)))} />
+                <input
+                  value={d.name}
+                  onChange={(e) =>
+                    setDepartments((prev) =>
+                      prev.map((x) =>
+                        x.id === d.id ? { ...x, name: e.target.value } : x,
+                      ),
+                    )
+                  }
+                />
               </td>
               <td className="actions">
-                <button className="btn btn-primary btn-sm" onClick={onOpenTeachers}>
-                  Chi tiết ({teachers.filter((t) => t.departmentIds.includes(d.id)).length})
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={onOpenTeachers}
+                >
+                  Chi tiết (
+                  {
+                    teachers.filter((t) => t.departmentIds.includes(d.id))
+                      .length
+                  }
+                  )
                 </button>
-                <button className="btn btn-danger btn-sm" onClick={() => setDepartments((prev) => prev.filter((x) => x.id !== d.id))}>Xóa</button>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() =>
+                    setDepartments((prev) => prev.filter((x) => x.id !== d.id))
+                  }
+                >
+                  Xóa
+                </button>
               </td>
             </tr>
           ))}
           <tr className="add-row">
             <td className="stt">{departments.length + 1}</td>
-            <td><input value={draft} placeholder="Mời nhập nhóm giáo viên (tổ bộ môn)" onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} /></td>
-            <td><button className="btn btn-add" onClick={add}>+</button></td>
+            <td>
+              <input
+                value={draft}
+                placeholder="Mời nhập nhóm giáo viên (tổ bộ môn)"
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && add()}
+              />
+            </td>
+            <td>
+              <button className="btn btn-add" onClick={add}>
+                +
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -487,12 +749,23 @@ function DepartmentsStep({ departments, setDepartments, teachers, onOpenTeachers
 
 function TeachersStep({ teachers, setTeachers, departments, assignments }) {
   const [draft, setDraft] = useState("");
-  const update = (id, patch) => setTeachers((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+  const update = (id, patch) =>
+    setTeachers((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+    );
 
   function add() {
     const v = draft.trim();
     if (!v) return;
-    setTeachers((prev) => [...prev, { id: nextId("t"), fullName: v, short: abbreviateName(v), departmentIds: [] }]);
+    setTeachers((prev) => [
+      ...prev,
+      {
+        id: nextId("t"),
+        fullName: v,
+        short: abbreviateName(v),
+        departmentIds: [],
+      },
+    ]);
     setDraft("");
   }
 
@@ -504,11 +777,16 @@ function TeachersStep({ teachers, setTeachers, departments, assignments }) {
           <div className="btn-row tight">
             <button className="btn btn-info btn-sm">Ràng buộc</button>
             <button className="btn btn-primary btn-sm">Chọn giáo viên</button>
-            <button className="btn btn-primary btn-sm">Nhập danh sách giáo viên</button>
+            <button className="btn btn-primary btn-sm">
+              Nhập danh sách giáo viên
+            </button>
           </div>
         }
       />
-      <p className="hint">Tên rút gọn tự sinh từ họ tên: viết tắt họ và chữ đệm, giữ nguyên tên cuối. Ví dụ Nguyễn Văn An → N.V.An. Bạn vẫn sửa lại được.</p>
+      <p className="hint">
+        Tên rút gọn tự sinh từ họ tên: viết tắt họ và chữ đệm, giữ nguyên tên
+        cuối. Ví dụ Nguyễn Văn An → N.V.An. Bạn vẫn sửa lại được.
+      </p>
       <table className="grid-table">
         <thead>
           <tr>
@@ -521,14 +799,29 @@ function TeachersStep({ teachers, setTeachers, departments, assignments }) {
         </thead>
         <tbody>
           {teachers.map((t, i) => {
-            const soTiet = assignments.filter((a) => a.teacherId === t.id).reduce((s, a) => s + Number(a.soTiet || 0), 0);
+            const soTiet = assignments
+              .filter((a) => a.teacherId === t.id)
+              .reduce((s, a) => s + Number(a.soTiet || 0), 0);
             return (
               <tr key={t.id}>
                 <td className="stt">{i + 1}</td>
                 <td>
-                  <input value={t.fullName} onChange={(e) => update(t.id, { fullName: e.target.value, short: abbreviateName(e.target.value) })} />
+                  <input
+                    value={t.fullName}
+                    onChange={(e) =>
+                      update(t.id, {
+                        fullName: e.target.value,
+                        short: abbreviateName(e.target.value),
+                      })
+                    }
+                  />
                 </td>
-                <td><input value={t.short} onChange={(e) => update(t.id, { short: e.target.value })} /></td>
+                <td>
+                  <input
+                    value={t.short}
+                    onChange={(e) => update(t.id, { short: e.target.value })}
+                  />
+                </td>
                 <td>
                   <div className="chip-cell">
                     {t.departmentIds.map((id) => {
@@ -536,7 +829,18 @@ function TeachersStep({ teachers, setTeachers, departments, assignments }) {
                       if (!d) return null;
                       return (
                         <span className="tag" key={id}>
-                          <button onClick={() => update(t.id, { departmentIds: t.departmentIds.filter((x) => x !== id) })} aria-label={`Bỏ ${d.name}`}>×</button>
+                          <button
+                            onClick={() =>
+                              update(t.id, {
+                                departmentIds: t.departmentIds.filter(
+                                  (x) => x !== id,
+                                ),
+                              })
+                            }
+                            aria-label={`Bỏ ${d.name}`}
+                          >
+                            ×
+                          </button>
                           {d.name}
                         </span>
                       );
@@ -545,27 +849,56 @@ function TeachersStep({ teachers, setTeachers, departments, assignments }) {
                       value=""
                       onChange={(e) => {
                         const v = e.target.value;
-                        if (v && !t.departmentIds.includes(v)) update(t.id, { departmentIds: [...t.departmentIds, v] });
+                        if (v && !t.departmentIds.includes(v))
+                          update(t.id, {
+                            departmentIds: [...t.departmentIds, v],
+                          });
                       }}
                     >
                       <option value="">+ tổ</option>
-                      {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                      {departments.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </td>
                 <td className="actions">
-                  <button className="btn btn-primary btn-sm">Chi tiết ({soTiet} tiết)</button>
-                  <button className="btn btn-danger btn-sm" onClick={() => setTeachers((prev) => prev.filter((x) => x.id !== t.id))}>Xóa</button>
+                  <button className="btn btn-primary btn-sm">
+                    Chi tiết ({soTiet} tiết)
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() =>
+                      setTeachers((prev) => prev.filter((x) => x.id !== t.id))
+                    }
+                  >
+                    Xóa
+                  </button>
                 </td>
               </tr>
             );
           })}
           <tr className="add-row">
             <td className="stt">{teachers.length + 1}</td>
-            <td><input value={draft} placeholder="Mời nhập họ tên giáo viên" onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} /></td>
-            <td className="muted">{draft.trim() ? abbreviateName(draft) : ""}</td>
+            <td>
+              <input
+                value={draft}
+                placeholder="Mời nhập họ tên giáo viên"
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && add()}
+              />
+            </td>
+            <td className="muted">
+              {draft.trim() ? abbreviateName(draft) : ""}
+            </td>
             <td />
-            <td><button className="btn btn-add" onClick={add}>+</button></td>
+            <td>
+              <button className="btn btn-add" onClick={add}>
+                +
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -575,18 +908,30 @@ function TeachersStep({ teachers, setTeachers, departments, assignments }) {
 
 /* ================= Bước 5 ================= */
 
-function GradesStep({ grades, setGrades, classes, gradeAssignments, onOpenFramework }) {
+function GradesStep({
+  grades,
+  setGrades,
+  classes,
+  gradeAssignments,
+  onOpenFramework,
+}) {
   const [draft, setDraft] = useState("");
   function add() {
     const v = draft.trim();
     if (!v) return;
-    setGrades((prev) => [...prev, { id: nextId("g"), name: v, laDiemTruong: false }]);
+    setGrades((prev) => [
+      ...prev,
+      { id: nextId("g"), name: v, laDiemTruong: false },
+    ]);
     setDraft("");
   }
   return (
     <div className="panel">
       <PanelTitle title="Nhóm lớp (Khối)" />
-      <p className="hint">Khung CT của khối là bản mẫu. Mỗi lớp có thể đồng bộ từ bản mẫu này rồi chỉnh riêng.</p>
+      <p className="hint">
+        Khung CT của khối là bản mẫu. Mỗi lớp có thể đồng bộ từ bản mẫu này rồi
+        chỉnh riêng.
+      </p>
       <table className="grid-table">
         <thead>
           <tr>
@@ -602,17 +947,39 @@ function GradesStep({ grades, setGrades, classes, gradeAssignments, onOpenFramew
             <tr key={g.id}>
               <td className="stt">{i + 1}</td>
               <td>
-                <input value={g.name} onChange={(e) => setGrades((prev) => prev.map((x) => (x.id === g.id ? { ...x, name: e.target.value } : x)))} />
+                <input
+                  value={g.name}
+                  onChange={(e) =>
+                    setGrades((prev) =>
+                      prev.map((x) =>
+                        x.id === g.id ? { ...x, name: e.target.value } : x,
+                      ),
+                    )
+                  }
+                />
               </td>
               <td className="center">
                 <button
                   className={"toggle" + (g.laDiemTruong ? " on" : "")}
-                  onClick={() => setGrades((prev) => prev.map((x) => (x.id === g.id ? { ...x, laDiemTruong: !x.laDiemTruong } : x)))}
+                  onClick={() =>
+                    setGrades((prev) =>
+                      prev.map((x) =>
+                        x.id === g.id
+                          ? { ...x, laDiemTruong: !x.laDiemTruong }
+                          : x,
+                      ),
+                    )
+                  }
                   aria-pressed={g.laDiemTruong}
-                ><span /></button>
+                >
+                  <span />
+                </button>
               </td>
               <td className="center">
-                <button className="btn btn-primary btn-sm" onClick={() => onOpenFramework({ type: "grade", id: g.id })}>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => onOpenFramework({ type: "grade", id: g.id })}
+                >
                   Khung CT
                 </button>
               </td>
@@ -620,16 +987,35 @@ function GradesStep({ grades, setGrades, classes, gradeAssignments, onOpenFramew
                 <button
                   className="btn btn-danger btn-sm"
                   disabled={classes.some((c) => c.gradeId === g.id)}
-                  title={classes.some((c) => c.gradeId === g.id) ? "Còn lớp thuộc khối này" : ""}
-                  onClick={() => setGrades((prev) => prev.filter((x) => x.id !== g.id))}
-                >Xóa</button>
+                  title={
+                    classes.some((c) => c.gradeId === g.id)
+                      ? "Còn lớp thuộc khối này"
+                      : ""
+                  }
+                  onClick={() =>
+                    setGrades((prev) => prev.filter((x) => x.id !== g.id))
+                  }
+                >
+                  Xóa
+                </button>
               </td>
             </tr>
           ))}
           <tr className="add-row">
             <td className="stt">{grades.length + 1}</td>
-            <td><input value={draft} placeholder="Mời nhập tên Nhóm lớp (Khối)" onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} /></td>
-            <td colSpan={3} className="center"><button className="btn btn-add" onClick={add}>+</button></td>
+            <td>
+              <input
+                value={draft}
+                placeholder="Mời nhập tên Nhóm lớp (Khối)"
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && add()}
+              />
+            </td>
+            <td colSpan={3} className="center">
+              <button className="btn btn-add" onClick={add}>
+                +
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -661,19 +1047,58 @@ function CampusesStep({ campuses, setCampuses, classes }) {
           </tr>
         </thead>
         <tbody>
-          {campuses.length === 0 && <tr><td colSpan={4} className="empty">Chưa khai báo điểm trường nào.</td></tr>}
+          {campuses.length === 0 && (
+            <tr>
+              <td colSpan={4} className="empty">
+                Chưa khai báo điểm trường nào.
+              </td>
+            </tr>
+          )}
           {campuses.map((p, i) => (
             <tr key={p.id}>
               <td className="stt">{i + 1}</td>
-              <td><input value={p.name} onChange={(e) => setCampuses((prev) => prev.map((x) => (x.id === p.id ? { ...x, name: e.target.value } : x)))} /></td>
-              <td className="center">{classes.filter((c) => c.campusId === p.id).length}</td>
-              <td className="center"><button className="btn btn-danger btn-sm" onClick={() => setCampuses((prev) => prev.filter((x) => x.id !== p.id))}>Xóa</button></td>
+              <td>
+                <input
+                  value={p.name}
+                  onChange={(e) =>
+                    setCampuses((prev) =>
+                      prev.map((x) =>
+                        x.id === p.id ? { ...x, name: e.target.value } : x,
+                      ),
+                    )
+                  }
+                />
+              </td>
+              <td className="center">
+                {classes.filter((c) => c.campusId === p.id).length}
+              </td>
+              <td className="center">
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() =>
+                    setCampuses((prev) => prev.filter((x) => x.id !== p.id))
+                  }
+                >
+                  Xóa
+                </button>
+              </td>
             </tr>
           ))}
           <tr className="add-row">
             <td className="stt">{campuses.length + 1}</td>
-            <td><input value={draft} placeholder="Mời nhập tên điểm trường" onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} /></td>
-            <td colSpan={2} className="center"><button className="btn btn-add" onClick={add}>+</button></td>
+            <td>
+              <input
+                value={draft}
+                placeholder="Mời nhập tên điểm trường"
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && add()}
+              />
+            </td>
+            <td colSpan={2} className="center">
+              <button className="btn btn-add" onClick={add}>
+                +
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -683,15 +1108,35 @@ function CampusesStep({ campuses, setCampuses, classes }) {
 
 /* ================= Bước 6 ================= */
 
-function ClassesStep({ classes, setClasses, grades, campuses, assignments, config, onOpenFramework }) {
+function ClassesStep({
+  classes,
+  setClasses,
+  grades,
+  campuses,
+  assignments,
+  config,
+  onOpenFramework,
+}) {
   const [draft, setDraft] = useState("");
   const [draftGrade, setDraftGrade] = useState(grades[0] ? grades[0].id : "");
-  const update = (id, patch) => setClasses((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  const update = (id, patch) =>
+    setClasses((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    );
 
   function add() {
     const v = draft.trim();
     if (!v) return;
-    setClasses((prev) => [...prev, { id: nextId("c"), name: v, gradeId: draftGrade, campusId: "", offSlots: [] }]);
+    setClasses((prev) => [
+      ...prev,
+      {
+        id: nextId("c"),
+        name: v,
+        gradeId: draftGrade,
+        campusId: "",
+        offSlots: [],
+      },
+    ]);
     setDraft("");
   }
 
@@ -703,7 +1148,9 @@ function ClassesStep({ classes, setClasses, grades, campuses, assignments, confi
           <div className="btn-row tight">
             <button className="btn btn-info btn-sm">Tiết học</button>
             <button className="btn btn-primary btn-sm">Chọn lớp học</button>
-            <button className="btn btn-primary btn-sm">Nhập danh sách lớp</button>
+            <button className="btn btn-primary btn-sm">
+              Nhập danh sách lớp
+            </button>
           </div>
         }
       />
@@ -723,45 +1170,94 @@ function ClassesStep({ classes, setClasses, grades, campuses, assignments, confi
             return (
               <tr key={c.id}>
                 <td className="stt">{i + 1}</td>
-                <td><input value={c.name} onChange={(e) => update(c.id, { name: e.target.value })} /></td>
                 <td>
-                  <select value={c.gradeId} onChange={(e) => update(c.id, { gradeId: e.target.value })}>
+                  <input
+                    value={c.name}
+                    onChange={(e) => update(c.id, { name: e.target.value })}
+                  />
+                </td>
+                <td>
+                  <select
+                    value={c.gradeId}
+                    onChange={(e) => update(c.id, { gradeId: e.target.value })}
+                  >
                     <option value="">-- Chọn khối --</option>
-                    {grades.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                    {grades.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
                   </select>
                 </td>
                 <td>
                   {campuses.length === 0 ? (
                     <span className="muted">Không có điểm trường</span>
                   ) : (
-                    <select value={c.campusId} onChange={(e) => update(c.id, { campusId: e.target.value })}>
+                    <select
+                      value={c.campusId}
+                      onChange={(e) =>
+                        update(c.id, { campusId: e.target.value })
+                      }
+                    >
                       <option value="">Không có điểm trường</option>
-                      {campuses.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      {campuses.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
                     </select>
                   )}
                 </td>
                 <td className="center">
-                  <button className="btn btn-primary btn-sm" onClick={() => onOpenFramework({ type: "class", id: c.id })}>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => onOpenFramework({ type: "class", id: c.id })}
+                  >
                     Khung CT
                   </button>
                 </td>
                 <td className="center">
-                  <button className="btn btn-danger btn-sm" onClick={() => setClasses((prev) => prev.filter((x) => x.id !== c.id))}>Xóa</button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() =>
+                      setClasses((prev) => prev.filter((x) => x.id !== c.id))
+                    }
+                  >
+                    Xóa
+                  </button>
                 </td>
               </tr>
             );
           })}
           <tr className="add-row">
             <td className="stt">{classes.length + 1}</td>
-            <td><input value={draft} placeholder="Mời nhập tên lớp học" onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} /></td>
             <td>
-              <select value={draftGrade} onChange={(e) => setDraftGrade(e.target.value)}>
+              <input
+                value={draft}
+                placeholder="Mời nhập tên lớp học"
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && add()}
+              />
+            </td>
+            <td>
+              <select
+                value={draftGrade}
+                onChange={(e) => setDraftGrade(e.target.value)}
+              >
                 <option value="">-- Chọn khối --</option>
-                {grades.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                {grades.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
               </select>
             </td>
             <td colSpan={2} />
-            <td className="center"><button className="btn btn-add" onClick={add}>+</button></td>
+            <td className="center">
+              <button className="btn btn-add" onClick={add}>
+                +
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -772,10 +1268,24 @@ function ClassesStep({ classes, setClasses, grades, campuses, assignments, confi
 /* ================= Khung chương trình (Bước 6.1 + 6.2) ================= */
 
 function FrameworkView({
-  scope, classes, grades, subjects, teachers, config,
-  items, setItems, setClasses, effectiveSchedule, lessonById,
-  gradeAssignments, schedule, setSchedule, notify,
-  onClose, onNext, onSaved,
+  scope,
+  classes,
+  grades,
+  subjects,
+  teachers,
+  config,
+  items,
+  setItems,
+  setClasses,
+  effectiveSchedule,
+  lessonById,
+  gradeAssignments,
+  schedule,
+  setSchedule,
+  notify,
+  onClose,
+  onNext,
+  onSaved,
 }) {
   const isClass = scope.type === "class";
   const klass = isClass ? classes.find((c) => c.id === scope.id) : null;
@@ -795,11 +1305,16 @@ function FrameworkView({
   const [draftSoTiet, setDraftSoTiet] = useState(1);
   const [draftLienTiep, setDraftLienTiep] = useState(1);
 
-  const offSlots = useMemo(() => new Set(klass ? klass.offSlots || [] : []), [klass]);
+  const offSlots = useMemo(
+    () => new Set(klass ? klass.offSlots || [] : []),
+    [klass],
+  );
   const rows = items;
 
   const totalKhungCT = rows.reduce((s, a) => s + Number(a.soTiet || 0), 0);
-  const totalSlots = days.length * sessions.length * tiets.length - (isClass ? offSlots.size : 0);
+  const totalSlots =
+    days.length * sessions.length * tiets.length -
+    (isClass ? offSlots.size : 0);
 
   function update(id, patch) {
     setItems((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
@@ -831,8 +1346,13 @@ function FrameworkView({
       prev.map((c) => {
         if (c.id !== scope.id) return c;
         const list = c.offSlots || [];
-        return { ...c, offSlots: list.includes(slot) ? list.filter((s) => s !== slot) : [...list, slot] };
-      })
+        return {
+          ...c,
+          offSlots: list.includes(slot)
+            ? list.filter((s) => s !== slot)
+            : [...list, slot],
+        };
+      }),
     );
     if (turningOn) {
       const key = `${slot}|${scope.id}`;
@@ -845,14 +1365,18 @@ function FrameworkView({
         return next;
       });
       if (hadLesson && notify) {
-        notify(`Đã gỡ tiết đang xếp ở ${slotLabel(slot)} về danh sách chưa xếp vì lớp nghỉ tiết này.`);
+        notify(
+          `Đã gỡ tiết đang xếp ở ${slotLabel(slot)} về danh sách chưa xếp vì lớp nghỉ tiết này.`,
+        );
       }
     }
   }
 
   /* Ô chỉ hiện tiết của chính lớp này; lớp khác trong khối chỉ hiện tên lớp đang bận. */
   function cellInfo(slot) {
-    const own = isClass ? lessonById[effectiveSchedule[`${slot}|${scope.id}`]] : null;
+    const own = isClass
+      ? lessonById[effectiveSchedule[`${slot}|${scope.id}`]]
+      : null;
     const locked = !!(own && own.pinnedSlot === slot);
     let others = [];
     if (busyScope === "khoi") {
@@ -870,11 +1394,21 @@ function FrameworkView({
   return (
     <div className="panel fw-panel">
       <div className="fw-head">
-        <span className="fw-name">{isClass ? (klass ? klass.name : "Lớp") : (grade ? grade.name : "Khối")}</span>
-        {isClass && <button className="btn btn-danger btn-sm" onClick={onNext}>⏩ Kế tiếp</button>}
+        <span className="fw-name">
+          {isClass ? (klass ? klass.name : "Lớp") : grade ? grade.name : "Khối"}
+        </span>
+        {isClass && (
+          <button className="btn btn-danger btn-sm" onClick={onNext}>
+            ⏩ Kế tiếp
+          </button>
+        )}
         <div className="spacer" />
-        <button className="btn btn-primary btn-sm" onClick={onClose}>Đóng</button>
-        <button className="btn btn-warn btn-sm" onClick={onSaved}>Lưu</button>
+        <button className="btn btn-primary btn-sm" onClick={onClose}>
+          Đóng
+        </button>
+        <button className="btn btn-warn btn-sm" onClick={onSaved}>
+          Lưu
+        </button>
       </div>
 
       {isClass && (
@@ -887,17 +1421,26 @@ function FrameworkView({
 
           <div className="fw-radio">
             <label>
-              <input type="radio" checked={busyScope === "khoi"} onChange={() => setBusyScope("khoi")} />
+              <input
+                type="radio"
+                checked={busyScope === "khoi"}
+                onChange={() => setBusyScope("khoi")}
+              />
               Xem tiết bận của cả lớp và khối
             </label>
             <label>
-              <input type="radio" checked={busyScope === "lop"} onChange={() => setBusyScope("lop")} />
+              <input
+                type="radio"
+                checked={busyScope === "lop"}
+                onChange={() => setBusyScope("lop")}
+              />
               Xem tiết bận của riêng lớp
             </label>
           </div>
 
           <div className="fw-guide">
-            <strong>Hướng dẫn:</strong> nhấn vào những vị trí mà lớp không phải học
+            <strong>Hướng dẫn:</strong> nhấn vào những vị trí mà lớp không phải
+            học
           </div>
           <div className="fw-legend-bar">Nghỉ</div>
 
@@ -906,14 +1449,20 @@ function FrameworkView({
               <thead>
                 <tr>
                   <th colSpan={2} />
-                  {days.map((d) => <th key={d}>{d}</th>)}
+                  {days.map((d) => (
+                    <th key={d}>{d}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {sessions.map((session) =>
                   tiets.map((tiet, i) => (
                     <tr key={session + tiet}>
-                      {i === 0 && <td className="fw-session" rowSpan={tiets.length}>{session}</td>}
+                      {i === 0 && (
+                        <td className="fw-session" rowSpan={tiets.length}>
+                          {session}
+                        </td>
+                      )}
                       <td className="fw-tiet">Tiết {tiet}</td>
                       {days.map((d) => {
                         const slot = slotKey(d, session, tiet);
@@ -921,24 +1470,34 @@ function FrameworkView({
                         const { own, locked, others } = cellInfo(slot);
                         let cls = "fw-cell ";
                         let text = "Trống";
-                        if (off) { cls += "off"; text = "Nghỉ"; }
-                        else if (locked) { cls += "locked"; text = own.subjectName; }
-                        else if (own) { cls += "busy"; text = own.subjectName; }
-                        else if (others.length) { cls += "other"; text = others.join(", "); }
-                        else cls += "free";
+                        if (off) {
+                          cls += "off";
+                          text = "Nghỉ";
+                        } else if (locked) {
+                          cls += "locked";
+                          text = own.subjectName;
+                        } else if (own) {
+                          cls += "busy";
+                          text = own.subjectName;
+                        } else if (others.length) {
+                          cls += "other";
+                          text = others.join(", ");
+                        } else cls += "free";
                         return (
                           <td
                             key={slot}
                             className={cls}
-                            onClick={() => { if (!locked) toggleOff(slot); }}
+                            onClick={() => {
+                              if (!locked) toggleOff(slot);
+                            }}
                             title={
                               locked
                                 ? "Tiết cố định, không đổi được"
                                 : off
-                                ? "Bấm để bỏ nghỉ"
-                                : others.length
-                                ? `Lớp đang bận: ${others.join(", ")}`
-                                : "Bấm để đánh dấu lớp nghỉ tiết này"
+                                  ? "Bấm để bỏ nghỉ"
+                                  : others.length
+                                    ? `Lớp đang bận: ${others.join(", ")}`
+                                    : "Bấm để đánh dấu lớp nghỉ tiết này"
                             }
                           >
                             {text}
@@ -946,7 +1505,7 @@ function FrameworkView({
                         );
                       })}
                     </tr>
-                  ))
+                  )),
                 )}
               </tbody>
             </table>
@@ -955,40 +1514,64 @@ function FrameworkView({
       )}
 
       <div className="fw-sub-head">
-        <h3>{isClass ? "Bước 6.2: Khung chương trình" : "Khung chương trình của khối"}</h3>
+        <h3>
+          {isClass
+            ? "Bước 6.2: Khung chương trình"
+            : "Khung chương trình của khối"}
+        </h3>
         <div className="spacer" />
         {isClass && (
           <div className="fw-sync">
             <span>Đồng bộ với khung chương trình của khối:</span>
-            <select value={syncGradeId} onChange={(e) => setSyncGradeId(e.target.value)}>
-              {grades.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+            <select
+              value={syncGradeId}
+              onChange={(e) => setSyncGradeId(e.target.value)}
+            >
+              {grades.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
             </select>
             <button
               className="btn btn-danger btn-sm"
               onClick={() => {
-                const src = gradeAssignments.filter((a) => a.gradeId === syncGradeId);
+                const src = gradeAssignments.filter(
+                  (a) => a.gradeId === syncGradeId,
+                );
                 if (src.length === 0) return;
-                if (!window.confirm("Thay thế khung chương trình hiện tại của lớp bằng khung của khối?")) return;
+                if (
+                  !window.confirm(
+                    "Thay thế khung chương trình hiện tại của lớp bằng khung của khối?",
+                  )
+                )
+                  return;
                 setItems((prev) => [
                   ...prev.filter((a) => a.classId !== scope.id),
-                  ...src.map((a) => newAssignment({
-                    classId: scope.id,
-                    subjectId: a.subjectId,
-                    teacherId: a.teacherId,
-                    soTiet: a.soTiet,
-                    tietLienTiep: a.tietLienTiep,
-                    fixed: [...(a.fixed || [])],
-                    avoid: [...(a.avoid || [])],
-                  })),
+                  ...src.map((a) =>
+                    newAssignment({
+                      classId: scope.id,
+                      subjectId: a.subjectId,
+                      teacherId: a.teacherId,
+                      soTiet: a.soTiet,
+                      tietLienTiep: a.tietLienTiep,
+                      fixed: [...(a.fixed || [])],
+                      avoid: [...(a.avoid || [])],
+                    }),
+                  ),
                 ]);
               }}
-            >Đồng bộ</button>
+            >
+              Đồng bộ
+            </button>
           </div>
         )}
       </div>
 
       <div className="fw-note">
-        Cột <strong>Cố định - Tránh</strong>: tiết cố định sẽ được khóa đúng vị trí đã chọn và không thể gỡ hay đổi chỗ trong thời khóa biểu. Tiết tránh là vị trí không được phép xếp.
+        Cột <strong>Cố định - Tránh</strong>: tiết cố định sẽ được khóa đúng vị
+        trí đã chọn và không thể gỡ hay đổi chỗ trong thời khóa biểu. Tiết tránh
+        là vị trí không được phép xếp.
       </div>
 
       <table className="grid-table">
@@ -1004,7 +1587,13 @@ function FrameworkView({
           </tr>
         </thead>
         <tbody>
-          {rows.length === 0 && <tr><td colSpan={7} className="empty">Chưa có môn nào trong khung chương trình.</td></tr>}
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={7} className="empty">
+                Chưa có môn nào trong khung chương trình.
+              </td>
+            </tr>
+          )}
           {rows.map((a, i) => {
             const subject = subjects.find((s) => s.id === a.subjectId);
             const over = (a.fixed || []).length > Number(a.soTiet || 0);
@@ -1012,30 +1601,73 @@ function FrameworkView({
               <tr key={a.id}>
                 <td className="stt center">{i + 1}</td>
                 <td className="center">
-                  <select value={a.subjectId} onChange={(e) => update(a.id, { subjectId: e.target.value })}>
+                  <select
+                    value={a.subjectId}
+                    onChange={(e) =>
+                      update(a.id, { subjectId: e.target.value })
+                    }
+                  >
                     <option value="">Mời chọn môn</option>
-                    {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    {subjects.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
                   </select>
                 </td>
                 <td>
-                  <select value={a.teacherId} onChange={(e) => update(a.id, { teacherId: e.target.value })}>
+                  <select
+                    value={a.teacherId}
+                    onChange={(e) =>
+                      update(a.id, { teacherId: e.target.value })
+                    }
+                  >
                     <option value="">Mời chọn giáo viên</option>
-                    {teachers.map((t) => <option key={t.id} value={t.id}>{t.fullName}</option>)}
+                    {teachers.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.fullName}
+                      </option>
+                    ))}
                   </select>
                 </td>
                 <td>
-                  <input type="number" min={1} max={30} value={a.soTiet} onChange={(e) => update(a.id, { soTiet: e.target.value })} className={over ? "bad" : ""} />
+                  <input
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={a.soTiet}
+                    onChange={(e) => update(a.id, { soTiet: e.target.value })}
+                    className={over ? "bad" : ""}
+                  />
                 </td>
                 <td>
-                  <input type="number" min={1} max={5} value={a.tietLienTiep} onChange={(e) => update(a.id, { tietLienTiep: e.target.value })} />
+                  <input
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={a.tietLienTiep}
+                    onChange={(e) =>
+                      update(a.id, { tietLienTiep: e.target.value })
+                    }
+                  />
                 </td>
                 <td className="center">
-                  <button className="btn btn-info btn-sm" onClick={() => setPicker(a.id)}>
+                  <button
+                    className="btn btn-info btn-sm"
+                    onClick={() => setPicker(a.id)}
+                  >
                     {(a.fixed || []).length} - {(a.avoid || []).length} tiết
                   </button>
                 </td>
                 <td className="center">
-                  <button className="btn btn-danger btn-sm" onClick={() => setItems((prev) => prev.filter((x) => x.id !== a.id))}>Xóa</button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() =>
+                      setItems((prev) => prev.filter((x) => x.id !== a.id))
+                    }
+                  >
+                    Xóa
+                  </button>
                 </td>
               </tr>
             );
@@ -1043,20 +1675,52 @@ function FrameworkView({
           <tr className="add-row">
             <td className="stt center">{rows.length + 1}</td>
             <td>
-              <select value={draftSubject} onChange={(e) => setDraftSubject(e.target.value)}>
+              <select
+                value={draftSubject}
+                onChange={(e) => setDraftSubject(e.target.value)}
+              >
                 <option value="">Mời chọn môn</option>
-                {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                {subjects.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
               </select>
             </td>
             <td>
-              <select value={draftTeacher} onChange={(e) => setDraftTeacher(e.target.value)}>
+              <select
+                value={draftTeacher}
+                onChange={(e) => setDraftTeacher(e.target.value)}
+              >
                 <option value="">Mời chọn giáo viên</option>
-                {teachers.map((t) => <option key={t.id} value={t.id}>{t.fullName}</option>)}
+                {teachers.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.fullName}
+                  </option>
+                ))}
               </select>
             </td>
-            <td><input type="number" min={1} value={draftSoTiet} onChange={(e) => setDraftSoTiet(e.target.value)} /></td>
-            <td><input type="number" min={1} value={draftLienTiep} onChange={(e) => setDraftLienTiep(e.target.value)} /></td>
-            <td colSpan={2} className="center"><button className="btn btn-add" onClick={addRow}>+</button></td>
+            <td>
+              <input
+                type="number"
+                min={1}
+                value={draftSoTiet}
+                onChange={(e) => setDraftSoTiet(e.target.value)}
+              />
+            </td>
+            <td>
+              <input
+                type="number"
+                min={1}
+                value={draftLienTiep}
+                onChange={(e) => setDraftLienTiep(e.target.value)}
+              />
+            </td>
+            <td colSpan={2} className="center">
+              <button className="btn btn-add" onClick={addRow}>
+                +
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -1087,7 +1751,10 @@ function SlotPicker({ item, subject, config, offSlots, onClose, onChange }) {
   function cycle(slot) {
     if (offSlots.has(slot)) return;
     if (fixed.includes(slot)) {
-      onChange({ fixed: fixed.filter((s) => s !== slot), avoid: [...avoid, slot] });
+      onChange({
+        fixed: fixed.filter((s) => s !== slot),
+        avoid: [...avoid, slot],
+      });
     } else if (avoid.includes(slot)) {
       onChange({ avoid: avoid.filter((s) => s !== slot) });
     } else {
@@ -1104,40 +1771,63 @@ function SlotPicker({ item, subject, config, offSlots, onClose, onChange }) {
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
           <h3>Cố định - Tránh: {subject ? subject.name : "môn chưa chọn"}</h3>
-          <button className="btn btn-primary btn-sm" onClick={onClose}>Xong</button>
+          <button className="btn btn-primary btn-sm" onClick={onClose}>
+            Xong
+          </button>
         </div>
         <p className="hint">
-          Bấm một ô để chuyển lần lượt: trống → <strong className="ok-text">cố định</strong> → <strong className="bad-text">tránh</strong> → trống.
-          Đã cố định {fixed.length}/{maxFixed} tiết, tránh {avoid.length} tiết.
+          Bấm một ô để chuyển lần lượt: trống →{" "}
+          <strong className="ok-text">cố định</strong> →{" "}
+          <strong className="bad-text">tránh</strong> → trống. Đã cố định{" "}
+          {fixed.length}/{maxFixed} tiết, tránh {avoid.length} tiết.
         </p>
         <div className="fw-grid-wrap">
           <table className="fw-grid">
             <thead>
               <tr>
                 <th colSpan={2} />
-                {days.map((d) => <th key={d}>{d}</th>)}
+                {days.map((d) => (
+                  <th key={d}>{d}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {sessions.map((session) =>
                 tiets.map((tiet, i) => (
                   <tr key={session + tiet}>
-                    {i === 0 && <td className="fw-session" rowSpan={tiets.length}>{session}</td>}
+                    {i === 0 && (
+                      <td className="fw-session" rowSpan={tiets.length}>
+                        {session}
+                      </td>
+                    )}
                     <td className="fw-tiet">Tiết {tiet}</td>
                     {days.map((d) => {
                       const slot = slotKey(d, session, tiet);
                       const off = offSlots.has(slot);
                       let cls = "fw-cell pick";
                       let text = "";
-                      if (off) { cls += " off"; text = "Nghỉ"; }
-                      else if (fixed.includes(slot)) { cls += " fixed"; text = "Cố định"; }
-                      else if (avoid.includes(slot)) { cls += " avoid"; text = "Tránh"; }
+                      if (off) {
+                        cls += " off";
+                        text = "Nghỉ";
+                      } else if (fixed.includes(slot)) {
+                        cls += " fixed";
+                        text = "Cố định";
+                      } else if (avoid.includes(slot)) {
+                        cls += " avoid";
+                        text = "Tránh";
+                      }
                       return (
-                        <td key={slot} className={cls} onClick={() => cycle(slot)}>{text}</td>
+                        <td
+                          key={slot}
+                          className={cls}
+                          onClick={() => cycle(slot)}
+                        >
+                          {text}
+                        </td>
                       );
                     })}
                   </tr>
-                ))
+                )),
               )}
             </tbody>
           </table>
@@ -1153,8 +1843,16 @@ function SlotPicker({ item, subject, config, offSlots, onClose, onChange }) {
 /* ================= Bước 7 ================= */
 
 function AssignmentsStep({
-  assignments, setAssignments, classes, subjects, teachers, grades,
-  filter, setFilter, onGoToTimetable, onOpenFramework,
+  assignments,
+  setAssignments,
+  classes,
+  subjects,
+  teachers,
+  grades,
+  filter,
+  setFilter,
+  onGoToTimetable,
+  onOpenFramework,
 }) {
   const [subjectId, setSubjectId] = useState(subjects[0] ? subjects[0].id : "");
   const [teacherId, setTeacherId] = useState("");
@@ -1162,17 +1860,24 @@ function AssignmentsStep({
 
   const visibleClasses = useMemo(() => {
     if (filter.classId) return classes.filter((c) => c.id === filter.classId);
-    if (filter.gradeId) return classes.filter((c) => c.gradeId === filter.gradeId);
+    if (filter.gradeId)
+      return classes.filter((c) => c.gradeId === filter.gradeId);
     return classes;
   }, [classes, filter]);
 
-  const targetClassId = filter.classId || (visibleClasses[0] ? visibleClasses[0].id : "");
+  const targetClassId =
+    filter.classId || (visibleClasses[0] ? visibleClasses[0].id : "");
 
   function add() {
     if (!targetClassId || !subjectId) return;
     setAssignments((prev) => [
       ...prev,
-      newAssignment({ classId: targetClassId, subjectId, teacherId, soTiet: Math.max(1, Number(soTiet) || 1) }),
+      newAssignment({
+        classId: targetClassId,
+        subjectId,
+        teacherId,
+        soTiet: Math.max(1, Number(soTiet) || 1),
+      }),
     ]);
     setSoTiet(1);
   }
@@ -1180,7 +1885,14 @@ function AssignmentsStep({
     if (!subjectId) return;
     setAssignments((prev) => [
       ...prev,
-      ...visibleClasses.map((c) => newAssignment({ classId: c.id, subjectId, teacherId, soTiet: Math.max(1, Number(soTiet) || 1) })),
+      ...visibleClasses.map((c) =>
+        newAssignment({
+          classId: c.id,
+          subjectId,
+          teacherId,
+          soTiet: Math.max(1, Number(soTiet) || 1),
+        }),
+      ),
     ]);
   }
 
@@ -1188,49 +1900,105 @@ function AssignmentsStep({
     <div className="panel">
       <PanelTitle
         title="Phân công giảng dạy"
-        actions={<button className="btn btn-primary btn-sm" onClick={onGoToTimetable}>Sang bảng xếp tiết</button>}
+        actions={
+          <button className="btn btn-primary btn-sm" onClick={onGoToTimetable}>
+            Sang bảng xếp tiết
+          </button>
+        }
       />
       <p className="hint">
-        Đây là bản gộp của tất cả khung chương trình. Muốn chỉnh riêng một lớp kèm lịch nghỉ và tiết cố định, mở Khung CT của lớp đó ở Bước 6.
+        Đây là bản gộp của tất cả khung chương trình. Muốn chỉnh riêng một lớp
+        kèm lịch nghỉ và tiết cố định, mở Khung CT của lớp đó ở Bước 6.
       </p>
 
       <div className="filter-bar">
         <label>
           Khối
-          <select value={filter.gradeId || ""} onChange={(e) => setFilter({ gradeId: e.target.value, classId: "" })}>
+          <select
+            value={filter.gradeId || ""}
+            onChange={(e) =>
+              setFilter({ gradeId: e.target.value, classId: "" })
+            }
+          >
             <option value="">Tất cả</option>
-            {grades.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+            {grades.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
           </select>
         </label>
         <label>
           Lớp
-          <select value={filter.classId || ""} onChange={(e) => setFilter({ ...filter, classId: e.target.value })}>
+          <select
+            value={filter.classId || ""}
+            onChange={(e) => setFilter({ ...filter, classId: e.target.value })}
+          >
             <option value="">Tất cả</option>
-            {classes.filter((c) => !filter.gradeId || c.gradeId === filter.gradeId).map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
+            {classes
+              .filter((c) => !filter.gradeId || c.gradeId === filter.gradeId)
+              .map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
           </select>
         </label>
         {filter.classId && (
-          <button className="btn btn-info btn-sm" onClick={() => onOpenFramework({ type: "class", id: filter.classId })}>
+          <button
+            className="btn btn-info btn-sm"
+            onClick={() =>
+              onOpenFramework({ type: "class", id: filter.classId })
+            }
+          >
             Mở Khung CT của lớp này
           </button>
         )}
       </div>
 
       <div className="assign-form">
-        <select value={subjectId} onChange={(e) => setSubjectId(e.target.value)}>
-          {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+        <select
+          value={subjectId}
+          onChange={(e) => setSubjectId(e.target.value)}
+        >
+          {subjects.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
         </select>
-        <select value={teacherId} onChange={(e) => setTeacherId(e.target.value)}>
+        <select
+          value={teacherId}
+          onChange={(e) => setTeacherId(e.target.value)}
+        >
           <option value="">-- Chưa phân công giáo viên --</option>
-          {teachers.map((t) => <option key={t.id} value={t.id}>{t.short} — {t.fullName}</option>)}
+          {teachers.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.short} — {t.fullName}
+            </option>
+          ))}
         </select>
-        <input type="number" min={1} max={30} value={soTiet} onChange={(e) => setSoTiet(e.target.value)} title="Số tiết trong tuần" />
-        <button className="btn btn-primary" onClick={add} disabled={!targetClassId}>
-          Thêm cho {targetClassId ? classes.find((c) => c.id === targetClassId)?.name : "lớp"}
+        <input
+          type="number"
+          min={1}
+          max={30}
+          value={soTiet}
+          onChange={(e) => setSoTiet(e.target.value)}
+          title="Số tiết trong tuần"
+        />
+        <button
+          className="btn btn-primary"
+          onClick={add}
+          disabled={!targetClassId}
+        >
+          Thêm cho{" "}
+          {targetClassId
+            ? classes.find((c) => c.id === targetClassId)?.name
+            : "lớp"}
         </button>
-        <button className="btn btn-info" onClick={applyToAll}>Áp dụng cho {visibleClasses.length} lớp đang lọc</button>
+        <button className="btn btn-info" onClick={applyToAll}>
+          Áp dụng cho {visibleClasses.length} lớp đang lọc
+        </button>
       </div>
 
       <table className="grid-table">
@@ -1246,37 +2014,104 @@ function AssignmentsStep({
           </tr>
         </thead>
         <tbody>
-          {assignments.filter((a) => visibleClasses.some((c) => c.id === a.classId)).length === 0 && (
-            <tr><td colSpan={7} className="empty">Chưa có phân công nào cho phạm vi đang lọc.</td></tr>
+          {assignments.filter((a) =>
+            visibleClasses.some((c) => c.id === a.classId),
+          ).length === 0 && (
+            <tr>
+              <td colSpan={7} className="empty">
+                Chưa có phân công nào cho phạm vi đang lọc.
+              </td>
+            </tr>
           )}
-          {assignments.filter((a) => visibleClasses.some((c) => c.id === a.classId)).map((a, i) => {
-            const klass = classes.find((c) => c.id === a.classId);
-            return (
-              <tr key={a.id}>
-                <td className="stt">{i + 1}</td>
-                <td>{klass ? klass.name : "?"}</td>
-                <td>
-                  <select value={a.subjectId} onChange={(e) => setAssignments((prev) => prev.map((x) => (x.id === a.id ? { ...x, subjectId: e.target.value } : x)))}>
-                    <option value="">Mời chọn môn</option>
-                    {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
-                </td>
-                <td>
-                  <select value={a.teacherId} onChange={(e) => setAssignments((prev) => prev.map((x) => (x.id === a.id ? { ...x, teacherId: e.target.value } : x)))}>
-                    <option value="">-- Chưa phân công --</option>
-                    {teachers.map((t) => <option key={t.id} value={t.id}>{t.short}</option>)}
-                  </select>
-                </td>
-                <td>
-                  <input type="number" min={1} max={30} value={a.soTiet} onChange={(e) => setAssignments((prev) => prev.map((x) => (x.id === a.id ? { ...x, soTiet: e.target.value } : x)))} />
-                </td>
-                <td className="center">{(a.fixed || []).length ? `${a.fixed.length} tiết` : <span className="muted">—</span>}</td>
-                <td className="center">
-                  <button className="btn btn-danger btn-sm" onClick={() => setAssignments((prev) => prev.filter((x) => x.id !== a.id))}>Xóa</button>
-                </td>
-              </tr>
-            );
-          })}
+          {assignments
+            .filter((a) => visibleClasses.some((c) => c.id === a.classId))
+            .map((a, i) => {
+              const klass = classes.find((c) => c.id === a.classId);
+              return (
+                <tr key={a.id}>
+                  <td className="stt">{i + 1}</td>
+                  <td>{klass ? klass.name : "?"}</td>
+                  <td>
+                    <select
+                      value={a.subjectId}
+                      onChange={(e) =>
+                        setAssignments((prev) =>
+                          prev.map((x) =>
+                            x.id === a.id
+                              ? { ...x, subjectId: e.target.value }
+                              : x,
+                          ),
+                        )
+                      }
+                    >
+                      <option value="">Mời chọn môn</option>
+                      {subjects.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <select
+                      value={a.teacherId}
+                      onChange={(e) =>
+                        setAssignments((prev) =>
+                          prev.map((x) =>
+                            x.id === a.id
+                              ? { ...x, teacherId: e.target.value }
+                              : x,
+                          ),
+                        )
+                      }
+                    >
+                      <option value="">-- Chưa phân công --</option>
+                      {teachers.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.short}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      min={1}
+                      max={30}
+                      value={a.soTiet}
+                      onChange={(e) =>
+                        setAssignments((prev) =>
+                          prev.map((x) =>
+                            x.id === a.id
+                              ? { ...x, soTiet: e.target.value }
+                              : x,
+                          ),
+                        )
+                      }
+                    />
+                  </td>
+                  <td className="center">
+                    {(a.fixed || []).length ? (
+                      `${a.fixed.length} tiết`
+                    ) : (
+                      <span className="muted">—</span>
+                    )}
+                  </td>
+                  <td className="center">
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() =>
+                        setAssignments((prev) =>
+                          prev.filter((x) => x.id !== a.id),
+                        )
+                      }
+                    >
+                      Xóa
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
         </tbody>
       </table>
     </div>
@@ -1286,27 +2121,50 @@ function AssignmentsStep({
 /* ================= Bước 8 ================= */
 
 function ConstraintsStep({ constraints, setConstraints }) {
-  const set = (field, value) => setConstraints((prev) => ({ ...prev, [field]: value }));
+  const set = (field, value) =>
+    setConstraints((prev) => ({ ...prev, [field]: value }));
   return (
     <div className="panel">
       <PanelTitle title="Cài đặt ràng buộc" />
-      <p className="hint">Các ràng buộc này áp dụng khi kiểm tra dữ liệu và khi xếp tiết. Giáo viên không bị giới hạn số tiết trong ngày — chỉ lớp học mới bị giới hạn số tiết tối đa trong một buổi.</p>
+      <p className="hint">
+        Các ràng buộc này áp dụng khi kiểm tra dữ liệu và khi xếp tiết. Giáo
+        viên không bị giới hạn số tiết trong ngày — chỉ lớp học mới bị giới hạn
+        số tiết tối đa trong một buổi.
+      </p>
       <div className="constraint-list">
         <label className="switch-row">
-          <input type="checkbox" checked={constraints.khongTietTrong} onChange={(e) => set("khongTietTrong", e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={constraints.khongTietTrong}
+            onChange={(e) => set("khongTietTrong", e.target.checked)}
+          />
           Không để tiết trống xen giữa các tiết trong cùng một buổi
         </label>
         <label className="switch-row">
-          <input type="checkbox" checked={constraints.chaoCoTiet1Thu2} onChange={(e) => set("chaoCoTiet1Thu2", e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={constraints.chaoCoTiet1Thu2}
+            onChange={(e) => set("chaoCoTiet1Thu2", e.target.checked)}
+          />
           Chào cờ luôn ở tiết 1 sáng thứ 2
         </label>
         <label className="switch-row">
-          <input type="checkbox" checked={constraints.uuTienMonChinhBuoiSang} onChange={(e) => set("uuTienMonChinhBuoiSang", e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={constraints.uuTienMonChinhBuoiSang}
+            onChange={(e) => set("uuTienMonChinhBuoiSang", e.target.checked)}
+          />
           Ưu tiên xếp môn chính vào buổi sáng
         </label>
         <label className="switch-row number">
           Số tiết tối đa của một lớp học trong một buổi
-          <input type="number" min={1} max={10} value={constraints.lopToiDaTietTrenBuoi} onChange={(e) => set("lopToiDaTietTrenBuoi", e.target.value)} />
+          <input
+            type="number"
+            min={1}
+            max={10}
+            value={constraints.lopToiDaTietTrenBuoi}
+            onChange={(e) => set("lopToiDaTietTrenBuoi", e.target.value)}
+          />
         </label>
       </div>
     </div>
@@ -1316,9 +2174,22 @@ function ConstraintsStep({ constraints, setConstraints }) {
 /* ================= Thời khóa biểu ================= */
 
 function TimetableView({
-  config, classes, teachers, schedule, setSchedule,
-  lessons, lessonById, effectiveSchedule, pinnedKeys, pinnedLessonIds,
-  focusClassId, onClearFocus, onBack, constraints,
+  config,
+  classes,
+  teachers,
+  schedule,
+  setSchedule,
+  lessons,
+  lessonById,
+  effectiveSchedule,
+  pinnedKeys,
+  pinnedLessonIds,
+  focusClassId,
+  onClearFocus,
+  onBack,
+  constraints,
+  onExport,
+  onExportPerClass,
 }) {
   const days = useMemo(() => getDays(config.soNgay), [config.soNgay]);
   const sessions = useMemo(() => getSessions(config.soBuoi), [config.soBuoi]);
@@ -1335,12 +2206,20 @@ function TimetableView({
 
   const offByClass = useMemo(() => {
     const m = {};
-    classes.forEach((c) => { m[c.id] = new Set(c.offSlots || []); });
+    classes.forEach((c) => {
+      m[c.id] = new Set(c.offSlots || []);
+    });
     return m;
   }, [classes]);
 
-  const placedIds = useMemo(() => new Set(Object.values(effectiveSchedule)), [effectiveSchedule]);
-  const unscheduled = useMemo(() => lessons.filter((l) => !placedIds.has(l.id)), [lessons, placedIds]);
+  const placedIds = useMemo(
+    () => new Set(Object.values(effectiveSchedule)),
+    [effectiveSchedule],
+  );
+  const unscheduled = useMemo(
+    () => lessons.filter((l) => !placedIds.has(l.id)),
+    [lessons, placedIds],
+  );
 
   /* Các ô đang thực sự trùng giáo viên trong lịch hiện tại — cả 2 (hoặc nhiều hơn) ô đều bị đánh dấu đỏ. */
   const dupKeys = useMemo(() => {
@@ -1360,18 +2239,30 @@ function TimetableView({
   }, [effectiveSchedule, lessonById]);
 
   const filteredUnscheduled = useMemo(
-    () => unscheduled.filter((l) => (!filterClass || l.classId === filterClass) && (!filterTeacher || l.teacherId === filterTeacher)),
-    [unscheduled, filterClass, filterTeacher]
+    () =>
+      unscheduled.filter(
+        (l) =>
+          (!filterClass || l.classId === filterClass) &&
+          (!filterTeacher || l.teacherId === filterTeacher),
+      ),
+    [unscheduled, filterClass, filterTeacher],
   );
 
   const selectedItem = selectedId ? lessonById[selectedId] || null : null;
 
   useEffect(() => {
     if (focusClassId && thRefs.current[focusClassId]) {
-      thRefs.current[focusClassId].scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      thRefs.current[focusClassId].scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+        block: "nearest",
+      });
       setFilterClass(focusClassId);
       setHighlightClassId(focusClassId);
-      const t = setTimeout(() => { setHighlightClassId(null); onClearFocus(); }, 1600);
+      const t = setTimeout(() => {
+        setHighlightClassId(null);
+        onClearFocus();
+      }, 1600);
       return () => clearTimeout(t);
     }
   }, [focusClassId]); // eslint-disable-line
@@ -1383,6 +2274,27 @@ function TimetableView({
     showFlash._t = window.setTimeout(() => setFlash(""), 2800);
   }
 
+  async function handleExport() {
+    try {
+      showFlash(`Đã xuất file ${await onExport()}.`);
+    } catch (err) {
+      showFlash(
+        "Không xuất được file Excel: " + (err?.message || "lỗi không xác định"),
+        "error",
+      );
+    }
+  }
+  async function handleExportPerClass() {
+    try {
+      showFlash(`Đã xuất file ${await onExportPerClass()}.`);
+    } catch (err) {
+      showFlash(
+        "Không xuất được file Excel: " + (err?.message || "lỗi không xác định"),
+        "error",
+      );
+    }
+  }
+
   function teacherBusy(day, session, tiet, tId, excludeKey) {
     if (!tId) return null;
     for (const [key, lessonId] of Object.entries(effectiveSchedule)) {
@@ -1390,7 +2302,12 @@ function TimetableView({
       const pos = parseCell(key);
       const lesson = lessonById[lessonId];
       if (!lesson) continue;
-      if (pos.day === day && pos.session === session && pos.tiet === String(tiet) && lesson.teacherId === tId) {
+      if (
+        pos.day === day &&
+        pos.session === session &&
+        pos.tiet === String(tiet) &&
+        lesson.teacherId === tId
+      ) {
         const klass = classes.find((c) => c.id === pos.classId);
         return { klass: klass ? klass.name : "?" };
       }
@@ -1403,7 +2320,9 @@ function TimetableView({
     return Object.keys(effectiveSchedule).filter((key) => {
       if (key === excludeKey) return false;
       const pos = parseCell(key);
-      return pos.day === day && pos.session === session && pos.classId === classId;
+      return (
+        pos.day === day && pos.session === session && pos.classId === classId
+      );
     }).length;
   }
 
@@ -1412,11 +2331,17 @@ function TimetableView({
     const key = cellKey(day, session, tiet, klass.id);
 
     if (offByClass[klass.id] && offByClass[klass.id].has(slot)) {
-      showFlash(`${klass.name} nghỉ tiết này theo khung chương trình.`, "error");
+      showFlash(
+        `${klass.name} nghỉ tiết này theo khung chương trình.`,
+        "error",
+      );
       return;
     }
     if (pinnedKeys.has(key)) {
-      showFlash("Tiết cố định, không thể gỡ hay đổi chỗ. Muốn sửa hãy vào Khung CT của lớp.", "error");
+      showFlash(
+        "Tiết cố định, không thể gỡ hay đổi chỗ. Muốn sửa hãy vào Khung CT của lớp.",
+        "error",
+      );
       return;
     }
 
@@ -1424,18 +2349,28 @@ function TimetableView({
 
     if (selectedItem) {
       if (selectedItem.classId !== klass.id) {
-        showFlash("Tiết này thuộc lớp khác, chỉ xếp được vào cột lớp của nó.", "error");
+        showFlash(
+          "Tiết này thuộc lớp khác, chỉ xếp được vào cột lớp của nó.",
+          "error",
+        );
         return;
       }
       if ((selectedItem.avoid || []).includes(slot)) {
-        showFlash(`Vị trí này nằm trong danh sách tiết tránh của ${selectedItem.subjectName}.`, "error");
+        showFlash(
+          `Vị trí này nằm trong danh sách tiết tránh của ${selectedItem.subjectName}.`,
+          "error",
+        );
         return;
       }
 
-      const maxPerSession = Number(constraints.lopToiDaTietTrenBuoi) || tiets.length;
+      const maxPerSession =
+        Number(constraints.lopToiDaTietTrenBuoi) || tiets.length;
       const sessionLoad = classSessionLoad(day, session, klass.id, key);
       if (sessionLoad >= maxPerSession) {
-        showFlash(`${klass.name} đã đạt tối đa ${maxPerSession} tiết trong buổi ${session} ${day}.`, "error");
+        showFlash(
+          `${klass.name} đã đạt tối đa ${maxPerSession} tiết trong buổi ${session} ${day}.`,
+          "error",
+        );
         return;
       }
 
@@ -1444,10 +2379,12 @@ function TimetableView({
       if (busy) {
         showFlash(
           `Trùng lịch: ${selectedItem.teacherName} đang dạy lớp ${busy.klass} vào tiết ${tiet} ${session} ${day}. Đã xếp đè, hãy kiểm tra lại.`,
-          "error"
+          "error",
         );
       } else {
-        showFlash(`Đã xếp ${selectedItem.subjectName} vào ${klass.name} — ${day}, tiết ${tiet} ${session}.`);
+        showFlash(
+          `Đã xếp ${selectedItem.subjectName} vào ${klass.name} — ${day}, tiết ${tiet} ${session}.`,
+        );
       }
       setSchedule((prev) => ({ ...prev, [key]: selectedItem.id }));
       setSelectedId(null);
@@ -1461,7 +2398,9 @@ function TimetableView({
         delete next[key];
         return next;
       });
-      showFlash(`Đã gỡ ${lesson ? lesson.subjectName : "tiết"} khỏi ${klass.name} — ${day}, tiết ${tiet}.`);
+      showFlash(
+        `Đã gỡ ${lesson ? lesson.subjectName : "tiết"} khỏi ${klass.name} — ${day}, tiết ${tiet}.`,
+      );
     }
   }
 
@@ -1479,14 +2418,19 @@ function TimetableView({
     const next = { ...schedule };
     const working = { ...effectiveSchedule };
     let placed = 0;
-    const maxPerSession = Number(constraints.lopToiDaTietTrenBuoi) || tiets.length;
+    const maxPerSession =
+      Number(constraints.lopToiDaTietTrenBuoi) || tiets.length;
 
     unscheduled.forEach((lesson) => {
       outer: for (const day of days) {
         for (const session of sessions) {
           const sessionLoad = Object.keys(working).filter((k) => {
             const pos = parseCell(k);
-            return pos.day === day && pos.session === session && pos.classId === lesson.classId;
+            return (
+              pos.day === day &&
+              pos.session === session &&
+              pos.classId === lesson.classId
+            );
           }).length;
           if (sessionLoad >= maxPerSession) continue;
 
@@ -1494,13 +2438,19 @@ function TimetableView({
             const slot = slotKey(day, session, tiet);
             const key = cellKey(day, session, tiet, lesson.classId);
             if (working[key]) continue;
-            if (offByClass[lesson.classId] && offByClass[lesson.classId].has(slot)) continue;
+            if (
+              offByClass[lesson.classId] &&
+              offByClass[lesson.classId].has(slot)
+            )
+              continue;
             if ((lesson.avoid || []).includes(slot)) continue;
             if (lesson.teacherId) {
               const busy = Object.entries(working).some(([k, id]) => {
                 const pos = parseCell(k);
                 const l = lessonById[id];
-                return l && l.teacherId === lesson.teacherId && pos.slot === slot;
+                return (
+                  l && l.teacherId === lesson.teacherId && pos.slot === slot
+                );
               });
               /* Xếp tự động vẫn cố tránh trùng giáo viên khi còn chỗ khác trống. */
               if (busy) continue;
@@ -1515,7 +2465,12 @@ function TimetableView({
     });
 
     setSchedule(next);
-    showFlash(placed > 0 ? `Đã xếp tự động ${placed} tiết.` : "Không còn chỗ trống phù hợp.", placed > 0 ? "ok" : "error");
+    showFlash(
+      placed > 0
+        ? `Đã xếp tự động ${placed} tiết.`
+        : "Không còn chỗ trống phù hợp.",
+      placed > 0 ? "ok" : "error",
+    );
   }
 
   if (classes.length === 0 || lessons.length === 0) {
@@ -1523,9 +2478,13 @@ function TimetableView({
       <div className="panel">
         <PanelTitle title="Thời khóa biểu" />
         <p className="hint">
-          {classes.length === 0 ? "Chưa có lớp học. Hãy khai báo ở Bước 6." : "Chưa có tiết nào trong khung chương trình. Hãy mở Khung CT của lớp ở Bước 6 hoặc dùng Bước 7."}
+          {classes.length === 0
+            ? "Chưa có lớp học. Hãy khai báo ở Bước 6."
+            : "Chưa có tiết nào trong khung chương trình. Hãy mở Khung CT của lớp ở Bước 6 hoặc dùng Bước 7."}
         </p>
-        <button className="btn btn-primary" onClick={onBack}>Quay lại các bước</button>
+        <button className="btn btn-primary" onClick={onBack}>
+          Quay lại các bước
+        </button>
       </div>
     );
   }
@@ -1536,15 +2495,31 @@ function TimetableView({
         <div>
           <h2>{config.tenTKB || "Thời khóa biểu"}</h2>
           <p className="tt-sub">
-            {[config.tenTruong, config.namHoc].filter(Boolean).join(" - ")} — {placedIds.size} tiết đã xếp
-            ({pinnedLessonIds.size} tiết cố định), {unscheduled.length} tiết chưa xếp.
+            {[config.tenTruong, config.namHoc].filter(Boolean).join(" - ")} —{" "}
+            {placedIds.size} tiết đã xếp ({pinnedLessonIds.size} tiết cố định),{" "}
+            {unscheduled.length} tiết chưa xếp.
           </p>
         </div>
         <div className="tt-tools">
           <span className={"flash " + flashType}>{flash}</span>
-          <button className="btn btn-info btn-sm" onClick={autoFill}>Xếp tự động</button>
-          <button className="btn btn-danger btn-sm" onClick={clearAll}>Gỡ tiết xếp tay</button>
-          <button className="btn btn-primary btn-sm" onClick={onBack}>Về các bước</button>
+          <button className="btn btn-info btn-sm" onClick={autoFill}>
+            Xếp tự động
+          </button>
+          <button className="btn btn-export btn-sm" onClick={handleExport}>
+            Xuất Excel
+          </button>
+          <button
+            className="btn btn-export btn-sm"
+            onClick={handleExportPerClass}
+          >
+            Excel từng lớp
+          </button>
+          <button className="btn btn-danger btn-sm" onClick={clearAll}>
+            Gỡ tiết xếp tay
+          </button>
+          <button className="btn btn-primary btn-sm" onClick={onBack}>
+            Về các bước
+          </button>
         </div>
       </div>
 
@@ -1557,7 +2532,13 @@ function TimetableView({
                 <th className="col-buoi">Buổi</th>
                 <th className="col-tiet">Tiết</th>
                 {classes.map((c) => (
-                  <th key={c.id} ref={(el) => { thRefs.current[c.id] = el; }} className={highlightClassId === c.id ? "hl" : ""}>
+                  <th
+                    key={c.id}
+                    ref={(el) => {
+                      thRefs.current[c.id] = el;
+                    }}
+                    className={highlightClassId === c.id ? "hl" : ""}
+                  >
                     {c.name}
                   </th>
                 ))}
@@ -1572,23 +2553,46 @@ function TimetableView({
                     if (firstOfDay) dayDone = true;
                     const slot = slotKey(day, session, tiet);
                     return (
-                      <tr key={`${day}-${session}-${tiet}`} className={ti === 0 ? "sess-start" : ""}>
-                        {firstOfDay && <td className="cell-thu" rowSpan={rowsPerDay}>{di === 6 ? "CN" : di + 2}</td>}
-                        {ti === 0 && <td className="cell-buoi" rowSpan={tiets.length}>{session}</td>}
+                      <tr
+                        key={`${day}-${session}-${tiet}`}
+                        className={ti === 0 ? "sess-start" : ""}
+                      >
+                        {firstOfDay && (
+                          <td className="cell-thu" rowSpan={rowsPerDay}>
+                            {di === 6 ? "CN" : di + 2}
+                          </td>
+                        )}
+                        {ti === 0 && (
+                          <td className="cell-buoi" rowSpan={tiets.length}>
+                            {session}
+                          </td>
+                        )}
                         <td className="cell-tiet">{tiet}</td>
                         {classes.map((c) => {
                           const key = cellKey(day, session, tiet, c.id);
                           const lesson = lessonById[effectiveSchedule[key]];
                           const isPinned = pinnedKeys.has(key);
-                          const isOff = offByClass[c.id] && offByClass[c.id].has(slot);
+                          const isOff =
+                            offByClass[c.id] && offByClass[c.id].has(slot);
                           const isDup = dupKeys.has(key);
                           let cls = "cell";
                           if (isOff) cls += " off";
                           else if (isDup) cls += " dup";
                           else if (isPinned) cls += " pinned";
                           else if (selectedItem && !lesson) {
-                            if (selectedItem.classId !== c.id) cls += " blocked";
-                            else if ((selectedItem.avoid || []).includes(slot) || teacherBusy(day, session, tiet, selectedItem.teacherId, key)) cls += " conflict";
+                            if (selectedItem.classId !== c.id)
+                              cls += " blocked";
+                            else if (
+                              (selectedItem.avoid || []).includes(slot) ||
+                              teacherBusy(
+                                day,
+                                session,
+                                tiet,
+                                selectedItem.teacherId,
+                                key,
+                              )
+                            )
+                              cls += " conflict";
                             else cls += " can-drop";
                           }
                           if (isDup && isPinned) cls += " pinned";
@@ -1596,8 +2600,14 @@ function TimetableView({
                             <td
                               key={key}
                               className={cls}
-                              onClick={() => handleCellClick(day, session, tiet, c)}
-                              title={isDup ? `${lesson ? lesson.teacherName : ""} bị trùng lịch ở tiết này — kiểm tra lại.` : undefined}
+                              onClick={() =>
+                                handleCellClick(day, session, tiet, c)
+                              }
+                              title={
+                                isDup
+                                  ? `${lesson ? lesson.teacherName : ""} bị trùng lịch ở tiết này — kiểm tra lại.`
+                                  : undefined
+                              }
                             >
                               {isOff ? (
                                 <span className="lesson muted">Nghỉ</span>
@@ -1605,7 +2615,10 @@ function TimetableView({
                                 <span className="lesson">
                                   {isPinned && <span className="lock">🔒</span>}
                                   {isDup && <span className="dup-mark">⚠</span>}
-                                  {lesson.subjectName}{lesson.teacherName ? ` - ${lesson.teacherName}` : ""}
+                                  {lesson.subjectName}
+                                  {lesson.teacherName
+                                    ? ` - ${lesson.teacherName}`
+                                    : ""}
                                 </span>
                               ) : null}
                             </td>
@@ -1613,7 +2626,7 @@ function TimetableView({
                         })}
                       </tr>
                     );
-                  })
+                  }),
                 );
               })}
             </tbody>
@@ -1622,34 +2635,62 @@ function TimetableView({
 
         <aside className="tt-side">
           <h3>CÁC TIẾT CHƯA ĐƯỢC XẾP ({unscheduled.length})</h3>
-          <p className="side-note">Chọn một tiết rồi bấm vào ô trống trong bảng để xếp. Ô có 🔒 là tiết cố định. Ô báo đỏ là trùng giáo viên — vẫn xếp được nhưng nên kiểm tra lại.</p>
+          <p className="side-note">
+            Chọn một tiết rồi bấm vào ô trống trong bảng để xếp. Ô có 🔒 là tiết
+            cố định. Ô báo đỏ là trùng giáo viên — vẫn xếp được nhưng nên kiểm
+            tra lại.
+          </p>
           <div className="side-filters">
             <label>
               Lớp
-              <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)}>
+              <select
+                value={filterClass}
+                onChange={(e) => setFilterClass(e.target.value)}
+              >
                 <option value="">Tất cả</option>
-                {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {classes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
               </select>
             </label>
             <label>
               Giáo viên
-              <select value={filterTeacher} onChange={(e) => setFilterTeacher(e.target.value)}>
+              <select
+                value={filterTeacher}
+                onChange={(e) => setFilterTeacher(e.target.value)}
+              >
                 <option value="">Tất cả</option>
-                {teachers.map((t) => <option key={t.id} value={t.id}>{t.short}</option>)}
+                {teachers.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.short}
+                  </option>
+                ))}
               </select>
             </label>
           </div>
           <div className="side-list">
-            {filteredUnscheduled.length === 0 && <div className="empty">Không còn tiết nào chưa xếp trong bộ lọc này.</div>}
+            {filteredUnscheduled.length === 0 && (
+              <div className="empty">
+                Không còn tiết nào chưa xếp trong bộ lọc này.
+              </div>
+            )}
             {filteredUnscheduled.map((l) => {
               const klass = classes.find((c) => c.id === l.classId);
               return (
                 <button
                   key={l.id}
-                  className={"side-pill" + (selectedId === l.id ? " selected" : "")}
-                  onClick={() => setSelectedId((prev) => (prev === l.id ? null : l.id))}
+                  className={
+                    "side-pill" + (selectedId === l.id ? " selected" : "")
+                  }
+                  onClick={() =>
+                    setSelectedId((prev) => (prev === l.id ? null : l.id))
+                  }
                 >
-                  {l.subjectName}{l.teacherName ? ` - ${l.teacherName}` : ""} - {klass ? klass.name : "?"}
+                  {l.subjectName}
+                  {l.teacherName ? ` - ${l.teacherName}` : ""} -{" "}
+                  {klass ? klass.name : "?"}
                 </button>
               );
             })}
@@ -1679,7 +2720,10 @@ export default function App() {
   const [assignments, setAssignments] = useState([]);
   const [gradeAssignments, setGradeAssignments] = useState([]);
   const [schedule, setSchedule] = useState({});
-  const [assignFilter, setAssignFilter] = useState({ gradeId: "", classId: "" });
+  const [assignFilter, setAssignFilter] = useState({
+    gradeId: "",
+    classId: "",
+  });
   const [focusClassId, setFocusClassId] = useState(null);
   const [checkResult, setCheckResult] = useState(null);
   const [toast, setToast] = useState("");
@@ -1719,7 +2763,9 @@ export default function App() {
 
   const lessonById = useMemo(() => {
     const m = {};
-    lessons.forEach((l) => { m[l.id] = l; });
+    lessons.forEach((l) => {
+      m[l.id] = l;
+    });
     return m;
   }, [lessons]);
 
@@ -1749,6 +2795,49 @@ export default function App() {
     return { ...out, ...pinned };
   }, [schedule, pinned, pinnedKeys, pinnedLessonIds, lessonById]);
 
+  /* ---- xuất Excel ---- */
+  function doExport() {
+    return exportTimetableToExcel({
+      config,
+      classes,
+      teachers,
+      lessonById,
+      effectiveSchedule,
+    });
+  }
+  function doExportPerClass() {
+    return exportPerClassExcel({
+      config,
+      classes,
+      lessonById,
+      effectiveSchedule,
+    });
+  }
+  function doExportPerTeacher() {
+    return exportPerTeacherExcel({
+      config,
+      classes,
+      teachers,
+      lessonById,
+      effectiveSchedule,
+    });
+  }
+
+  async function exportFromSidebar() {
+    if (classes.length === 0) {
+      notify("Chưa có lớp học nào để xuất.");
+      return;
+    }
+    try {
+      const name = await doExport();
+      notify(`Đã xuất file ${name}.`);
+    } catch (err) {
+      notify(
+        "Không xuất được file Excel: " + (err?.message || "lỗi không xác định"),
+      );
+    }
+  }
+
   /* ---- kiểm tra dữ liệu ---- */
   function runCheck() {
     const errors = [];
@@ -1757,15 +2846,22 @@ export default function App() {
     if (classes.length === 0) errors.push("Bước 6: chưa có lớp học nào.");
 
     const noGrade = classes.filter((c) => !c.gradeId);
-    if (noGrade.length) errors.push(`Bước 6: ${noGrade.length} lớp chưa chọn khối.`);
+    if (noGrade.length)
+      errors.push(`Bước 6: ${noGrade.length} lớp chưa chọn khối.`);
     const noDept = teachers.filter((t) => t.departmentIds.length === 0);
-    if (noDept.length) errors.push(`Bước 4: ${noDept.length} giáo viên chưa thuộc tổ nào.`);
+    if (noDept.length)
+      errors.push(`Bước 4: ${noDept.length} giáo viên chưa thuộc tổ nào.`);
 
     const slotCount = allSlots(config).length;
     classes.forEach((c) => {
-      const total = assignments.filter((a) => a.classId === c.id).reduce((s, a) => s + Number(a.soTiet || 0), 0);
+      const total = assignments
+        .filter((a) => a.classId === c.id)
+        .reduce((s, a) => s + Number(a.soTiet || 0), 0);
       const free = slotCount - (c.offSlots || []).length;
-      if (total > free) errors.push(`Lớp ${c.name}: ${total} tiết vượt quá ${free} ô khả dụng.`);
+      if (total > free)
+        errors.push(
+          `Lớp ${c.name}: ${total} tiết vượt quá ${free} ô khả dụng.`,
+        );
     });
 
     assignments.forEach((a) => {
@@ -1777,7 +2873,9 @@ export default function App() {
       }
       (a.fixed || []).forEach((slot) => {
         if (klass && (klass.offSlots || []).includes(slot)) {
-          errors.push(`${label}: cố định vào ${slotLabel(slot)} nhưng lớp nghỉ tiết đó.`);
+          errors.push(
+            `${label}: cố định vào ${slotLabel(slot)} nhưng lớp nghỉ tiết đó.`,
+          );
         }
       });
     });
@@ -1789,20 +2887,30 @@ export default function App() {
       const k = `${l.pinnedSlot}|${l.teacherId}`;
       if (seen[k]) {
         const t = teachers.find((x) => x.id === l.teacherId);
-        errors.push(`${t ? t.short : "GV"} bị cố định 2 lớp cùng lúc tại ${slotLabel(l.pinnedSlot)}.`);
+        errors.push(
+          `${t ? t.short : "GV"} bị cố định 2 lớp cùng lúc tại ${slotLabel(l.pinnedSlot)}.`,
+        );
       }
       seen[k] = true;
     });
 
-    if (assignments.length === 0) errors.push("Chưa có khung chương trình cho lớp nào.");
+    if (assignments.length === 0)
+      errors.push("Chưa có khung chương trình cho lớp nào.");
     setCheckResult({ errors, at: Date.now() });
   }
 
   function resetData() {
     if (!window.confirm("Xóa toàn bộ dữ liệu của thời khóa biểu này?")) return;
-    setSubjects([]); setDepartments([]); setTeachers([]); setGrades([]);
-    setCampuses([]); setClasses([]); setAssignments([]); setGradeAssignments([]);
-    setSchedule({}); setCheckResult(null);
+    setSubjects([]);
+    setDepartments([]);
+    setTeachers([]);
+    setGrades([]);
+    setCampuses([]);
+    setClasses([]);
+    setAssignments([]);
+    setGradeAssignments([]);
+    setSchedule({});
+    setCheckResult(null);
     notify("Đã xóa dữ liệu của thời khóa biểu.");
   }
 
@@ -1826,11 +2934,13 @@ export default function App() {
   }, [frameworkScope, assignments, gradeAssignments]);
 
   const setFrameworkItems = (updater) => {
-    const setter = frameworkScope.type === "class" ? setAssignments : setGradeAssignments;
+    const setter =
+      frameworkScope.type === "class" ? setAssignments : setGradeAssignments;
     setter((prev) => {
-      const mine = frameworkScope.type === "class"
-        ? prev.filter((a) => a.classId === frameworkScope.id)
-        : prev.filter((a) => a.gradeId === frameworkScope.id);
+      const mine =
+        frameworkScope.type === "class"
+          ? prev.filter((a) => a.classId === frameworkScope.id)
+          : prev.filter((a) => a.gradeId === frameworkScope.id);
       const others = prev.filter((a) => !mine.includes(a));
       const nextMine = typeof updater === "function" ? updater(mine) : updater;
       return [...others, ...nextMine];
@@ -1846,10 +2956,14 @@ export default function App() {
       <div className="layout">
         <Sidebar
           activeStep={view === "steps" ? step : ""}
-          onSelect={(k) => { setView("steps"); setStep(k); }}
+          onSelect={(k) => {
+            setView("steps");
+            setStep(k);
+          }}
           checkResult={checkResult}
           onCheck={runCheck}
           onViewResult={() => setView("timetable")}
+          onExport={exportFromSidebar}
         />
 
         <main className="content">
@@ -1871,6 +2985,8 @@ export default function App() {
               focusClassId={focusClassId}
               onClearFocus={() => setFocusClassId(null)}
               onBack={() => setView("steps")}
+              onExport={doExport}
+              onExportPerClass={doExportPerClass}
             />
           )}
 
@@ -1908,17 +3024,41 @@ export default function App() {
                   onResetData={resetData}
                 />
               )}
-              {step === "subjects" && <SubjectsStep subjects={subjects} setSubjects={setSubjects} />}
+              {step === "subjects" && (
+                <SubjectsStep subjects={subjects} setSubjects={setSubjects} />
+              )}
               {step === "departments" && (
-                <DepartmentsStep departments={departments} setDepartments={setDepartments} teachers={teachers} onOpenTeachers={() => setStep("teachers")} />
+                <DepartmentsStep
+                  departments={departments}
+                  setDepartments={setDepartments}
+                  teachers={teachers}
+                  onOpenTeachers={() => setStep("teachers")}
+                />
               )}
               {step === "teachers" && (
-                <TeachersStep teachers={teachers} setTeachers={setTeachers} departments={departments} assignments={assignments} />
+                <TeachersStep
+                  teachers={teachers}
+                  setTeachers={setTeachers}
+                  departments={departments}
+                  assignments={assignments}
+                />
               )}
               {step === "grades" && (
-                <GradesStep grades={grades} setGrades={setGrades} classes={classes} gradeAssignments={gradeAssignments} onOpenFramework={openFramework} />
+                <GradesStep
+                  grades={grades}
+                  setGrades={setGrades}
+                  classes={classes}
+                  gradeAssignments={gradeAssignments}
+                  onOpenFramework={openFramework}
+                />
               )}
-              {step === "campuses" && <CampusesStep campuses={campuses} setCampuses={setCampuses} classes={classes} />}
+              {step === "campuses" && (
+                <CampusesStep
+                  campuses={campuses}
+                  setCampuses={setCampuses}
+                  classes={classes}
+                />
+              )}
               {step === "classes" && (
                 <ClassesStep
                   classes={classes}
@@ -1940,11 +3080,19 @@ export default function App() {
                   grades={grades}
                   filter={assignFilter}
                   setFilter={setAssignFilter}
-                  onGoToTimetable={() => { setFocusClassId(assignFilter.classId || null); setView("timetable"); }}
+                  onGoToTimetable={() => {
+                    setFocusClassId(assignFilter.classId || null);
+                    setView("timetable");
+                  }}
                   onOpenFramework={openFramework}
                 />
               )}
-              {step === "constraints" && <ConstraintsStep constraints={constraints} setConstraints={setConstraints} />}
+              {step === "constraints" && (
+                <ConstraintsStep
+                  constraints={constraints}
+                  setConstraints={setConstraints}
+                />
+              )}
             </>
           )}
         </main>
@@ -1970,6 +3118,7 @@ const STYLES = `
   --green-dark: #16a34a;
   --warn: #f59e0b;
   --stage: #6c63b5;
+  --export: #0f766e;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--bg);
   color: var(--ink);
@@ -2023,6 +3172,8 @@ const STYLES = `
 .btn-info { background: var(--info); }
 .btn-danger { background: var(--danger); }
 .btn-warn { background: var(--warn); }
+.btn-export { background: var(--export); }
+.sidebar .btn-export { width: 100%; margin-top: 8px; padding: 12px; font-size: 15px; }
 .btn-add { background: var(--green); padding: 6px 12px; font-size: 16px; line-height: 1; }
 .btn.block { width: 100%; }
 .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
