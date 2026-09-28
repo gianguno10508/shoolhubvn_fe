@@ -1,8 +1,8 @@
 import { apiFetch } from "./client";
 
-/** Danh sách các bản TKB của tài khoản (chỉ gồm _id, name, updatedAt), mới nhất trước */
-export function listTimetables() {
-  return apiFetch("/timetables");
+/** Danh sách TKB (chỉ gồm _id, name, createdAt...). trash=true -> danh sách trong thùng rác */
+export function listTimetables(trash = false) {
+  return apiFetch(`/timetables${trash ? "?trash=1" : ""}`);
 }
 
 /** Lấy đầy đủ 1 bản TKB (gồm cả `data`) */
@@ -20,6 +20,21 @@ export function updateTimetable(id, name, data) {
   return apiFetch(`/timetables/${id}`, { method: "PUT", body: { name, data } });
 }
 
-export function deleteTimetable(id) {
+/** Nhân bản: server sao chép toàn bộ cấu hình + dữ liệu sang bản mới */
+export function duplicateTimetable(id) {
+  return apiFetch(`/timetables/${id}/duplicate`, { method: "POST" });
+}
+
+/** Xóa = chuyển vào thùng rác (khôi phục được) */
+export function trashTimetable(id) {
   return apiFetch(`/timetables/${id}`, { method: "DELETE" });
+}
+
+export function restoreTimetable(id) {
+  return apiFetch(`/timetables/${id}/restore`, { method: "POST" });
+}
+
+/** Xóa vĩnh viễn (chỉ dùng cho bản đang ở thùng rác) */
+export function deleteTimetableForever(id) {
+  return apiFetch(`/timetables/${id}/permanent`, { method: "DELETE" });
 }

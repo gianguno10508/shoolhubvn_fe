@@ -9,8 +9,7 @@ export default function Sidebar({
   onExport,
   onSave,
   saving,
-  onLogout,
-  userName,
+  onBack,
 }) {
   return (
     <aside className="sidebar">
@@ -61,9 +60,8 @@ export default function Sidebar({
       <button className="btn btn-save" onClick={onSave} disabled={saving}>
         {saving ? "Đang lưu..." : "Lưu dữ liệu"}
       </button>
-      {userName && <p className="sidebar-user">Đang đăng nhập: {userName}</p>}
-      <button className="btn btn-logout" onClick={onLogout}>
-        Đăng xuất
+      <button className="btn btn-back" onClick={onBack}>
+        ← Về danh sách thời khóa biểu
       </button>
     </aside>
   );

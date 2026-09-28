@@ -30,8 +30,7 @@ export default function TimetableApp({
   initialData,
   timetableId,
   onSave,
-  onLogout,
-  user,
+  onBack,
 }) {
   const [stage, setStage] = useState("Thủ công");
   const [step, setStep] = useState("config");
@@ -343,8 +342,7 @@ export default function TimetableApp({
           onExport={exportFromSidebar}
           onSave={saveNow}
           saving={saving}
-          onLogout={onLogout}
-          userName={user ? user.name || user.username : ""}
+          onBack={onBack}
         />
 
         <main className="content">

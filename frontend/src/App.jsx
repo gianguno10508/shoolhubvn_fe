@@ -1,59 +1,24 @@
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
-import useTimetable from "./hooks/useTimetable";
 import LoginRegister from "./components/auth/LoginRegister";
-import TimetableApp from "./TimetableApp";
-
-/* Màn hình chờ / lỗi dùng chung */
-function CenterScreen({ children }) {
-  return (
-    <div className="tkb-root">
-      <div className="center-screen">{children}</div>
-    </div>
-  );
-}
-
-/* Chỉ được render khi đã đăng nhập: tải dữ liệu rồi mới vào giao diện chính */
-function LoggedInApp() {
-  const { user, logout } = useAuth();
-  const { status, error, timetableId, initialData, save, reload } = useTimetable();
-
-  if (status === "loading") {
-    return <CenterScreen>Đang tải thời khóa biểu...</CenterScreen>;
-  }
-
-  if (status === "error") {
-    return (
-      <CenterScreen>
-        <p style={{ color: "var(--danger)" }}>{error}</p>
-        <div className="btn-row">
-          <button className="btn btn-primary" onClick={reload}>
-            Thử lại
-          </button>
-          <button className="btn btn-danger" onClick={logout}>
-            Đăng xuất
-          </button>
-        </div>
-      </CenterScreen>
-    );
-  }
-
-  return (
-    <TimetableApp
-      key={timetableId}
-      initialData={initialData}
-      timetableId={timetableId}
-      onSave={save}
-      onLogout={logout}
-      user={user}
-    />
-  );
-}
+import HomeLayout from "./pages/HomeLayout";
+import TimetableListPage from "./pages/TimetableListPage";
+import TimetableEditorPage from "./pages/TimetableEditorPage";
+import TeacherPage from "./pages/TeacherPage";
+import ContactPage from "./pages/ContactPage";
 
 export default function App() {
   const { token, loading } = useAuth();
 
-  if (loading) return <CenterScreen>Đang kiểm tra đăng nhập...</CenterScreen>;
+  if (loading) {
+    return (
+      <div className="tkb-root">
+        <div className="center-screen">Đang kiểm tra đăng nhập...</div>
+      </div>
+    );
+  }
 
+  // Chưa đăng nhập: chỉ có màn hình đăng nhập / đăng ký
   if (!token) {
     return (
       <div className="tkb-root">
@@ -62,5 +27,17 @@ export default function App() {
     );
   }
 
-  return <LoggedInApp />;
+  // Đăng nhập xong: vào trang chủ (mặc định là mục Thời khóa biểu)
+  return (
+    <Routes>
+      <Route element={<HomeLayout />}>
+        <Route index element={<Navigate to="/tkb" replace />} />
+        <Route path="tkb" element={<TimetableListPage />} />
+        <Route path="tkb/:id" element={<TimetableEditorPage />} />
+        <Route path="giao-vien" element={<TeacherPage />} />
+        <Route path="lien-he" element={<ContactPage />} />
+        <Route path="*" element={<Navigate to="/tkb" replace />} />
+      </Route>
+    </Routes>
+  );
 }
