@@ -1,9 +1,11 @@
+// server.js
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./db");
 const authRoutes = require("./routes/auth");
 const timetableRoutes = require("./routes/timetables");
+const adminRoutes = require("./routes/admin");
 
 const app = express();
 
@@ -12,10 +14,13 @@ app.use(express.json({ limit: "5mb" })); // state TKB có thể khá lớn, tăn
 
 app.use("/api/auth", authRoutes);
 app.use("/api/timetables", timetableRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/", (req, res) => res.send("TKB backend (MongoDB) đang chạy ✅"));
 
 connectDB().then(() => {
   const port = process.env.PORT || 3001;
-  app.listen(port, () => console.log(`🚀 Server chạy tại http://localhost:${port}`));
+  app.listen(port, () =>
+    console.log(`🚀 Server chạy tại http://localhost:${port}`),
+  );
 });

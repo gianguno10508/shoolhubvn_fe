@@ -1,11 +1,15 @@
+// App.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import LoginRegister from "./components/auth/LoginRegister";
+import RequireTimetableAccess from "./components/guards/RequireTimetableAccess";
+import RequireAdmin from "./components/guards/RequireAdmin";
 import HomeLayout from "./pages/HomeLayout";
 import TimetableListPage from "./pages/TimetableListPage";
 import TimetableEditorPage from "./pages/TimetableEditorPage";
 import TeacherPage from "./pages/TeacherPage";
 import ContactPage from "./pages/ContactPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
 
 export default function App() {
   const { token, loading } = useAuth();
@@ -32,10 +36,21 @@ export default function App() {
     <Routes>
       <Route element={<HomeLayout />}>
         <Route index element={<Navigate to="/tkb" replace />} />
-        <Route path="tkb" element={<TimetableListPage />} />
-        <Route path="tkb/:id" element={<TimetableEditorPage />} />
+
+        {/* Chỉ admin hoặc VIP còn hạn mới vào được các trang xếp thời khóa biểu */}
+        <Route element={<RequireTimetableAccess />}>
+          <Route path="tkb" element={<TimetableListPage />} />
+          <Route path="tkb/:id" element={<TimetableEditorPage />} />
+        </Route>
+
         <Route path="giao-vien" element={<TeacherPage />} />
         <Route path="lien-he" element={<ContactPage />} />
+
+        {/* Chỉ admin mới vào được trang quản lý tài khoản */}
+        <Route element={<RequireAdmin />}>
+          <Route path="admin/users" element={<AdminUsersPage />} />
+        </Route>
+
         <Route path="*" element={<Navigate to="/tkb" replace />} />
       </Route>
     </Routes>

@@ -1,3 +1,4 @@
+// routes/auth.js
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
@@ -10,7 +11,7 @@ function signToken(userId) {
 }
 
 /* Đăng ký tài khoản mới
- * body: { username, password, name, className, role } */
+ * body: { username, password, name, className } */
 router.post("/register", async (req, res) => {
   try {
     const { username, password, name, className } = req.body;
@@ -25,28 +26,18 @@ router.post("/register", async (req, res) => {
 
     // Không tin role do client gửi lên (ai cũng có thể tự nhận admin).
     // Tài khoản đầu tiên của hệ thống là admin, các tài khoản sau mặc định
-    // là "giao_vien"; muốn nâng quyền thì sửa trực tiếp trong database.
+    // là "giao_vien" và chưa có VIP; muốn xếp TKB phải được admin cấp VIP.
     const isFirstUser = (await User.countDocuments()) === 0;
 
-    // password sẽ tự động được băm bởi hook pre("save") trong models/User.js
     const user = await User.create({
       username,
-      password,
+      password, // tự động được băm bởi hook pre("save") trong models/User.js
       name,
       className,
       role: isFirstUser ? "admin" : "giao_vien",
     });
 
-    res.json({
-      token: signToken(user._id),
-      user: {
-        id: user._id,
-        username: user.username,
-        name: user.name,
-        className: user.className,
-        role: user.role,
-      },
-    });
+    res.json({ token: signToken(user._id), user: user.toPublicJSON() });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Lỗi máy chủ khi đăng ký." });
@@ -59,10 +50,9 @@ router.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // .select("+password") vì trong model đã đặt select: false cho field này
-    const user = await User.findOne({ username: (username || "").toLowerCase() }).select(
-      "+password",
-    );
+    const user = await User.findOne({
+      username: (username || "").toLowerCase(),
+    }).select("+password");
     if (!user) {
       return res.status(401).json({ error: "Sai username hoặc password." });
     }
@@ -72,16 +62,7 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Sai username hoặc password." });
     }
 
-    res.json({
-      token: signToken(user._id),
-      user: {
-        id: user._id,
-        username: user.username,
-        name: user.name,
-        className: user.className,
-        role: user.role,
-      },
-    });
+    res.json({ token: signToken(user._id), user: user.toPublicJSON() });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Lỗi máy chủ khi đăng nhập." });
@@ -91,14 +72,9 @@ router.post("/login", async (req, res) => {
 /* Lấy thông tin tài khoản đang đăng nhập (dùng khi mở lại app còn phiên) */
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.userId);
-  if (!user) return res.status(404).json({ error: "Không tìm thấy tài khoản." });
-  res.json({
-    id: user._id,
-    username: user.username,
-    name: user.name,
-    className: user.className,
-    role: user.role,
-  });
+  if (!user)
+    return res.status(404).json({ error: "Không tìm thấy tài khoản." });
+  res.json(user.toPublicJSON());
 });
 
 module.exports = router;
