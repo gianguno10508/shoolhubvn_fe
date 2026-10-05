@@ -10,6 +10,7 @@ import TimetableEditorPage from "./pages/TimetableEditorPage";
 import TeacherPage from "./pages/TeacherPage";
 import ContactPage from "./pages/ContactPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import ShuffleExamPage from "./pages/teacher/ShuffleExamPage";
 
 export default function App() {
   const { token, loading } = useAuth();
@@ -44,6 +45,7 @@ export default function App() {
         </Route>
 
         <Route path="giao-vien" element={<TeacherPage />} />
+        <Route path="giao-vien/tron-de" element={<ShuffleExamPage />} />
         <Route path="lien-he" element={<ContactPage />} />
 
         {/* Chỉ admin mới vào được trang quản lý tài khoản */}

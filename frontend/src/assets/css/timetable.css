@@ -1,0 +1,331 @@
+/* =========================================
+   TIMETABLE PAGE
+========================================= */
+
+.page {
+  width: 100%;
+  max-width: 1280px;
+
+  margin: 0 auto;
+  padding: 28px 24px 50px;
+
+  color: var(--text);
+}
+
+/* =========================================
+   HEADER
+========================================= */
+
+.page-head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+
+  margin-bottom: 24px;
+  padding: 24px 26px;
+
+  background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+
+  border: 1px solid var(--border);
+  border-radius: 18px;
+
+  box-shadow: var(--shadow-sm);
+}
+
+.page-head::before {
+  content: "📅";
+
+  width: 52px;
+  height: 52px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 14px;
+
+  background: linear-gradient(135deg, #fff4e8, #ffe2bf);
+
+  font-size: 26px;
+}
+
+.page-head h2 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 25px;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+.page-head h2::after {
+  content: "Quản lý và tổ chức các thời khóa biểu của bạn";
+
+  display: block;
+
+  margin-top: 5px;
+
+  color: var(--text-3);
+
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* =========================================
+   BUTTONS
+========================================= */
+
+.page .btn {
+  min-height: 42px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  padding: 0 16px;
+
+  border: 1px solid transparent;
+  border-radius: 10px;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.page .btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.page .btn-orange {
+  min-height: 44px;
+
+  border: 0;
+
+  background: linear-gradient(135deg, #f97316, #ea580c);
+
+  color: #fff;
+
+  box-shadow: 0 7px 18px rgba(234, 88, 12, 0.22);
+}
+
+.page .btn-primary {
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+
+  color: #fff;
+
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.2);
+}
+
+.page .btn-info {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+.page .btn-red {
+  background: #fff;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.page .btn-sm {
+  min-height: 36px;
+  padding: 0 12px;
+
+  border-radius: 9px;
+  font-size: 13px;
+}
+
+/* =========================================
+   TABS
+========================================= */
+
+.tabs {
+  width: fit-content;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-bottom: 18px;
+  padding: 5px;
+
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.tab {
+  min-width: 125px;
+  height: 40px;
+
+  padding: 0 18px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: transparent;
+
+  color: #64748b;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.tab.active {
+  background: #fff;
+  color: #1d4ed8;
+
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+/* =========================================
+   TIMETABLE LIST
+========================================= */
+
+.tkb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  list-style: none;
+}
+
+.tkb-row {
+  position: relative;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(280px, 1fr)
+    minmax(180px, 260px)
+    auto;
+
+  align-items: center;
+
+  gap: 22px;
+
+  padding: 18px 20px;
+
+  border: 1px solid var(--border);
+  border-radius: 16px;
+
+  background: #fff;
+
+  box-shadow: var(--shadow-sm);
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.tkb-row:hover {
+  transform: translateY(-2px);
+
+  border-color: #d7deea;
+
+  box-shadow: var(--shadow-md);
+}
+
+.tkb-row::before {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+
+  width: 4px;
+
+  border-radius: 0 5px 5px 0;
+
+  background: linear-gradient(180deg, #f97316, #f59e0b);
+
+  opacity: 0;
+}
+
+.tkb-row:hover::before {
+  opacity: 1;
+}
+
+.tkb-row-main {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.tkb-row-title {
+  overflow: hidden;
+
+  color: var(--text);
+
+  font-size: 17px;
+  font-weight: 800;
+
+  line-height: 1.4;
+
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tkb-row-title:hover {
+  color: var(--blue);
+}
+
+.tkb-row-date {
+  color: var(--muted);
+
+  font-size: 13px;
+}
+
+.tkb-row-id {
+  min-width: 0;
+
+  display: inline-flex;
+  align-items: center;
+
+  padding: 9px 12px;
+
+  overflow: hidden;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+
+  background: #f8fafc;
+
+  color: #64748b;
+
+  font-family: "SFMono-Regular", Consolas, monospace;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tkb-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  flex-wrap: wrap;
+}
