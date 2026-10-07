@@ -11,6 +11,8 @@ import TeacherPage from "./pages/TeacherPage";
 import ContactPage from "./pages/ContactPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import ShuffleExamPage from "./pages/teacher/ShuffleExamPage";
+import AssignmentPage from "./pages/teacher/AssignmentPage";
+import CompetitionDisciplinePage from "./pages/teacher/CompetitionDisciplinePage";
 
 export default function App() {
   const { token, loading } = useAuth();
@@ -46,6 +48,11 @@ export default function App() {
 
         <Route path="giao-vien" element={<TeacherPage />} />
         <Route path="giao-vien/tron-de" element={<ShuffleExamPage />} />
+        <Route path="giao-vien/bai-tap" element={<AssignmentPage />} />
+        <Route
+          path="giao-vien/thi-dua"
+          element={<CompetitionDisciplinePage />}
+        />
         <Route path="lien-he" element={<ContactPage />} />
 
         {/* Chỉ admin mới vào được trang quản lý tài khoản */}

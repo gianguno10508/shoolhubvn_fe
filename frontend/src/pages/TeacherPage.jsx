@@ -127,7 +127,7 @@ export default function TeacherPage() {
             <span>Tổng quan</span>
           </Link>
 
-          <Link to="/teacher/thi-dua" className="teacher-nav-item">
+          <Link to="/giao-vien/thi-dua" className="teacher-nav-item">
             <span className="teacher-nav-icon">🏆</span>
 
             <span>Thi đua & Nề nếp</span>
