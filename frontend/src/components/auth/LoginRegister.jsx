@@ -12,7 +12,7 @@ export default function LoginRegister() {
     username: "",
     password: "",
     name: "",
-    className: "",
+    school: "",
   });
 
   const [error, setError] = useState("");
@@ -45,6 +45,11 @@ export default function LoginRegister() {
       return;
     }
 
+    if (mode === "register" && !form.school.trim()) {
+      setError("Vui lòng nhập tên trường.");
+      return;
+    }
+
     setBusy(true);
 
     try {
@@ -55,7 +60,7 @@ export default function LoginRegister() {
           username: form.username.trim(),
           password: form.password,
           name: form.name.trim(),
-          className: form.className.trim(),
+          school: form.school.trim(),
         });
       }
     } catch (err) {
@@ -201,19 +206,17 @@ export default function LoginRegister() {
                 </div>
 
                 <div className="auth-field">
-                  <label>
-                    Lớp phụ trách
-                    <span className="optional">Không bắt buộc</span>
-                  </label>
+                  <label>Tên trường</label>
 
                   <div className="auth-input-wrap">
                     <span className="auth-input-icon">🏫</span>
 
                     <input
                       type="text"
-                      value={form.className}
-                      onChange={(e) => set("className", e.target.value)}
-                      placeholder="Ví dụ: 10A1"
+                      value={form.school}
+                      onChange={(e) => set("school", e.target.value)}
+                      placeholder="Ví dụ: THPT Nguyễn Văn Cừ"
+                      autoComplete="organization"
                       disabled={busy}
                     />
                   </div>

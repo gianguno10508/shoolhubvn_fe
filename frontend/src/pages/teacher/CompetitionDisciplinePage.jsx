@@ -214,45 +214,22 @@ function formatDateTime(dateString) {
   return date.toLocaleString("vi-VN");
 }
 
+function calculateChildPoint(child, value) {
+  if (child.inputType === "checkbox") return value === true ? Number(child.point || 0) : 0;
+  if (child.inputType === "number") return (Number(value || 0) || 0) * Number(child.point || 0);
+  if (child.inputType === "score") return Number(value || 0);
+  if (["text", "textarea", "select", "radio"].includes(child.inputType)) {
+    return value !== undefined && value !== null && String(value).trim() !== ""
+      ? Number(child.point || 0)
+      : 0;
+  }
+  return 0;
+}
+
 function getInputTypeLabel(type) {
   const item = INPUT_TYPES.find((item) => item.value === type);
 
   return item?.label || type;
-}
-
-function calculateChildPoint(child, value) {
-  if (child.inputType === "checkbox") {
-    return value === true ? Number(child.point || 0) : 0;
-  }
-
-  if (child.inputType === "number") {
-    const quantity = Number(value || 0);
-
-    if (Number.isNaN(quantity)) {
-      return 0;
-    }
-
-    return quantity * Number(child.point || 0);
-  }
-
-  if (child.inputType === "score") {
-    return Number(value || 0);
-  }
-
-  if (
-    child.inputType === "text" ||
-    child.inputType === "textarea" ||
-    child.inputType === "select" ||
-    child.inputType === "radio"
-  ) {
-    if (value === undefined || value === null || String(value).trim() === "") {
-      return 0;
-    }
-
-    return Number(child.point || 0);
-  }
-
-  return 0;
 }
 
 /* =========================================================
@@ -329,19 +306,6 @@ export default function CompetitionDisciplinePage() {
   });
 
   /* ---------------------------------------------------------
-     COMPETITION FORM
-  --------------------------------------------------------- */
-
-  const [competitionForm, setCompetitionForm] = useState({
-    date: getToday(),
-    sessionId: "",
-    className: "",
-    note: "",
-  });
-
-  const [competitionValues, setCompetitionValues] = useState({});
-
-  /* ---------------------------------------------------------
      HISTORY FILTER
   --------------------------------------------------------- */
 
@@ -365,28 +329,9 @@ export default function CompetitionDisciplinePage() {
     window.localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
   }, [history]);
 
-  useEffect(() => {
-    if (!competitionForm.sessionId && config.sessions.length > 0) {
-      const enabledSession =
-        config.sessions.find((item) => item.enabled) || config.sessions[0];
-
-      if (enabledSession) {
-        setCompetitionForm((prev) => ({
-          ...prev,
-          sessionId: enabledSession.id,
-        }));
-      }
-    }
-  }, [config.sessions, competitionForm.sessionId]);
-
   /* =========================================================
      COMPUTED
   ========================================================= */
-
-  const enabledSessions = useMemo(
-    () => config.sessions.filter((item) => item.enabled),
-    [config.sessions],
-  );
 
   const totalCriteria = useMemo(() => {
     return config.criteria.reduce(
@@ -410,20 +355,6 @@ export default function CompetitionDisciplinePage() {
       return matchDate && matchClass && matchSession;
     });
   }, [history, historyFilter]);
-
-  const currentTotalPoint = useMemo(() => {
-    return config.criteria.reduce((total, criteria) => {
-      return (
-        total +
-        criteria.children.reduce((criteriaTotal, child) => {
-          return (
-            criteriaTotal +
-            calculateChildPoint(child, competitionValues[child.id])
-          );
-        }, 0)
-      );
-    }, 0);
-  }, [config.criteria, competitionValues]);
 
   /* =========================================================
      SESSION FUNCTIONS
@@ -516,12 +447,6 @@ export default function CompetitionDisciplinePage() {
       sessions: prev.sessions.filter((item) => item.id !== id),
     }));
 
-    if (competitionForm.sessionId === id) {
-      setCompetitionForm((prev) => ({
-        ...prev,
-        sessionId: "",
-      }));
-    }
   }
 
   function toggleSession(id) {
@@ -732,76 +657,6 @@ export default function CompetitionDisciplinePage() {
       ),
     }));
 
-    setCompetitionValues((prev) => {
-      const next = { ...prev };
-      delete next[childId];
-      return next;
-    });
-  }
-
-  /* =========================================================
-     COMPETITION FUNCTIONS
-  ========================================================= */
-
-  function updateCompetitionValue(childId, value) {
-    setCompetitionValues((prev) => ({
-      ...prev,
-      [childId]: value,
-    }));
-  }
-
-  function resetCompetitionForm() {
-    setCompetitionValues({});
-
-    const enabledSession =
-      config.sessions.find((item) => item.enabled) || config.sessions[0];
-
-    setCompetitionForm({
-      date: getToday(),
-      sessionId: enabledSession?.id || "",
-      className: "",
-      note: "",
-    });
-  }
-
-  function saveCompetition() {
-    if (!competitionForm.date) {
-      alert("Vui lòng chọn ngày.");
-      return;
-    }
-
-    if (!competitionForm.sessionId) {
-      alert("Vui lòng chọn buổi.");
-      return;
-    }
-
-    if (!competitionForm.className) {
-      alert("Vui lòng chọn lớp.");
-      return;
-    }
-
-    const session = config.sessions.find(
-      (item) => item.id === competitionForm.sessionId,
-    );
-
-    const record = {
-      id: createId("history"),
-      date: competitionForm.date,
-      sessionId: competitionForm.sessionId,
-      sessionName: session?.name || "",
-      className: competitionForm.className,
-      note: competitionForm.note.trim(),
-      values: cloneData(competitionValues),
-      totalPoint: currentTotalPoint,
-      createdAt: new Date().toISOString(),
-    };
-
-    setHistory((prev) => [record, ...prev]);
-
-    alert(`Đã lưu kết quả chấm thi đua.\nTổng điểm trừ: ${currentTotalPoint}`);
-
-    resetCompetitionForm();
-    setActiveTab("history");
   }
 
   function deleteHistory(id) {
@@ -839,136 +694,6 @@ export default function CompetitionDisciplinePage() {
   }
 
   /* =========================================================
-     RENDER INPUT
-  ========================================================= */
-
-  function renderCompetitionInput(child) {
-    const value = competitionValues[child.id];
-
-    switch (child.inputType) {
-      case "checkbox":
-        return (
-          <label className="competition-checkbox">
-            <input
-              type="checkbox"
-              checked={Boolean(value)}
-              onChange={(event) =>
-                updateCompetitionValue(child.id, event.target.checked)
-              }
-            />
-            <span className="custom-check"></span>
-            <span>Có vi phạm</span>
-          </label>
-        );
-
-      case "number":
-        return (
-          <div className="input-with-unit">
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={value ?? ""}
-              placeholder="0"
-              onChange={(event) =>
-                updateCompetitionValue(child.id, event.target.value)
-              }
-            />
-            <span>lần</span>
-          </div>
-        );
-
-      case "text":
-        return (
-          <input
-            type="text"
-            className="form-input"
-            value={value ?? ""}
-            placeholder="Nhập nội dung..."
-            onChange={(event) =>
-              updateCompetitionValue(child.id, event.target.value)
-            }
-          />
-        );
-
-      case "textarea":
-        return (
-          <textarea
-            className="form-textarea"
-            rows="3"
-            value={value ?? ""}
-            placeholder="Nhập nội dung..."
-            onChange={(event) =>
-              updateCompetitionValue(child.id, event.target.value)
-            }
-          />
-        );
-
-      case "select":
-        return (
-          <select
-            className="form-select"
-            value={value ?? ""}
-            onChange={(event) =>
-              updateCompetitionValue(child.id, event.target.value)
-            }
-          >
-            <option value="">-- Chọn --</option>
-
-            {(child.options || []).map((option, index) => (
-              <option key={index} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        );
-
-      case "radio":
-        return (
-          <div className="radio-list">
-            {(child.options || []).map((option, index) => (
-              <label className="radio-option" key={`${child.id}_${index}`}>
-                <input
-                  type="radio"
-                  name={`radio_${child.id}`}
-                  value={option}
-                  checked={value === option}
-                  onChange={(event) =>
-                    updateCompetitionValue(child.id, event.target.value)
-                  }
-                />
-                <span>{option}</span>
-              </label>
-            ))}
-
-            {!child.options?.length && (
-              <span className="empty-input-note">Chưa cấu hình phương án.</span>
-            )}
-          </div>
-        );
-
-      case "score":
-        return (
-          <div className="input-with-unit">
-            <input
-              type="number"
-              step="0.1"
-              value={value ?? ""}
-              placeholder="0"
-              onChange={(event) =>
-                updateCompetitionValue(child.id, event.target.value)
-              }
-            />
-            <span>điểm</span>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  }
-
-  /* =========================================================
      RENDER
   ========================================================= */
 
@@ -989,8 +714,7 @@ export default function CompetitionDisciplinePage() {
           <h1>Thi đua & Nề nếp</h1>
 
           <p>
-            Thiết lập tiêu chí, chấm điểm và theo dõi kết quả thi đua của các
-            lớp.
+            Quản lý cấu hình buổi học, tiêu chí thi đua và tra cứu lịch sử đã lưu.
           </p>
         </div>
 
@@ -999,13 +723,6 @@ export default function CompetitionDisciplinePage() {
             <button className="btn btn-secondary" onClick={resetAllConfig}>
               <span>↺</span>
               Khôi phục mặc định
-            </button>
-          )}
-
-          {activeTab === "competition" && (
-            <button className="btn btn-light" onClick={resetCompetitionForm}>
-              <span>↻</span>
-              Làm mới
             </button>
           )}
 
@@ -1078,14 +795,6 @@ export default function CompetitionDisciplinePage() {
         >
           <span>⚙️</span>
           Cấu hình
-        </button>
-
-        <button
-          className={activeTab === "competition" ? "active" : ""}
-          onClick={() => setActiveTab("competition")}
-        >
-          <span>📝</span>
-          Chấm thi đua
         </button>
 
         <button
@@ -1181,8 +890,7 @@ export default function CompetitionDisciplinePage() {
                     <strong>Có thể thiết lập Sáng, Chiều hoặc Cả ngày</strong>
 
                     <p>
-                      Bạn có thể thêm bao nhiêu buổi tùy theo mô hình hoạt động
-                      của đơn vị.
+                      Bạn có thể thêm, sửa, bật hoặc tắt buổi theo mô hình hoạt động của đơn vị.
                     </p>
                   </div>
                 </div>
@@ -1274,7 +982,7 @@ export default function CompetitionDisciplinePage() {
               <div className="content-card">
                 <div className="content-card-header">
                   <div>
-                    <h2>Tiêu chí chấm thi đua</h2>
+                    <h2>Nhóm tiêu chí</h2>
 
                     <p>
                       Tạo nhóm tiêu chí và các tiêu chí con theo nhu cầu thực
@@ -1456,254 +1164,6 @@ export default function CompetitionDisciplinePage() {
       )}
 
       {/* =====================================================
-          COMPETITION TAB
-      ===================================================== */}
-
-      {activeTab === "competition" && (
-        <div className="competition-layout">
-          <section className="content-card">
-            <div className="content-card-header">
-              <div>
-                <h2>Chấm thi đua</h2>
-
-                <p>Nhập tình hình thực tế của lớp theo từng buổi học.</p>
-              </div>
-
-              <div className="score-summary">
-                <span>Tổng điểm trừ</span>
-
-                <strong>{currentTotalPoint}</strong>
-              </div>
-            </div>
-
-            <div className="competition-meta">
-              <div className="form-group">
-                <label>Ngày chấm</label>
-
-                <input
-                  type="date"
-                  className="form-input"
-                  value={competitionForm.date}
-                  onChange={(event) =>
-                    setCompetitionForm((prev) => ({
-                      ...prev,
-                      date: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Buổi học</label>
-
-                <select
-                  className="form-select"
-                  value={competitionForm.sessionId}
-                  onChange={(event) =>
-                    setCompetitionForm((prev) => ({
-                      ...prev,
-                      sessionId: event.target.value,
-                    }))
-                  }
-                >
-                  <option value="">-- Chọn buổi --</option>
-
-                  {enabledSessions.map((session) => (
-                    <option key={session.id} value={session.id}>
-                      {session.name} ({session.startTime} - {session.endTime})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Lớp</label>
-
-                <select
-                  className="form-select"
-                  value={competitionForm.className}
-                  onChange={(event) =>
-                    setCompetitionForm((prev) => ({
-                      ...prev,
-                      className: event.target.value,
-                    }))
-                  }
-                >
-                  <option value="">-- Chọn lớp --</option>
-
-                  {DEFAULT_CLASSES.map((className) => (
-                    <option key={className} value={className}>
-                      {className}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="competition-form">
-              {config.criteria.length === 0 ? (
-                <div className="empty-state large">
-                  <div>⚙️</div>
-
-                  <h3>Chưa có tiêu chí chấm</h3>
-
-                  <p>Hãy vào phần Cấu hình để tạo tiêu chí trước khi chấm.</p>
-
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => setActiveTab("config")}
-                  >
-                    Đi đến cấu hình
-                  </button>
-                </div>
-              ) : (
-                config.criteria.map((criteria) => (
-                  <div className="competition-section" key={criteria.id}>
-                    <div className="competition-section-header">
-                      <div className="section-title-wrap">
-                        <div className="criteria-icon small">
-                          {criteria.icon || "📌"}
-                        </div>
-
-                        <div>
-                          <h3>{criteria.name}</h3>
-
-                          <p>
-                            {criteria.description ||
-                              "Các nội dung cần theo dõi"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {criteria.children.length === 0 ? (
-                      <div className="section-empty">
-                        Nhóm này chưa có tiêu chí con.
-                      </div>
-                    ) : (
-                      <div className="competition-items">
-                        {criteria.children.map((child) => (
-                          <div className="competition-item" key={child.id}>
-                            <div className="competition-item-info">
-                              <strong>{child.name}</strong>
-
-                              <span
-                                className={
-                                  child.point < 0
-                                    ? "penalty-text"
-                                    : "reward-text"
-                                }
-                              >
-                                {child.point > 0 ? "+" : ""}
-                                {child.point} điểm
-                                {child.inputType === "number" && " / lần"}
-                              </span>
-                            </div>
-
-                            <div className="competition-item-control">
-                              {renderCompetitionInput(child)}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="competition-note-group">
-              <div className="form-group">
-                <label>Ghi chú</label>
-
-                <textarea
-                  className="form-textarea"
-                  rows="4"
-                  value={competitionForm.note}
-                  placeholder="Nhập ghi chú nếu có..."
-                  onChange={(event) =>
-                    setCompetitionForm((prev) => ({
-                      ...prev,
-                      note: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="form-footer">
-              <button
-                className="btn btn-secondary"
-                onClick={resetCompetitionForm}
-              >
-                Hủy / Làm mới
-              </button>
-
-              <button
-                className="btn btn-primary btn-large"
-                onClick={saveCompetition}
-              >
-                <span>✓</span>
-                Lưu kết quả chấm
-              </button>
-            </div>
-          </section>
-
-          <aside className="competition-summary-card">
-            <div className="summary-header">
-              <span>📊</span>
-
-              <div>
-                <strong>Tổng hợp</strong>
-                <small>Kết quả hiện tại</small>
-              </div>
-            </div>
-
-            <div className="big-score">
-              <strong>{currentTotalPoint}</strong>
-              <span>điểm</span>
-            </div>
-
-            <div className="summary-divider"></div>
-
-            <div className="summary-info">
-              <div>
-                <span>Ngày</span>
-                <strong>
-                  {competitionForm.date
-                    ? formatDate(`${competitionForm.date}T00:00:00`)
-                    : "--"}
-                </strong>
-              </div>
-
-              <div>
-                <span>Buổi</span>
-                <strong>
-                  {config.sessions.find(
-                    (item) => item.id === competitionForm.sessionId,
-                  )?.name || "--"}
-                </strong>
-              </div>
-
-              <div>
-                <span>Lớp</span>
-                <strong>{competitionForm.className || "--"}</strong>
-              </div>
-            </div>
-
-            <div className="summary-tip">
-              <span>💡</span>
-
-              <p>
-                Điểm âm là điểm trừ. Với tiêu chí dạng số, điểm sẽ được nhân với
-                số lần vi phạm.
-              </p>
-            </div>
-          </aside>
-        </div>
-      )}
-
-      {/* =====================================================
           HISTORY TAB
       ===================================================== */}
 
@@ -1802,16 +1262,10 @@ export default function CompetitionDisciplinePage() {
             <div className="empty-state history-empty">
               <div>📚</div>
 
-              <h3>Chưa có dữ liệu</h3>
+              <h3>Chưa có dữ liệu lịch sử</h3>
 
-              <p>Các kết quả sau khi chấm sẽ xuất hiện ở đây.</p>
+              <p>Các bản ghi lịch sử đã lưu trước đây sẽ hiển thị tại đây.</p>
 
-              <button
-                className="btn btn-primary"
-                onClick={() => setActiveTab("competition")}
-              >
-                Chấm thi đua
-              </button>
             </div>
           ) : (
             <div className="history-table-wrapper">
@@ -1992,7 +1446,7 @@ export default function CompetitionDisciplinePage() {
 
                 <span>
                   <strong>Kích hoạt buổi này</strong>
-                  <small>Buổi được hiển thị khi chấm thi đua.</small>
+                  <small>Bật hoặc tắt buổi này trong cấu hình.</small>
                 </span>
               </label>
             </div>
