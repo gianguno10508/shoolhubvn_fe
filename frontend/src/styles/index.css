@@ -1,0 +1,31 @@
+/* =========================================================
+   STYLES ENTRY — import duy nhất của app (main.jsx)
+   Thứ tự: token → base → component dùng chung → layout → trang
+========================================================= */
+
+/* Nền tảng */
+@import "./base/tokens.css";
+@import "./base/base.css";
+
+/* Component dùng chung */
+@import "./components/buttons.css";
+@import "./components/forms.css";
+@import "./components/data.css";
+@import "./components/feedback.css";
+@import "./components/overlay.css";
+@import "./components/notifications.css";
+
+/* Khung trang */
+@import "./layout/app-shell.css";
+@import "./layout/page.css";
+
+/* Từng trang */
+@import "./pages/auth.css";
+@import "./pages/timetable-list.css";
+@import "./pages/timetable-editor.css";
+@import "./pages/teacher-dashboard.css";
+@import "./pages/shuffle-exam.css";
+@import "./pages/contact.css";
+@import "./pages/admin-users.css";
+@import "./pages/assignments.css";
+@import "./pages/discipline.css";

@@ -1,68 +1,61 @@
+// components/layout/Sidebar.jsx
 import { NAV_GROUPS } from "../../constants/config";
 
-export default function Sidebar({
-  activeStep,
-  onSelect,
-  checkResult,
-  onCheck,
-  onViewResult,
-  onExport,
-  onSave,
-  saving,
-  onBack,
-}) {
+/* Danh sách bước soạn thời khóa biểu (stepper dọc) + kết quả kiểm tra dữ liệu */
+export default function Sidebar({ activeStep, onSelect, counts, checkResult, onDismissCheck }) {
+  let index = 0;
   return (
-    <aside className="sidebar">
+    <aside className="sidebar ed-steps">
       {NAV_GROUPS.map((group) => (
-        <div className="nav-group" key={group.title}>
+        <div className="ed-step-group" key={group.title}>
           <h3>{group.title}</h3>
-          <div className="nav-card">
-            {group.items.map((item) => (
+          {group.items.map((item) => {
+            index += 1;
+            const n = item.count ? counts[item.count] || 0 : null;
+            return (
               <button
                 key={item.key}
                 className={
-                  "nav-item" +
+                  "ed-step" +
                   (activeStep === item.key ? " active" : "") +
+                  (n ? " filled" : "") +
                   (item.small ? " small" : "")
                 }
                 onClick={() => onSelect(item.key)}
               >
-                {item.label}
+                <span className="ed-step-num">{n ? "✓" : index}</span>
+                <span className="ed-step-label">
+                  {item.label}
+                  {item.hint && <small>{item.hint}</small>}
+                </span>
+                {n !== null && <span className="ed-step-count">{n}</span>}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
       ))}
 
-      <div className="nav-card check-card">
-        <button className="btn btn-check" onClick={onCheck}>
-          Kiểm tra dữ liệu
-        </button>
-        {!checkResult && <p className="check-empty">Chưa kiểm tra lần nào</p>}
-        {checkResult && checkResult.errors.length === 0 && (
-          <p className="check-ok">Dữ liệu hợp lệ. Có thể xếp thời khóa biểu.</p>
-        )}
-        {checkResult && checkResult.errors.length > 0 && (
-          <ul className="check-errors">
-            {checkResult.errors.map((e, i) => (
-              <li key={i}>{e}</li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <button className="btn btn-result" onClick={onViewResult}>
-        Xem kết quả
-      </button>
-      <button className="btn btn-export" onClick={onExport}>
-        Xuất Excel
-      </button>
-      <button className="btn btn-save" onClick={onSave} disabled={saving}>
-        {saving ? "Đang lưu..." : "Lưu dữ liệu"}
-      </button>
-      <button className="btn btn-back" onClick={onBack}>
-        ← Về danh sách thời khóa biểu
-      </button>
+      {checkResult && (
+        <div className={"ed-check" + (checkResult.errors.length ? " bad" : " ok")}>
+          <div className="ed-check-head">
+            <strong>
+              {checkResult.errors.length ? `${checkResult.errors.length} vấn đề cần xử lý` : "✓ Dữ liệu hợp lệ"}
+            </strong>
+            <button onClick={onDismissCheck} aria-label="Đóng">
+              ×
+            </button>
+          </div>
+          {checkResult.errors.length ? (
+            <ul>
+              {checkResult.errors.map((e, i) => (
+                <li key={i}>{e}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>Có thể bắt đầu xếp thời khóa biểu.</p>
+          )}
+        </div>
+      )}
     </aside>
   );
 }

@@ -144,7 +144,7 @@ export default function TimetableView({
     return null;
   }
 
-  /* Số tiết một lớp đã có trong đúng buổi này (không tính ô đang xét) — dùng để chặn theo Bước 8. */
+  /* Số tiết một lớp đã có trong đúng buổi này (không tính ô đang xét) — dùng để chặn theo Ràng buộc xếp lịch. */
   function classSessionLoad(day, session, classId, excludeKey) {
     return Object.keys(effectiveSchedule).filter((key) => {
       if (key === excludeKey) return false;
@@ -409,8 +409,8 @@ export default function TimetableView({
         <PanelTitle title="Thời khóa biểu" />
         <p className="hint">
           {classes.length === 0
-            ? "Chưa có lớp học. Hãy khai báo ở Bước 6."
-            : "Chưa có tiết nào trong khung chương trình. Hãy mở Khung CT của lớp ở Bước 6 hoặc dùng Bước 7."}
+            ? "Chưa có lớp học. Hãy khai báo ở mục “Lớp học”."
+            : "Chưa có tiết nào trong khung chương trình. Hãy mở Khung CT của lớp ở mục “Lớp học” hoặc dùng “Phân công giảng dạy”."}
         </p>
         <button className="btn btn-primary" onClick={onBack}>
           Quay lại các bước

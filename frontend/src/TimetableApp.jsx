@@ -12,7 +12,7 @@ import {
   SEED_GRADES,
   SEED_CLASSES,
 } from "./constants/seedData";
-import StatusBar from "./components/layout/StatusBar";
+import EditorHeader from "./components/layout/EditorHeader";
 import Sidebar from "./components/layout/Sidebar";
 import ConfigStep from "./components/steps/ConfigStep";
 import SubjectsStep from "./components/steps/SubjectsStep";
@@ -173,16 +173,16 @@ export default function TimetableApp({
   /* ---- kiểm tra dữ liệu ---- */
   function runCheck() {
     const errors = [];
-    if (subjects.length === 0) errors.push("Bước 2: chưa có môn học nào.");
-    if (teachers.length === 0) errors.push("Bước 4: chưa có giáo viên nào.");
-    if (classes.length === 0) errors.push("Bước 6: chưa có lớp học nào.");
+    if (subjects.length === 0) errors.push("Môn học: chưa có môn học nào.");
+    if (teachers.length === 0) errors.push("Giáo viên: chưa có giáo viên nào.");
+    if (classes.length === 0) errors.push("Lớp học: chưa có lớp học nào.");
 
     const noGrade = classes.filter((c) => !c.gradeId);
     if (noGrade.length)
-      errors.push(`Bước 6: ${noGrade.length} lớp chưa chọn khối.`);
+      errors.push(`Lớp học: ${noGrade.length} lớp chưa chọn khối.`);
     const noDept = teachers.filter((t) => t.departmentIds.length === 0);
     if (noDept.length)
-      errors.push(`Bước 4: ${noDept.length} giáo viên chưa thuộc tổ nào.`);
+      errors.push(`Giáo viên: ${noDept.length} giáo viên chưa thuộc tổ nào.`);
 
     const slotCount = allSlots(config).length;
     classes.forEach((c) => {
@@ -326,8 +326,21 @@ export default function TimetableApp({
   };
 
   return (
-    <div className="tkb-root">
-      <StatusBar stage={stage} onChangeStage={setStage} shareUrl={shareUrl} />
+    <div className="editor">
+      <EditorHeader
+        config={config}
+        stage={stage}
+        onChangeStage={setStage}
+        shareUrl={shareUrl}
+        view={view}
+        onBack={onBack}
+        onCheck={runCheck}
+        onViewResult={() => setView("timetable")}
+        onEditSteps={() => setView("steps")}
+        onExport={exportFromSidebar}
+        onSave={saveNow}
+        saving={saving}
+      />
 
       <div className="layout">
         <Sidebar
@@ -336,13 +349,17 @@ export default function TimetableApp({
             setView("steps");
             setStep(k);
           }}
+          counts={{
+            subjects: subjects.length,
+            departments: departments.length,
+            teachers: teachers.length,
+            grades: grades.length,
+            campuses: campuses.length,
+            classes: classes.length,
+            assignments: assignments.length,
+          }}
           checkResult={checkResult}
-          onCheck={runCheck}
-          onViewResult={() => setView("timetable")}
-          onExport={exportFromSidebar}
-          onSave={saveNow}
-          saving={saving}
-          onBack={onBack}
+          onDismissCheck={() => setCheckResult(null)}
         />
 
         <main className="content">

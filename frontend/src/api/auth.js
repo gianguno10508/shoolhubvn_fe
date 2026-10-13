@@ -1,6 +1,6 @@
 import { apiFetch } from "./client";
 
-/** @param {{username:string,password:string,name?:string,className?:string,role?:string}} payload */
+/** @param {{username:string,password:string,name?:string,schoolName:string}} payload */
 export function register(payload) {
   return apiFetch("/auth/register", { method: "POST", body: payload });
 }

@@ -116,9 +116,13 @@ export default function TimetableListPage() {
   }
 
   return (
-    <div className="page">
+    <div className="page tkb-list-page">
       <div className="page-head">
-        <h2>Danh sách thời khóa biểu</h2>
+        <span className="page-head-icon">📅</span>
+        <div>
+          <h2>Danh sách thời khóa biểu</h2>
+          <p>Quản lý và tổ chức các thời khóa biểu của trường</p>
+        </div>
         <div className="spacer" />
         <button className="btn btn-orange" onClick={() => setShowCreate(true)}>
           + Thêm mới
@@ -185,7 +189,7 @@ export default function TimetableListPage() {
                 <span className="tkb-row-id">Id: {t._id}</span>
 
                 <div className="tkb-row-actions">
-                  <button className="btn btn-sm btn-red" onClick={() => handleCopyId(t._id)}>
+                  <button className="btn btn-sm btn-light" onClick={() => handleCopyId(t._id)}>
                     Copy Id
                   </button>
                   {isTrash ? (
@@ -252,7 +256,7 @@ export default function TimetableListPage() {
             <div className="btn-row modal-actions">
               <button
                 type="button"
-                className="btn btn-info"
+                className="btn btn-light"
                 disabled={creating}
                 onClick={() => setShowCreate(false)}
               >

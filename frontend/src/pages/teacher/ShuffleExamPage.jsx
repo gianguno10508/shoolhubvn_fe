@@ -1,6 +1,4 @@
 import { useMemo, useRef, useState } from "react";
-import * as pdfjsLib from "pdfjs-dist";
-import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
@@ -20,169 +18,13 @@ import {
 } from "docx";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
-
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
-
-const LETTERS = ["A", "B", "C", "D"];
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function shuffleArray(array) {
-  const result = [...array];
-
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-
-  return result;
-}
-
-/* =========================================================
-   PDF PARSER
-========================================================= */
-
-async function extractPdfText(file) {
-  const buffer = await file.arrayBuffer();
-
-  const pdf = await pdfjsLib.getDocument({
-    data: new Uint8Array(buffer),
-  }).promise;
-
-  const pages = [];
-
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-    const page = await pdf.getPage(pageNumber);
-
-    const content = await page.getTextContent();
-
-    const items = content.items || [];
-
-    const lines = [];
-
-    let currentLine = [];
-    let currentY = null;
-
-    for (const item of items) {
-      const text = item.str || "";
-
-      if (!text.trim()) continue;
-
-      const y = item.transform?.[5] ?? 0;
-
-      if (currentY !== null && Math.abs(y - currentY) > 3) {
-        if (currentLine.length) {
-          lines.push(currentLine.join("").trim());
-        }
-
-        currentLine = [];
-      }
-
-      currentLine.push(text);
-
-      currentY = y;
-    }
-
-    if (currentLine.length) {
-      lines.push(currentLine.join("").trim());
-    }
-
-    pages.push(lines);
-  }
-
-  return pages.flat();
-}
-
-/* =========================================================
-   QUESTION PARSER
-========================================================= */
-
-function parseQuestions(lines) {
-  const questions = [];
-
-  let currentQuestion = null;
-  let currentOption = null;
-
-  const questionRegex = /^Câu\s*(\d+)[\.\):\-]?\s*(.*)$/i;
-
-  const optionRegex = /^_?\s*([ABCD])[\.\):\-]\s*(.*)$/i;
-
-  for (const rawLine of lines) {
-    const line = rawLine.replace(/\u00a0/g, " ").trim();
-
-    if (!line) continue;
-
-    const questionMatch = line.match(questionRegex);
-
-    if (questionMatch) {
-      if (currentQuestion) {
-        questions.push(currentQuestion);
-      }
-
-      currentQuestion = {
-        id: questions.length + 1,
-        originalNumber: Number(questionMatch[1]),
-        text: questionMatch[2].trim(),
-        options: [],
-        correctAnswer: null,
-      };
-
-      currentOption = null;
-
-      continue;
-    }
-
-    const optionMatch = line.match(optionRegex);
-
-    if (optionMatch && currentQuestion) {
-      const letter = optionMatch[1].toUpperCase();
-
-      const text = optionMatch[2].trim();
-
-      const isCorrect = /^_/.test(line);
-
-      const option = {
-        id: `${currentQuestion.originalNumber}-${letter}`,
-        letter,
-        text,
-        originalLetter: letter,
-        isCorrect,
-      };
-
-      currentQuestion.options.push(option);
-
-      if (isCorrect) {
-        currentQuestion.correctAnswer = letter;
-      }
-
-      currentOption = option;
-
-      continue;
-    }
-
-    if (currentQuestion) {
-      if (currentOption) {
-        currentOption.text += ` ${line}`;
-      } else {
-        currentQuestion.text += ` ${line}`;
-      }
-    }
-  }
-
-  if (currentQuestion) {
-    questions.push(currentQuestion);
-  }
-
-  return questions.map((question, index) => ({
-    ...question,
-    id: index + 1,
-    options: question.options.slice(0, 4),
-  }));
-}
+import {
+  LETTERS,
+  shuffleArray,
+  extractPdfText,
+  parseQuestions,
+  validateQuestions,
+} from "../../utils/pdfQuestions";
 
 /* =========================================================
    GENERATE EXAM
@@ -222,29 +64,6 @@ function generateExam(sourceQuestions, shuffleQuestions, shuffleOptions) {
 
       correctAnswer:
         correctOptionIndex >= 0 ? LETTERS[correctOptionIndex] : null,
-    };
-  });
-}
-
-/* =========================================================
-   VALIDATE
-========================================================= */
-
-function validateQuestions(questions) {
-  return questions.map((question) => {
-    const errors = [];
-
-    if (question.options.length !== 4) {
-      errors.push(`Cần 4 phương án, hiện có ${question.options.length}`);
-    }
-
-    if (!question.correctAnswer) {
-      errors.push("Chưa xác định đáp án đúng");
-    }
-
-    return {
-      ...question,
-      errors,
     };
   });
 }

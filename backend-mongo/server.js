@@ -5,6 +5,11 @@ const connectDB = require("./db");
 const authRoutes = require("./routes/auth");
 const timetableRoutes = require("./routes/timetables");
 const adminRoutes = require("./routes/admin");
+const schoolRoutes = require("./routes/school");
+const assignmentRoutes = require("./routes/assignments");
+const disciplineRoutes = require("./routes/discipline");
+const dashboardRoutes = require("./routes/dashboard");
+const notificationRoutes = require("./routes/notifications");
 
 const app = express();
 
@@ -14,6 +19,11 @@ app.use(express.json({ limit: "5mb" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/timetables", timetableRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/school", schoolRoutes);
+app.use("/api/assignments", assignmentRoutes);
+app.use("/api/discipline", disciplineRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.get("/", (req, res) => res.send("TKB backend (MongoDB) đang chạy ✅"));
 

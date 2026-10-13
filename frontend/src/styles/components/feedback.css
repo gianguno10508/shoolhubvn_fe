@@ -1,0 +1,131 @@
+/* =========================================================
+   FEEDBACK — toast · hint · empty · spinner
+========================================================= */
+
+/* ---------- Toast (góc trên phải) ---------- */
+.toast {
+  position: fixed;
+  z-index: 1100;
+  top: 76px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 260px;
+  max-width: 420px;
+  padding: 12px 16px;
+  border: 1px solid var(--green-border);
+  border-radius: var(--radius-lg);
+  background: var(--green-soft);
+  color: #166534;
+  box-shadow: var(--shadow-lg);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  animation: toast-in 0.25s var(--ease);
+}
+
+.toast::before {
+  content: "✓";
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--green-bright);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.toast.toast-error {
+  border-color: var(--red-border);
+  background: var(--red-soft);
+  color: #991b1b;
+}
+
+.toast.toast-error::before {
+  content: "!";
+  background: var(--red-bright);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- Gợi ý / trạng thái rỗng ---------- */
+.hint {
+  max-width: 80ch;
+  margin: 0 0 14px;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+
+.empty {
+  padding: 18px 0;
+  color: var(--text-3);
+}
+
+/* Hộp lỗi dùng chung (đăng nhập, tải danh sách…) */
+.auth-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 16px;
+  padding: 11px 14px;
+  border: 1px solid var(--red-border);
+  border-radius: var(--radius-md);
+  background: var(--red-soft);
+  color: var(--red-strong);
+  font-size: var(--fs-sm);
+}
+
+.auth-error > span {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.auth-error p {
+  margin: 0;
+}
+
+/* ---------- Spinner ---------- */
+.spin {
+  display: inline-block;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .toast {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    min-width: 0;
+    max-width: none;
+  }
+}

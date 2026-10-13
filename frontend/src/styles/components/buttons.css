@@ -1,0 +1,204 @@
+/* =========================================================
+   BUTTONS
+   .btn            nút chính (indigo)
+   .btn-sm         cỡ nhỏ          .block   full width
+   Biến thể: primary · info (phụ) · light (trung tính) · danger/red
+             warn · orange · export · add · save · back · check · result
+========================================================= */
+
+.btn {
+  --btn-bg: var(--primary);
+  --btn-bg-hover: var(--primary-hover);
+  --btn-color: #fff;
+  --btn-border: transparent;
+  --btn-shadow: var(--shadow-xs);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--control-h);
+  padding: 0 16px;
+  border: 1px solid var(--btn-border);
+  border-radius: var(--radius-md);
+  background: var(--btn-bg);
+  color: var(--btn-color);
+  box-shadow: var(--btn-shadow);
+  font-family: inherit;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--t-fast),
+    border-color var(--t-fast),
+    color var(--t-fast),
+    box-shadow var(--t-fast),
+    transform var(--t-fast);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--btn-bg-hover);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-ring);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-sm {
+  min-height: var(--control-h-sm);
+  padding: 0 11px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+}
+
+.btn.block {
+  width: 100%;
+}
+
+/* ---------- Biến thể ---------- */
+
+.btn-primary {
+  --btn-bg: var(--primary);
+  --btn-bg-hover: var(--primary-hover);
+  --btn-shadow: var(--shadow-primary);
+}
+
+.btn-sm.btn-primary {
+  --btn-shadow: var(--shadow-xs);
+}
+
+/* Nút phụ: nền indigo nhạt (Hướng dẫn, Hủy, Ràng buộc…) */
+.btn-info,
+.btn-check {
+  --btn-bg: var(--primary-soft);
+  --btn-bg-hover: var(--primary-soft-2);
+  --btn-color: var(--primary-strong);
+  --btn-shadow: none;
+}
+
+/* Nút trung tính: viền xám */
+.btn-light,
+.btn-back,
+.btn-logout-top {
+  --btn-bg: var(--surface);
+  --btn-bg-hover: var(--gray-50);
+  --btn-color: var(--text-2);
+  --btn-border: var(--border);
+}
+
+.btn-light:hover:not(:disabled),
+.btn-back:hover:not(:disabled),
+.btn-logout-top:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+
+/* Xóa / nguy hiểm: nền đỏ nhạt, hover đỏ đậm */
+.btn-danger,
+.btn-red {
+  --btn-bg: var(--red-soft);
+  --btn-bg-hover: var(--red);
+  --btn-color: var(--red);
+  --btn-border: var(--red-border);
+  --btn-shadow: none;
+}
+
+.btn-danger:hover:not(:disabled),
+.btn-red:hover:not(:disabled) {
+  border-color: var(--red);
+  color: #fff;
+}
+
+.btn-warn {
+  --btn-bg: var(--amber-soft);
+  --btn-bg-hover: var(--amber-border);
+  --btn-color: var(--amber-strong);
+  --btn-border: var(--amber-border);
+  --btn-shadow: none;
+}
+
+.btn-orange {
+  --btn-bg: linear-gradient(135deg, var(--orange-bright), var(--orange));
+  --btn-bg-hover: var(--orange);
+  --btn-shadow: 0 6px 16px rgba(234, 88, 12, 0.22);
+}
+
+.btn-sm.btn-orange {
+  --btn-bg: var(--orange-soft);
+  --btn-bg-hover: var(--orange-border);
+  --btn-color: var(--orange);
+  --btn-border: var(--orange-border);
+  --btn-shadow: none;
+}
+
+.btn-export {
+  --btn-bg: var(--teal);
+  --btn-bg-hover: var(--teal-hover);
+}
+
+.btn-save {
+  --btn-bg: var(--amber-strong);
+  --btn-bg-hover: #92400e;
+}
+
+.btn-add {
+  --btn-bg: var(--green);
+  --btn-bg-hover: var(--green-strong);
+  min-width: var(--control-h-sm);
+  min-height: var(--control-h-sm);
+  padding: 0 10px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.btn-result {
+  --btn-bg: var(--primary-gradient);
+  --btn-bg-hover: var(--primary-hover);
+  --btn-shadow: var(--shadow-primary);
+}
+
+/* ---------- Nút dạng link ---------- */
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Hàng nút ---------- */
+.btn-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.btn-row.tight {
+  margin-bottom: 0;
+}
+
+.row-right {
+  display: flex;
+  justify-content: flex-end;
+  margin: 8px 0 20px;
+}

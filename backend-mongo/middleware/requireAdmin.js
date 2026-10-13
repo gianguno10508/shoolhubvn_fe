@@ -1,13 +1,12 @@
-const User = require("../models/User");
+const loadUser = require("./loadUser");
 
 async function requireAdmin(req, res, next) {
-  const user = await User.findById(req.userId);
-  if (!user) return res.status(401).json({ error: "Không tìm thấy tài khoản." });
-  if (user.role !== "admin") {
-    return res.status(403).json({ error: "Chỉ quản trị viên mới được thực hiện thao tác này." });
-  }
-  req.currentUser = user;
-  next();
+  loadUser(req, res, () => {
+    if (!req.currentUser.isAdmin()) {
+      return res.status(403).json({ error: "Chỉ quản trị viên mới được thực hiện thao tác này." });
+    }
+    next();
+  });
 }
 
 module.exports = requireAdmin;

@@ -25,7 +25,11 @@ export async function apiFetch(path, { method = "GET", body, token } = {}) {
   }
 
   if (!res.ok) {
-    const message = data?.error || `Lỗi máy chủ (${res.status})`;
+    const message =
+      data?.error ||
+      (res.status === 404
+        ? "Máy chủ chưa có chức năng này (404). Hãy khởi động lại backend để cập nhật phiên bản mới."
+        : `Lỗi máy chủ (${res.status})`);
     throw new Error(message);
   }
 

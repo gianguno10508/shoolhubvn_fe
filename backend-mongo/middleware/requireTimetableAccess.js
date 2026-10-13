@@ -1,15 +1,15 @@
-const User = require("../models/User");
+const { PERMISSIONS } = require("../config/roles");
+const loadUser = require("./loadUser");
+const requireSchoolVip = require("./requireSchoolVip");
 
-async function requireTimetableAccess(req, res, next) {
-  const user = await User.findById(req.userId);
-  if (!user) return res.status(401).json({ error: "Không tìm thấy tài khoản." });
-  if (!user.canManageTimetables()) {
-    return res.status(403).json({
-      error: "Tài khoản của bạn chưa có quyền xếp thời khóa biểu. Vui lòng liên hệ nâng cấp VIP.",
-      code: "VIP_REQUIRED",
-    });
-  }
-  next();
+/** Xếp TKB: cần quyền timetable.manage và trường còn hạn VIP */
+function requireTimetableAccess(req, res, next) {
+  loadUser(req, res, () => {
+    if (!req.currentUser.hasPermission(PERMISSIONS.TIMETABLE_MANAGE)) {
+      return res.status(403).json({ error: "Chức danh của bạn không có quyền xếp thời khóa biểu." });
+    }
+    requireSchoolVip(req, res, next);
+  });
 }
 
 module.exports = requireTimetableAccess;

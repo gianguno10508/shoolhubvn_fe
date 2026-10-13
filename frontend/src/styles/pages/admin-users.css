@@ -1,0 +1,923 @@
+.admin-users-page {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.admin-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 25px;
+  margin-bottom: 25px;
+}
+
+.admin-eyebrow {
+  margin-bottom: 5px;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+}
+
+.admin-page-header h2 {
+  margin: 0 0 6px;
+  color: var(--text);
+  font-size: 29px;
+  letter-spacing: -0.6px;
+}
+
+.admin-page-header p {
+  margin: 0;
+  color: var(--text-3);
+  font-size: var(--fs-base);
+}
+
+.admin-refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 15px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--gray-600);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.admin-refresh-btn:hover {
+  border-color: var(--primary-soft-2);
+  color: var(--primary);
+  background: var(--surface-hover);
+}
+
+.admin-refresh-btn > span {
+  font-size: 18px;
+}
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+.admin-toast {
+  position: fixed;
+  z-index: 1000;
+  top: 76px;
+  right: 25px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 380px;
+  padding: 13px 17px;
+  border: 1px solid var(--green-border);
+  border-radius: 12px;
+  background: var(--green-soft);
+  color: #166534;
+  box-shadow: 0 15px 40px rgba(15, 23, 42, 0.12);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  animation: toast-in 0.25s var(--ease);
+}
+
+.admin-toast > span {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--green-bright);
+  color: #fff;
+  font-size: var(--fs-sm);
+}
+
+.admin-toast-error {
+  border-color: var(--red-border);
+  background: var(--red-soft);
+  color: var(--red-strong);
+}
+
+.admin-toast-error > span {
+  background: var(--red);
+}
+
+/* =========================================================
+   STATISTICS
+========================================================= */
+
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-bottom: 22px;
+}
+
+.admin-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 19px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.035);
+}
+
+.admin-stat-icon {
+  width: 45px;
+  height: 45px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-size: 19px;
+}
+
+.admin-stat-icon.blue {
+  background: var(--primary-soft);
+}
+
+.admin-stat-icon.gold {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.admin-stat-icon.orange {
+  background: var(--orange-soft);
+  color: var(--orange);
+}
+
+.admin-stat-icon.purple {
+  background: var(--purple-soft);
+  color: var(--purple);
+}
+
+.admin-stat-card span {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.admin-stat-card strong {
+  color: var(--text);
+  font-size: 23px;
+}
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.admin-loading {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  color: var(--text-3);
+  font-size: var(--fs-base);
+}
+
+.admin-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.admin-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--red-border);
+  border-radius: 15px;
+  background: var(--red-soft);
+  color: var(--red-strong);
+}
+
+.admin-error-icon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  font-weight: 800;
+}
+
+.admin-error strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.admin-error p {
+  margin: 0 0 7px;
+  color: var(--red-strong);
+  font-size: var(--fs-base);
+}
+
+/* =========================================================
+   MAIN PANEL
+========================================================= */
+
+.admin-users-panel {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 5px 25px rgba(15, 23, 42, 0.045);
+}
+
+/* =========================================================
+   TOOLBAR
+========================================================= */
+
+.admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.admin-toolbar-title h3 {
+  margin: 0 0 3px;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.admin-toolbar-title span {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.admin-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Search */
+
+.admin-search {
+  position: relative;
+  width: 260px;
+}
+
+.admin-search > span {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 19px;
+}
+
+.admin-search input {
+  width: 100%;
+  height: 38px;
+  padding: 0 35px 0 35px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  outline: none;
+  background: var(--gray-50);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+}
+
+.admin-search input:focus {
+  border-color: var(--primary-soft-2);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
+}
+
+.admin-search button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.admin-filters select,
+.role-control select {
+  width: auto;
+  height: 38px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  outline: none;
+  background: var(--gray-50);
+  color: var(--gray-600);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.admin-filters select:focus {
+  border-color: var(--primary-soft-2);
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.admin-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.admin-users-table {
+  width: 100%;
+  min-width: 1050px;
+  border-collapse: collapse;
+}
+
+.admin-users-table th {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--gray-50);
+  color: var(--text-3);
+  text-align: left;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+
+.admin-users-table td {
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: middle;
+}
+
+.admin-users-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.admin-users-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.admin-users-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* =========================================================
+   USER
+========================================================= */
+
+.user-account {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 160px;
+}
+
+.user-avatar {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #dbeafe, #e0e7ff);
+  color: var(--primary-strong);
+  font-size: var(--fs-base);
+  font-weight: 800;
+}
+
+.user-account strong {
+  color: var(--text);
+  font-size: var(--fs-base);
+}
+
+.self-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: var(--fs-xs);
+  font-weight: 800;
+}
+
+/* =========================================================
+   USER INFORMATION
+========================================================= */
+
+.user-information strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+.user-information span {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+/* =========================
+   ROLE
+========================= */
+
+.role-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 230px;
+}
+
+.role-badge {
+  --role-color: var(--text-2);
+  --role-bg: var(--gray-50);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid color-mix(in srgb, var(--role-color) 18%, transparent);
+  border-radius: var(--radius-pill);
+  background: var(--role-bg);
+  color: var(--role-color);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* Màu riêng từng chức danh */
+.role-admin { --role-color: var(--purple); --role-bg: var(--purple-soft); }
+.role-school_admin { --role-color: var(--primary); --role-bg: var(--primary-soft); }
+.role-principal { --role-color: var(--amber-strong); --role-bg: var(--amber-soft); }
+.role-homeroom_teacher { --role-color: var(--teal); --role-bg: #f0fdfa; }
+.role-teacher { --role-color: var(--blue); --role-bg: var(--blue-soft); }
+.role-youth_union { --role-color: var(--green-strong); --role-bg: var(--green-soft); }
+.role-red_flag { --role-color: var(--red); --role-bg: var(--red-soft); }
+.role-student { --role-color: var(--gray-600); --role-bg: var(--gray-100); }
+
+/* =========================================================
+   VIP STATUS
+========================================================= */
+
+.vip-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.vip-status > span {
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  font-weight: 800;
+}
+
+.vip-status div strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: var(--fs-xs);
+}
+
+.vip-status small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.vip-status.active {
+  color: #a16207;
+}
+
+.vip-status.active > span {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.vip-status.expired {
+  color: var(--red);
+}
+
+.vip-status.expired > span {
+  background: var(--red-soft-2);
+}
+
+.vip-status.admin {
+  color: var(--purple);
+}
+
+.vip-status.admin > span {
+  background: var(--purple-soft);
+}
+
+.vip-status.none {
+  color: var(--muted);
+}
+
+.vip-status.none > span {
+  background: var(--gray-100);
+}
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vip-action-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vip-action-group > span,
+.vip-action-group button,
+.revoke-btn {
+  white-space: nowrap;
+}
+
+.vip-action-group > span {
+  margin-right: 3px;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.vip-action-group button {
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--primary-soft-2);
+  border-radius: 7px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.vip-action-group button:hover:not(:disabled) {
+  border-color: var(--primary-soft-2);
+  background: var(--primary-soft-2);
+}
+
+.vip-action-group button:disabled,
+.revoke-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.revoke-btn {
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--red-border);
+  border-radius: 7px;
+  background: var(--red-soft);
+  color: var(--red);
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.revoke-btn:hover:not(:disabled) {
+  background: var(--red-soft-2);
+}
+
+/* Nút thao tác thường trong bảng (Đặt lại mật khẩu, Khóa…) */
+.user-actions > button:not(.revoke-btn) {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--t-fast),
+    border-color var(--t-fast);
+}
+
+.user-actions > button:not(.revoke-btn):hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--gray-50);
+}
+
+/* =========================================================
+   TRANG TÀI KHOẢN TRƯỜNG — nhiều panel + form tạo nhanh
+========================================================= */
+
+.admin-users-panel + .admin-users-panel {
+  margin-top: 18px;
+}
+
+form.admin-filters {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+form.admin-filters input,
+form.admin-filters select {
+  width: 170px;
+  min-height: 38px;
+  font-size: var(--fs-sm);
+}
+
+form.admin-filters .btn {
+  min-height: 38px;
+}
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.admin-empty {
+  height: 280px;
+  text-align: center;
+}
+
+.admin-empty > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.admin-empty span {
+  margin-bottom: 10px;
+  font-size: 30px;
+}
+
+.admin-empty strong {
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.admin-empty p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1100px) {
+  .admin-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .admin-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-filters {
+    width: 100%;
+  }
+
+  .admin-search {
+    flex: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-page-header h2 {
+    font-size: 25px;
+  }
+
+  .admin-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .admin-stat-card {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .admin-stat-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .admin-stat-card strong {
+    font-size: 19px;
+  }
+
+  .admin-filters {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-search {
+    width: 100%;
+  }
+
+  .admin-filters select {
+    width: 100%;
+  }
+
+  .admin-toolbar {
+    padding: 15px;
+  }
+
+  .admin-users-table th,
+  .admin-users-table td {
+    padding: 12px;
+  }
+
+  .admin-toast {
+    left: 15px;
+    right: 15px;
+    top: 76px;
+    max-width: none;
+  }
+}
+
+
+@media (max-width: 640px) {
+  form.admin-filters input,
+  form.admin-filters select,
+  form.admin-filters .btn {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   ADMIN — NHÓM THEO TRƯỜNG
+========================================================= */
+
+.admin-group-toolbar {
+  margin-bottom: 14px;
+}
+
+.admin-group-toolbar .admin-toolbar {
+  border-bottom: 0;
+}
+
+.admin-school {
+  margin-bottom: 12px;
+}
+
+.admin-school-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+}
+
+.admin-school.open .admin-school-head {
+  border-bottom: 1px solid var(--border-light);
+  background: var(--gray-25);
+}
+
+.admin-school-toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-school-chevron {
+  flex-shrink: 0;
+  width: 18px;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1;
+  transition: transform var(--t-fast);
+}
+
+.admin-school.open .admin-school-chevron {
+  transform: rotate(90deg);
+  color: var(--primary);
+}
+
+.admin-school-avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--brand-gradient);
+  color: #fff;
+  font-size: var(--fs-md);
+  font-weight: 800;
+}
+
+.admin-school-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-school-name strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: var(--fs-md);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-school-name small {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.admin-school-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 330px;
+}
+
+.admin-school-roles .role-badge {
+  padding: 3px 8px;
+  font-size: var(--fs-xs);
+}
+
+.admin-school-table {
+  min-width: 760px;
+}
+
+.admin-empty-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 40px;
+  color: var(--text-3);
+}
+
+.admin-empty-panel > span {
+  font-size: 28px;
+}
+
+@media (max-width: 1100px) {
+  .admin-school-head {
+    flex-wrap: wrap;
+  }
+
+  .admin-school-toggle {
+    flex-basis: 100%;
+  }
+
+  .admin-school-roles {
+    max-width: none;
+  }
+}

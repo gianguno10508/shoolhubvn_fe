@@ -68,7 +68,7 @@ export default function AssignmentsStep({
       />
       <p className="hint">
         Đây là bản gộp của tất cả khung chương trình. Muốn chỉnh riêng một lớp
-        kèm lịch nghỉ và tiết cố định, mở Khung CT của lớp đó ở Bước 6.
+        kèm lịch nghỉ và tiết cố định, mở Khung CT của lớp đó ở mục “Lớp học”.
       </p>
 
       <div className="filter-bar">

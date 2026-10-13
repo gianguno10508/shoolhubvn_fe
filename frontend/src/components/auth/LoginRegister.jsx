@@ -12,7 +12,7 @@ export default function LoginRegister() {
     username: "",
     password: "",
     name: "",
-    className: "",
+    schoolName: "",
   });
 
   const [error, setError] = useState("");
@@ -45,6 +45,11 @@ export default function LoginRegister() {
       return;
     }
 
+    if (mode === "register" && !form.schoolName.trim()) {
+      setError("Vui lòng nhập tên trường.");
+      return;
+    }
+
     setBusy(true);
 
     try {
@@ -55,7 +60,7 @@ export default function LoginRegister() {
           username: form.username.trim(),
           password: form.password,
           name: form.name.trim(),
-          className: form.className.trim(),
+          schoolName: form.schoolName.trim(),
         });
       }
     } catch (err) {
@@ -124,7 +129,7 @@ export default function LoginRegister() {
             <p>
               {isLogin
                 ? "Đăng nhập để tiếp tục sử dụng hệ thống."
-                : "Tạo tài khoản để lưu và quản lý thời khóa biểu."}
+                : "Đăng ký tài khoản chính cho trường của bạn."}
             </p>
           </div>
 
@@ -201,19 +206,17 @@ export default function LoginRegister() {
                 </div>
 
                 <div className="auth-field">
-                  <label>
-                    Lớp phụ trách
-                    <span className="optional">Không bắt buộc</span>
-                  </label>
+                  <label>Trường học</label>
 
                   <div className="auth-input-wrap">
                     <span className="auth-input-icon">🏫</span>
 
                     <input
                       type="text"
-                      value={form.className}
-                      onChange={(e) => set("className", e.target.value)}
-                      placeholder="Ví dụ: 10A1"
+                      value={form.schoolName}
+                      onChange={(e) => set("schoolName", e.target.value)}
+                      placeholder="Ví dụ: THPT Nguyễn Du"
+                      autoComplete="organization"
                       disabled={busy}
                     />
                   </div>

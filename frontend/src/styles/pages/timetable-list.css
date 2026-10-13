@@ -1,0 +1,158 @@
+/* =========================================================
+   TRANG DANH SÁCH THỜI KHÓA BIỂU
+========================================================= */
+
+.tkb-list-page > .hint,
+.tkb-list-page > .empty,
+.tkb-list-page > .auth-error {
+  max-width: none;
+  margin: 18px 0;
+  padding: 22px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  font-size: var(--fs-md);
+  text-align: center;
+}
+
+.tkb-list-page > .auth-error {
+  justify-content: center;
+  border-style: solid;
+  border-color: var(--red-border);
+  background: var(--red-soft);
+}
+
+.tkb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tkb-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(180px, 260px) auto;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast),
+    transform var(--t-fast);
+}
+
+.tkb-row:hover {
+  transform: translateY(-1px);
+  border-color: var(--primary-soft-2);
+  box-shadow: var(--shadow-md);
+}
+
+/* Thanh màu bên trái khi hover */
+.tkb-row::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 4px 4px 0;
+  background: var(--primary-gradient);
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+
+.tkb-row:hover::before {
+  opacity: 1;
+}
+
+.tkb-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tkb-row-title {
+  overflow: hidden;
+  color: var(--text);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  line-height: 1.4;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--t-fast);
+}
+
+a.tkb-row-title:hover {
+  color: var(--primary);
+}
+
+.tkb-row-title.muted {
+  color: var(--text-3);
+}
+
+.tkb-row-date {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.tkb-row-id {
+  overflow: hidden;
+  padding: 7px 11px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--gray-50);
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tkb-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+@media (max-width: 1100px) {
+  .tkb-row {
+    grid-template-columns: minmax(240px, 1fr) minmax(160px, 220px);
+  }
+
+  .tkb-row-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-light);
+  }
+}
+
+@media (max-width: 640px) {
+  .tkb-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .tkb-row-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tkb-row-actions .btn:first-child {
+    grid-column: 1 / -1;
+  }
+}

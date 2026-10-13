@@ -1,0 +1,116 @@
+/* =========================================================
+   DESIGN TOKENS
+   Mọi màu / cỡ chữ / bo góc / bóng đổ đều lấy từ đây.
+   Breakpoint dùng thống nhất: 1100px · 860px · 640px · 440px
+========================================================= */
+
+:root {
+  /* ---------- Brand ---------- */
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-strong: #3730a3;
+  --primary-soft: #eef2ff;
+  --primary-soft-2: #e0e7ff;
+  --primary-ring: rgba(79, 70, 229, 0.18);
+  --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  --brand-gradient: linear-gradient(135deg, #2563eb 0%, #4f46e5 55%, #7c3aed 100%);
+
+  /* ---------- Neutral (slate) ---------- */
+  --gray-25: #fbfcfe;
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+
+  /* ---------- Semantic ---------- */
+  --blue: #2563eb;
+  --blue-soft: #eff6ff;
+  --blue-border: #bfdbfe;
+
+  --green: #16a34a;
+  --green-strong: #15803d;
+  --green-bright: #22c55e;
+  --green-soft: #f0fdf4;
+  --green-border: #bbf7d0;
+
+  --red: #dc2626;
+  --red-strong: #b91c1c;
+  --red-bright: #ef4444;
+  --red-soft: #fef2f2;
+  --red-soft-2: #fee2e2;
+  --red-border: #fecaca;
+
+  --amber: #d97706;
+  --amber-strong: #b45309;
+  --amber-bright: #f59e0b;
+  --amber-soft: #fffbeb;
+  --amber-border: #fde68a;
+
+  --orange: #ea580c;
+  --orange-bright: #f97316;
+  --orange-soft: #fff7ed;
+  --orange-border: #fed7aa;
+
+  --purple: #7c3aed;
+  --purple-soft: #f5f3ff;
+
+  --teal: #0f766e;
+  --teal-hover: #115e59;
+
+  --gold: #facc15;
+
+  /* ---------- Surface & text ---------- */
+  --bg: #f5f6fb;
+  --surface: #ffffff;
+  --surface-2: var(--gray-50);
+  --surface-hover: #f8f9ff;
+
+  --text: var(--gray-900);
+  --text-2: var(--gray-700);
+  --text-3: var(--gray-500);
+  --muted: var(--gray-400);
+
+  --border: var(--gray-200);
+  --border-light: #edf1f6;
+  --border-strong: var(--gray-300);
+
+  /* ---------- Typography ---------- */
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-base: 14px;
+  --fs-md: 15px;
+  --fs-lg: 17px;
+  --fs-xl: 20px;
+  --fs-2xl: 24px;
+  --fs-3xl: 30px;
+
+  /* ---------- Shape ---------- */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  --control-h: 40px;
+  --control-h-sm: 32px;
+
+  /* ---------- Elevation ---------- */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 14px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 20px 50px rgba(15, 23, 42, 0.14);
+  --shadow-primary: 0 6px 16px rgba(79, 70, 229, 0.24);
+
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --t-fast: 0.15s var(--ease);
+}

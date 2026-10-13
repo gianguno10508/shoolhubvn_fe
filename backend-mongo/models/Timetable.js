@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const timetableSchema = new mongoose.Schema(
   {
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    // TKB thuộc về trường: mọi tài khoản có quyền xếp TKB trong trường đều dùng chung
+    school: { type: mongoose.Schema.Types.ObjectId, ref: "School", default: null },
     name: { type: String, required: true, trim: true },
     data: { type: mongoose.Schema.Types.Mixed, required: true },
     deletedAt: { type: Date, default: null },
@@ -11,5 +13,6 @@ const timetableSchema = new mongoose.Schema(
 );
 
 timetableSchema.index({ owner: 1, deletedAt: 1, createdAt: -1 });
+timetableSchema.index({ school: 1, deletedAt: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Timetable", timetableSchema);

@@ -251,7 +251,7 @@ export default function FrameworkView({
       <div className="fw-sub-head">
         <h3>
           {isClass
-            ? "Bước 6.2: Khung chương trình"
+            ? "Khung chương trình"
             : "Khung chương trình của khối"}
         </h3>
         <div className="spacer" />

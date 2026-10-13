@@ -8,6 +8,6 @@ import UpgradeNotice from "../../pages/UpgradeNoticePage";
  * Không đủ quyền thì hiện luôn hướng dẫn liên hệ nâng cấp, thay vì chuyển trang. */
 export default function RequireTimetableAccess() {
   const { user } = useAuth();
-  if (!canManageTimetables(user)) return <UpgradeNotice />;
+  if (!canManageTimetables(user)) return <UpgradeNotice reason="permission" />;
   return <Outlet />;
 }

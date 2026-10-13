@@ -1,181 +1,113 @@
+// pages/TeacherPage.jsx
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { getDashboard } from "../api/dashboard";
+import { useAuth } from "../context/AuthContext";
+import useUnreadCount from "../hooks/useUnreadCount";
+import {
+  ROLE_LABEL,
+  canAccessDiscipline,
+  canAccessSchoolUsers,
+  canManageAssignments,
+  hasPermission,
+} from "../utils/permissions";
+import { timeAgo } from "../utils/time";
 
-const teacherModules = [
-  {
-    id: "thi-dua",
-    icon: "🏆",
-    title: "Thi đua & Nề nếp",
-    subtitle: "Quản lý nề nếp học sinh",
-    description:
-      "Chấm thi đua cờ đỏ, ghi nhận vi phạm, điểm cộng và theo dõi kết quả rèn luyện của từng lớp.",
-    path: "/giao-vien/thi-dua",
-    color: "orange",
-    stats: "12 lớp đang theo dõi",
-  },
-  {
-    id: "bai-tap",
-    icon: "📝",
-    title: "Bài tập & Tự chấm",
-    subtitle: "Giao bài trực tuyến",
-    description:
-      "Tạo và giao bài tập cho học sinh. Hệ thống hỗ trợ học sinh làm bài và tự động chấm điểm.",
-    path: "/giao-vien/bai-tap",
-    color: "blue",
-    stats: "08 bài đang hoạt động",
-  },
-  {
-    id: "hoc-sinh",
-    icon: "👥",
-    title: "Quản lý học sinh",
-    subtitle: "Tài khoản & danh sách",
-    description:
-      "Tạo tài khoản, quản lý thông tin và theo dõi danh sách học sinh thuộc các lớp phụ trách.",
-    path: "/giao-vien/hoc-sinh",
-    color: "green",
-    stats: "356 học sinh",
-  },
-  {
-    id: "tron-de",
-    icon: "📊",
-    title: "Kiểm tra & Đánh giá",
-    subtitle: "Đề kiểm tra & trộn đề",
-    description:
-      "Tạo ngân hàng câu hỏi, thiết lập đề kiểm tra, trộn mã đề và theo dõi kết quả đánh giá.",
-    path: "/giao-vien/tron-de",
-    color: "purple",
-    stats: "24 đề kiểm tra",
-  },
-];
+const canSendNotice = (user) =>
+  hasPermission(user, "notification.send_school") || hasPermission(user, "notification.send_class");
 
-const recentActivities = [
-  {
-    icon: "📝",
-    title: "Bài tập Toán - Chương II",
-    description: "35 học sinh đã hoàn thành",
-    time: "10 phút trước",
-    type: "blue",
-  },
-  {
-    icon: "🏆",
-    title: "Chấm thi đua lớp 10A1",
-    description: "Đã cập nhật kết quả tuần 6",
-    time: "35 phút trước",
-    type: "orange",
-  },
-  {
-    icon: "📊",
-    title: "Kiểm tra giữa học kỳ I",
-    description: "Đã tạo 4 mã đề",
-    time: "Hôm qua",
-    type: "purple",
-  },
-  {
-    icon: "👥",
-    title: "Tạo tài khoản học sinh",
-    description: "Đã tạo 32 tài khoản mới",
-    time: "Hôm qua",
-    type: "green",
-  },
-];
+const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 
-const quickActions = [
-  {
-    icon: "➕",
-    title: "Giao bài mới",
-    path: "/giao-vien/bai-tap",
-  },
-  {
-    icon: "🏆",
-    title: "Chấm thi đua",
-    path: "/giao-vien/thi-dua",
-  },
-  {
-    icon: "👤",
-    title: "Tạo tài khoản",
-    path: "/giao-vien/hoc-sinh",
-  },
-  {
-    icon: "📄",
-    title: "Tạo đề kiểm tra",
-    path: "/giao-vien/tron-de",
-  },
-];
+/** Các mục chức năng + số liệu lấy từ server; ẩn mục mà chức danh không dùng được */
+function buildModules(user, d, unread) {
+  const disc = d?.discipline;
+  return [
+    canAccessDiscipline(user) && {
+      id: "thi-dua",
+      icon: "🏆",
+      title: "Thi đua & Nề nếp",
+      subtitle: "Quản lý nề nếp học sinh",
+      description:
+        "Chấm thi đua cờ đỏ, ghi nhận vi phạm, điểm cộng và theo dõi kết quả rèn luyện của từng lớp theo tuần, tháng.",
+      path: "/thi-dua",
+      color: "orange",
+      stats: disc
+        ? disc.myClass
+          ? `Lớp ${disc.myClass.className}: ${disc.myClass.score} điểm · hạng ${disc.myClass.rank}/${disc.myClass.totalClasses}`
+          : `${disc.classesTracked} lớp · hôm nay đã chấm ${disc.recordedToday}`
+        : "…",
+    },
+    canManageAssignments(user) && {
+      id: "bai-tap",
+      icon: "📝",
+      title: "Bài tập & Tự chấm",
+      subtitle: "Giao bài trực tuyến",
+      description: "Giao bài trắc nghiệm từ file PDF. Học sinh làm bài trực tuyến và được hệ thống chấm điểm tự động.",
+      path: "/giao-vien/bai-tap",
+      color: "blue",
+      stats: d ? `${pad2(d.assignments.active)} bài đang mở · ${d.assignments.submissionsThisWeek} lượt nộp tuần này` : "…",
+    },
+    canAccessSchoolUsers(user) && {
+      id: "hoc-sinh",
+      icon: "👥",
+      title: "Quản lý học sinh",
+      subtitle: "Tài khoản & danh sách",
+      description: "Tạo tài khoản, quản lý thông tin và theo dõi danh sách học sinh thuộc các lớp phụ trách.",
+      path: "/truong/tai-khoan",
+      color: "green",
+      stats: d ? `${d.students.count} học sinh${d.students.scope === "class" ? ` lớp ${d.user.className}` : ""}` : "…",
+    },
+    {
+      id: "thong-bao",
+      icon: "🔔",
+      title: "Thông báo",
+      subtitle: "Nhắn tin nội bộ",
+      description: canSendNotice(user)
+        ? "Gửi thông báo đến giáo viên, học sinh theo trường, chức danh hoặc lớp. Theo dõi số người đã đọc."
+        : "Nhận thông báo từ Ban giám hiệu, Đoàn trường và giáo viên chủ nhiệm.",
+      path: "/thong-bao",
+      color: "teal",
+      stats: unread ? `${unread} thông báo chưa đọc` : "Không có thông báo mới",
+    },
+    {
+      id: "tron-de",
+      icon: "📊",
+      title: "Kiểm tra & Đánh giá",
+      subtitle: "Đề kiểm tra & trộn đề",
+      description: "Tải đề PDF, tự động đảo câu hỏi và phương án để tạo nhiều mã đề, xuất PDF / Word / đáp án Excel.",
+      path: "/giao-vien/tron-de",
+      color: "purple",
+      stats: "Trộn đề ngay trên trình duyệt",
+    },
+  ].filter(Boolean);
+}
 
 export default function TeacherPage() {
+  const { user } = useAuth();
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getDashboard()
+      .then(setData)
+      .catch((err) => setError(err.message || "Không tải được số liệu."));
+  }, []);
+
+  const [unread] = useUnreadCount(!!user?.schoolId);
+  const modules = buildModules(user, data, unread);
+  const quickActions = [
+    canManageAssignments(user) && { icon: "➕", title: "Giao bài mới", path: "/giao-vien/bai-tap/moi" },
+    canAccessDiscipline(user) && { icon: "🏆", title: "Xem / chấm thi đua", path: "/thi-dua" },
+    canSendNotice(user) && { icon: "📣", title: "Gửi thông báo", path: "/thong-bao" },
+    canAccessSchoolUsers(user) && { icon: "👤", title: "Tạo tài khoản học sinh", path: "/truong/tai-khoan" },
+    { icon: "📄", title: "Trộn đề kiểm tra", path: "/giao-vien/tron-de" },
+  ].filter(Boolean);
+  const displayName = user?.name || user?.username || "Thầy/Cô";
+  const myClass = data?.discipline?.myClass;
+
   return (
     <div className="teacher-dashboard">
-      {/* =====================================================
-          SIDEBAR
-      ===================================================== */}
 
-      <aside className="teacher-sidebar">
-        <div className="teacher-logo">
-          <div className="teacher-logo-mark">🎓</div>
-
-          <div className="teacher-logo-text">
-            <strong>Teacher Portal</strong>
-            <span>Hệ thống giáo viên</span>
-          </div>
-        </div>
-
-        <div className="teacher-menu-title">MENU CHÍNH</div>
-
-        <nav className="teacher-nav">
-          <Link to="/giao-vien" className="teacher-nav-item active">
-            <span className="teacher-nav-icon">🏠</span>
-
-            <span>Tổng quan</span>
-          </Link>
-
-          <Link to="/teacher/thi-dua" className="teacher-nav-item">
-            <span className="teacher-nav-icon">🏆</span>
-
-            <span>Thi đua & Nề nếp</span>
-          </Link>
-
-          <Link to="/giao-vien/bai-tap" className="teacher-nav-item">
-            <span className="teacher-nav-icon">📝</span>
-
-            <span>Bài tập & Tự chấm</span>
-          </Link>
-
-          <Link to="/giao-vien/hoc-sinh" className="teacher-nav-item">
-            <span className="teacher-nav-icon">👥</span>
-
-            <span>Quản lý học sinh</span>
-          </Link>
-
-          <Link to="/giao-vien/tron-de" className="teacher-nav-item">
-            <span className="teacher-nav-icon">📊</span>
-
-            <span>Kiểm tra & Đánh giá</span>
-          </Link>
-        </nav>
-
-        <div className="teacher-menu-title teacher-menu-title-bottom">
-          HỆ THỐNG
-        </div>
-
-        <nav className="teacher-nav">
-          <a href="#huong-dan" className="teacher-nav-item">
-            <span className="teacher-nav-icon">💡</span>
-
-            <span>Hướng dẫn sử dụng</span>
-          </a>
-
-          <a href="#tro-giup" className="teacher-nav-item">
-            <span className="teacher-nav-icon">❓</span>
-
-            <span>Trợ giúp</span>
-          </a>
-        </nav>
-
-        <div className="teacher-sidebar-footer">
-          <Link to="/" className="teacher-home-link">
-            ← Về trang chính
-          </Link>
-        </div>
-      </aside>
 
       {/* =====================================================
           MAIN CONTENT
@@ -187,40 +119,37 @@ export default function TeacherPage() {
 
           <header className="teacher-topbar">
             <div>
-              <span className="teacher-breadcrumb">
-                Teacher Portal / Tổng quan
-              </span>
+              <h1>Xin chào, {displayName} 👋</h1>
 
-              <h1>Xin chào, Thầy/Cô 👋</h1>
-
-              <p>Chào mừng đến với không gian quản lý giảng dạy.</p>
+              <p>
+                {data
+                  ? `${data.school.name} · năm học ${data.school.academicYear}`
+                  : "Chào mừng đến với không gian quản lý giảng dạy."}
+              </p>
             </div>
 
-            <div className="teacher-user">
-              <div className="teacher-user-avatar">GV</div>
-
-              <div className="teacher-user-info">
-                <strong>Nguyễn Văn Giáo</strong>
-
-                <span>Giáo viên</span>
-              </div>
-
-              <button className="teacher-user-more">⋮</button>
-            </div>
           </header>
 
           {/* SEMESTER BANNER */}
 
           <section className="teacher-banner">
             <div className="teacher-banner-content">
-              <span className="teacher-banner-label">NĂM HỌC 2025 - 2026</span>
+              <span className="teacher-banner-label">
+                NĂM HỌC {data?.school.academicYear?.replace("-", " - ") || "…"}
+              </span>
 
-              <h2>Quản lý giảng dạy hiệu quả hơn</h2>
+              <h2>
+                {myClass
+                  ? `Lớp ${myClass.className} đang xếp hạng ${myClass.rank}/${myClass.totalClasses} tuần này`
+                  : "Quản lý giảng dạy hiệu quả hơn"}
+              </h2>
 
               <p>
-                Tập trung quản lý học sinh, giao bài, kiểm tra và theo dõi nề
-                nếp trong một hệ thống.
+                {myClass
+                  ? `Điểm thi đua tuần: ${myClass.score}/${data.discipline.basePoints} · bị trừ ${myClass.penalty} điểm.`
+                  : "Tập trung quản lý học sinh, giao bài, kiểm tra và theo dõi nề nếp trong một hệ thống."}
               </p>
+              {error && <p className="teacher-banner-error">⚠ {error}</p>}
             </div>
 
             <div className="teacher-banner-decoration">
@@ -235,51 +164,69 @@ export default function TeacherPage() {
           ================================================= */}
 
           <section className="teacher-overview">
-            <div className="teacher-overview-card">
-              <div className="overview-icon blue">👥</div>
-
-              <div className="overview-content">
-                <span>Học sinh</span>
-                <strong>356</strong>
-                <small>
-                  <b>+12</b> trong tháng này
-                </small>
+            {[
+              {
+                icon: "👥",
+                color: "blue",
+                label: data?.students.scope === "class" ? `Học sinh lớp ${data.user.className}` : "Học sinh",
+                value: data?.students.count,
+                sub: (
+                  <>
+                    <b>+{data?.students.newThisMonth ?? 0}</b> trong tháng này
+                  </>
+                ),
+              },
+              {
+                icon: "📝",
+                color: "orange",
+                label: data?.assignments.scope === "school" ? "Bài tập toàn trường" : "Bài tập đã giao",
+                value: data?.assignments.total,
+                sub: (
+                  <>
+                    <b>{pad2(data?.assignments.active)}</b> đang mở
+                  </>
+                ),
+              },
+              {
+                icon: "📥",
+                color: "purple",
+                label: "Lượt nộp bài",
+                value: data?.assignments.submissionsThisWeek,
+                sub: "trong 7 ngày qua",
+              },
+              myClass
+                ? {
+                    icon: "🏆",
+                    color: "green",
+                    label: "Thi đua tuần",
+                    value: myClass.score,
+                    sub: (
+                      <>
+                        hạng <b>{myClass.rank}</b>/{myClass.totalClasses} lớp
+                      </>
+                    ),
+                  }
+                : {
+                    icon: "🏆",
+                    color: "green",
+                    label: "Thi đua",
+                    value: data?.discipline.classesTracked,
+                    sub: (
+                      <>
+                        lớp · hôm nay chấm <b>{data?.discipline.recordedToday ?? 0}</b>
+                      </>
+                    ),
+                  },
+            ].map((s) => (
+              <div className="teacher-overview-card" key={s.label}>
+                <div className={`overview-icon ${s.color}`}>{s.icon}</div>
+                <div className="overview-content">
+                  <span>{s.label}</span>
+                  <strong>{data ? (s.value ?? 0) : "…"}</strong>
+                  <small>{s.sub}</small>
+                </div>
               </div>
-            </div>
-
-            <div className="teacher-overview-card">
-              <div className="overview-icon orange">📝</div>
-
-              <div className="overview-content">
-                <span>Bài tập</span>
-                <strong>18</strong>
-                <small>
-                  <b>08</b> đang hoạt động
-                </small>
-              </div>
-            </div>
-
-            <div className="teacher-overview-card">
-              <div className="overview-icon purple">📊</div>
-
-              <div className="overview-content">
-                <span>Bài kiểm tra</span>
-                <strong>24</strong>
-                <small>
-                  <b>04</b> trong tháng này
-                </small>
-              </div>
-            </div>
-
-            <div className="teacher-overview-card">
-              <div className="overview-icon green">🏆</div>
-
-              <div className="overview-content">
-                <span>Thi đua</span>
-                <strong>12</strong>
-                <small>lớp đang theo dõi</small>
-              </div>
-            </div>
+            ))}
           </section>
 
           {/* =================================================
@@ -298,7 +245,7 @@ export default function TeacherPage() {
             </div>
 
             <div className="teacher-module-grid">
-              {teacherModules.map((module) => (
+              {modules.map((module) => (
                 <Link
                   key={module.id}
                   to={module.path}
@@ -338,14 +285,14 @@ export default function TeacherPage() {
                 <div>
                   <h2>Hoạt động gần đây</h2>
 
-                  <p>Những hoạt động mới nhất của Thầy/Cô</p>
+                  <p>Giao bài, học sinh nộp bài, chấm thi đua</p>
                 </div>
-
-                <button>Xem tất cả</button>
               </div>
 
               <div className="teacher-activities">
-                {recentActivities.map((activity, index) => (
+                {data && data.activities.length === 0 && <p className="teacher-empty">Chưa có hoạt động nào.</p>}
+                {!data && <p className="teacher-empty">Đang tải...</p>}
+                {data?.activities.map((activity, index) => (
                   <div className="teacher-activity" key={index}>
                     <div className={`activity-icon ${activity.type}`}>
                       {activity.icon}
@@ -357,7 +304,7 @@ export default function TeacherPage() {
                       <span>{activity.description}</span>
                     </div>
 
-                    <time>{activity.time}</time>
+                    <time>{timeAgo(activity.time)}</time>
                   </div>
                 ))}
               </div>

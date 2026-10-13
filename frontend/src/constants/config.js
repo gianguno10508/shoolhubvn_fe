@@ -25,36 +25,33 @@ export const STATUS_STAGES = [
   "Đã có kết quả",
 ];
 
+/* Các bước soạn thời khóa biểu (sidebar trình soạn). `count` = khóa đếm số lượng hiển thị bên phải */
 export const NAV_GROUPS = [
   {
-    title: "Cài đặt",
+    title: "Thiết lập",
     items: [
-      { key: "config", label: "Bước 1: Cấu hình chung" },
-      { key: "subjects", label: "Bước 2: Danh sách môn học" },
+      { key: "config", label: "Thông tin chung", hint: "Tên, năm học, số buổi / tiết" },
+      { key: "subjects", label: "Môn học", count: "subjects" },
     ],
   },
   {
-    title: "Tổ chuyên môn / Giáo viên",
+    title: "Giáo viên",
     items: [
-      { key: "departments", label: "Bước 3: Danh sách tổ chuyên môn" },
-      { key: "teachers", label: "Bước 4: Danh sách giáo viên" },
+      { key: "departments", label: "Tổ chuyên môn", count: "departments" },
+      { key: "teachers", label: "Danh sách giáo viên", count: "teachers" },
     ],
   },
   {
-    title: "Khối / lớp",
+    title: "Khối & lớp",
     items: [
-      { key: "grades", label: "Bước 5: Danh sách khối (nhóm lớp)" },
-      {
-        key: "campuses",
-        label: "Bước 5.1: Danh sách điểm trường",
-        small: true,
-      },
-      { key: "classes", label: "Bước 6: Danh sách lớp học" },
-      { key: "assignments", label: "Bước 7: Thiết lập phân công giảng dạy" },
+      { key: "grades", label: "Khối lớp", count: "grades" },
+      { key: "campuses", label: "Điểm trường", count: "campuses", small: true },
+      { key: "classes", label: "Lớp học", count: "classes" },
+      { key: "assignments", label: "Phân công giảng dạy", count: "assignments" },
     ],
   },
   {
     title: "Nâng cao",
-    items: [{ key: "constraints", label: "Bước 8: Cài đặt ràng buộc" }],
+    items: [{ key: "constraints", label: "Ràng buộc xếp lịch" }],
   },
 ];
