@@ -1,6 +1,7 @@
 // pages/assignments/game/ObstacleGame.jsx
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LETTERS, readQuestionsFromPdf, shuffleArray, validateQuestions } from "../../../utils/pdfQuestions";
+import { LETTERS, shuffleArray } from "../../../utils/pdfQuestions";
+import { Confetti, Leaderboard, QuestionFileCard, starsOf, usePlayingSignal } from "./GameShared";
 import { playSound, readMuted, writeMuted } from "./gameSound";
 import {
   BOARD_SIZE,
@@ -43,15 +44,6 @@ function multiplierOf(streak) {
   return 1;
 }
 
-/** 0–3 sao theo tỉ lệ câu đúng trên tổng số câu */
-function starsOf(right, total) {
-  if (!right || !total) return 0;
-  const rate = right / total;
-  if (rate >= 0.9) return 3;
-  if (rate >= 0.6) return 2;
-  return 1;
-}
-
 /** Tạo lượt chơi mới: trộn câu / phương án, gắn thời gian cho từng câu */
 function buildRun(questions, settings) {
   const list = settings.shuffleQuestions ? shuffleArray(questions) : [...questions];
@@ -67,72 +59,14 @@ function buildRun(questions, settings) {
 
 const NO_LIFELINES = { fifty: false, time: false, skip: false };
 
-/** Pháo giấy khi về đích / đạt kết quả tốt */
-function Confetti() {
-  const pieces = useMemo(
-    () =>
-      Array.from({ length: 70 }, (_, i) => ({
-        left: Math.random() * 100,
-        delay: Math.random() * 1.2,
-        duration: 2.2 + Math.random() * 1.8,
-        color: ["#f43f5e", "#3b82f6", "#f59e0b", "#22c55e", "#a855f7", "#06b6d4"][i % 6],
-        rotate: Math.random() * 360,
-        size: 6 + Math.random() * 6,
-      })),
-    [],
-  );
-  return (
-    <div className="og-confetti" aria-hidden="true">
-      {pieces.map((p, i) => (
-        <span
-          key={i}
-          style={{
-            left: `${p.left}%`,
-            width: p.size,
-            height: p.size * 1.6,
-            background: p.color,
-            animationDelay: `${p.delay}s`,
-            animationDuration: `${p.duration}s`,
-            transform: `rotate(${p.rotate}deg)`,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function Leaderboard({ list, highlight }) {
-  if (!list.length) return <p className="og-board-empty">Chưa có ai trên bảng xếp hạng. Hãy là người đầu tiên!</p>;
-  return (
-    <ol className="og-board">
-      {list.map((e, i) => (
-        <li key={e.date + e.name} className={e.date === highlight ? "me" : ""}>
-          <span className="og-board-rank">{["🥇", "🥈", "🥉"][i] || i + 1}</span>
-          <span className="og-board-name">{e.name}</span>
-          <span className="og-board-meta">
-            {e.passed}/{e.total} câu
-          </span>
-          <strong>{e.score.toLocaleString("vi-VN")}</strong>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-export default function ObstacleGame() {
-  const fileInputRef = useRef(null);
+export default function ObstacleGame({ deck, onDeckChange, onPlaying }) {
   const gameRef = useRef(null);
   const timers = useRef([]);
   const popId = useRef(0);
   const lastTick = useRef(null);
 
   /* ----- Cài đặt ----- */
-  const [file, setFile] = useState(null);
-  const [questions, setQuestions] = useState([]);
-  const [skipped, setSkipped] = useState(0);
-  const [reading, setReading] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
-  const [error, setError] = useState("");
+  const { file, questions } = deck;
   const [settings, setSettings] = useState({
     defaultSeconds: 20,
     overrides: {}, // id câu -> số giây riêng
@@ -201,6 +135,13 @@ export default function ObstacleGame() {
     setBoard(lbKey ? loadBoard(lbKey) : []);
   }, [lbKey]);
 
+  // Đổi đề → bỏ thời gian riêng của từng câu
+  useEffect(() => {
+    setSettings((prev) => ({ ...prev, overrides: {} }));
+  }, [questions]);
+
+  usePlayingSignal(phase !== "setup", onPlaying);
+
   function toggleMute() {
     setMuted((m) => {
       writeMuted(!m);
@@ -216,35 +157,6 @@ export default function ObstacleGame() {
     },
     [later],
   );
-
-  /* ----- Đọc đề ----- */
-  async function processFile(selected) {
-    if (!selected) return;
-    setError("");
-    setReading(true);
-    try {
-      const checked = validateQuestions(await readQuestionsFromPdf(selected));
-      const valid = checked.filter((q) => !q.errors.length);
-      if (!valid.length) throw new Error("Không có câu hỏi nào đủ 4 phương án và đáp án đúng (đánh dấu “_A.”).");
-      setFile(selected);
-      setQuestions(valid);
-      setSkipped(checked.length - valid.length);
-      setSettings((prev) => ({ ...prev, overrides: {} }));
-    } catch (err) {
-      setFile(null);
-      setQuestions([]);
-      setError(err.message || "Không thể đọc file PDF.");
-    } finally {
-      setReading(false);
-    }
-  }
-
-  function removeFile() {
-    setFile(null);
-    setQuestions([]);
-    setSkipped(0);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  }
 
   const set = (field, value) => setSettings((prev) => ({ ...prev, [field]: value }));
 
@@ -477,75 +389,7 @@ export default function ObstacleGame() {
   if (phase === "setup") {
     return (
       <>
-        {error && (
-          <div className="auth-error as-alert">
-            <span>!</span>
-            <p>{error}</p>
-          </div>
-        )}
-
-        <section className="as-card">
-          <div className="as-card-head">
-            <span className="as-step">1</span>
-            <div>
-              <h3>Tải đề PDF</h3>
-              <p>
-                Cùng định dạng với bài tập cổ điển: <b>“Câu 1.”</b>, phương án <b>A. B. C. D.</b>, đáp án đúng có dấu
-                gạch dưới phía trước, ví dụ <b>“_B.”</b>. Câu thiếu phương án hoặc chưa có đáp án sẽ bị bỏ qua.
-              </p>
-            </div>
-          </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/pdf,.pdf"
-            hidden
-            onChange={(e) => processFile(e.target.files?.[0])}
-          />
-
-          {!file ? (
-            <div
-              className={"as-dropzone" + (dragActive ? " drag-active" : "")}
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragActive(true);
-              }}
-              onDragLeave={() => setDragActive(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragActive(false);
-                processFile(e.dataTransfer.files?.[0]);
-              }}
-            >
-              <span className="as-dropzone-icon">{reading ? <span className="spin">↻</span> : "↑"}</span>
-              <strong>{reading ? "Đang đọc đề..." : "Kéo thả file PDF vào đây"}</strong>
-              <span>
-                hoặc <b>chọn file từ máy tính</b>
-              </span>
-            </div>
-          ) : (
-            <div className="as-file">
-              <span className="as-file-icon">PDF</span>
-              <div className="as-file-info">
-                <strong>{file.name}</strong>
-                <span>
-                  {questions.length} chướng ngại vật
-                  {skipped > 0 && (
-                    <>
-                      {" · "}
-                      <b className="bad-text">bỏ qua {skipped} câu chưa hoàn chỉnh</b>
-                    </>
-                  )}
-                </span>
-              </div>
-              <button className="btn btn-sm btn-light" type="button" onClick={removeFile}>
-                Chọn file khác
-              </button>
-            </div>
-          )}
-        </section>
+        <QuestionFileCard deck={deck} onChange={onDeckChange} unit="chướng ngại vật" />
 
         <section className="as-card">
           <div className="as-card-head">
@@ -669,7 +513,7 @@ export default function ObstacleGame() {
             {questions.length ? `${questions.length} câu` : "Chưa có đề"}
             {questions.length > 0 && ` · tối đa ${Math.ceil(totalSeconds / 60)} phút`} · không lưu điểm lên hệ thống
           </span>
-          <button className="btn btn-primary" type="button" onClick={startGame} disabled={!questions.length || reading}>
+          <button className="btn btn-primary" type="button" onClick={startGame} disabled={!questions.length}>
             🏃 Bắt đầu chơi
           </button>
         </div>

@@ -16,6 +16,9 @@ import { timeAgo } from "../utils/time";
 const canSendNotice = (user) =>
   hasPermission(user, "notification.send_school") || hasPermission(user, "notification.send_class");
 
+const hasSchoolLessonPlans = (user) =>
+  !!user?.schoolId && (hasPermission(user, "exam.manage") || hasPermission(user, "assignment.manage"));
+
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 
 /** Các mục chức năng + số liệu lấy từ server; ẩn mục mà chức danh không dùng được */
@@ -46,6 +49,16 @@ function buildModules(user, d, unread) {
       path: "/giao-vien/bai-tap",
       color: "blue",
       stats: d ? `${pad2(d.assignments.active)} bài đang mở · ${d.assignments.submissionsThisWeek} lượt nộp tuần này` : "…",
+    },
+    hasSchoolLessonPlans(user) && {
+      id: "giao-an",
+      icon: "📖",
+      title: "Giáo án AI",
+      subtitle: "Soạn giáo án từ ảnh SGK",
+      description: "Chụp ảnh các trang sách giáo khoa, AI soạn kế hoạch bài dạy theo mẫu Công văn 5512. Sửa và xuất Word.",
+      path: "/giao-vien/giao-an",
+      color: "orange",
+      stats: "Miễn phí · xuất file Word",
     },
     canAccessSchoolUsers(user) && {
       id: "hoc-sinh",
@@ -100,6 +113,7 @@ export default function TeacherPage() {
     canAccessDiscipline(user) && { icon: "🏆", title: "Xem / chấm thi đua", path: "/thi-dua" },
     canSendNotice(user) && { icon: "📣", title: "Gửi thông báo", path: "/thong-bao" },
     canAccessSchoolUsers(user) && { icon: "👤", title: "Tạo tài khoản học sinh", path: "/truong/tai-khoan" },
+    hasSchoolLessonPlans(user) && { icon: "📖", title: "Soạn giáo án AI", path: "/giao-vien/giao-an" },
     { icon: "📄", title: "Trộn đề kiểm tra", path: "/giao-vien/tron-de" },
   ].filter(Boolean);
   const displayName = user?.name || user?.username || "Thầy/Cô";

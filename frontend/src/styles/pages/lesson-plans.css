@@ -1,0 +1,482 @@
+/* =========================================================
+   GIÁO ÁN AI (lp-*) — dùng lại as-card / as-dropzone / field của trang Bài tập
+========================================================= */
+
+.lp-icon {
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+}
+
+.lp-quota {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.lp-quota.out {
+  border-color: var(--red-border);
+  background: var(--red-soft);
+  color: var(--red-strong);
+}
+
+/* Ảnh đã tải */
+.lp-thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.lp-thumbs li {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  aspect-ratio: 3 / 4;
+}
+
+.lp-thumbs img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lp-thumb-num {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  background: var(--primary);
+  color: #fff;
+  font-size: var(--fs-xs);
+  font-weight: 800;
+}
+
+.lp-thumb-actions {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px;
+  background: linear-gradient(transparent, rgba(15, 23, 42, 0.7));
+}
+
+.lp-thumb-actions button {
+  width: 30px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text);
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lp-thumb-actions button.danger {
+  color: var(--red-strong);
+}
+
+.lp-thumb-actions button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.as-dropzone.lp-dropzone-small {
+  padding: 16px;
+}
+
+.lp-span-2 {
+  grid-column: span 2;
+}
+
+.lp-span-2 textarea {
+  resize: vertical;
+}
+
+.lp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.lp-chips button {
+  padding: 5px 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.lp-chips button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Đang soạn */
+.lp-generating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 24px 16px;
+  border: 1px solid var(--primary-soft-2);
+  border-radius: var(--radius-lg);
+  background: var(--primary-soft);
+  text-align: center;
+}
+
+.lp-generating-icon {
+  font-size: 40px;
+  animation: lp-write 1.2s ease-in-out infinite alternate;
+}
+
+.lp-generating strong {
+  color: var(--primary-strong);
+}
+
+.lp-generating small {
+  color: var(--text-3);
+}
+
+@keyframes lp-write {
+  from {
+    transform: rotate(-8deg) translateX(-6px);
+  }
+  to {
+    transform: rotate(8deg) translateX(6px);
+  }
+}
+
+/* Danh sách */
+.lp-saved {
+  margin-top: 28px;
+}
+
+.lp-saved > h3 {
+  margin: 0 0 12px;
+  font-size: var(--fs-lg);
+}
+
+.lp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.lp-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    border-color var(--t-fast),
+    transform var(--t-fast);
+}
+
+.lp-item:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.lp-item h4 {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.4;
+}
+
+.lp-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lp-tags span {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.lp-item small {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+/* Chi tiết */
+.lp-detail-head {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.lp-detail-title {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.lp-detail-title h2 {
+  margin: 0;
+}
+
+.lp-detail-title input {
+  width: 100%;
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+.lp-detail-title p {
+  margin: 4px 0 0;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+}
+
+.lp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lp-notice {
+  margin-bottom: 12px;
+  padding: 8px 14px;
+  border: 1px solid var(--green-border);
+  border-radius: var(--radius-md);
+  background: var(--green-soft);
+  color: var(--green-strong);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.lp-paper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 48px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  color: #111827;
+}
+
+.lp-paper.scroll {
+  max-width: none;
+  height: 100%;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.lp-disclaimer {
+  max-width: 900px;
+  margin: 12px auto 0;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+/* Nội dung giáo án: giống văn bản in */
+.lp-doc {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.lp-doc h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  text-align: center;
+}
+
+.lp-doc h2 {
+  margin: 22px 0 8px;
+  font-size: 20px;
+}
+
+.lp-doc h3,
+.lp-doc h4 {
+  margin: 16px 0 6px;
+  font-size: 18px;
+}
+
+.lp-doc p {
+  margin: 0 0 8px;
+  text-align: justify;
+}
+
+.lp-doc hr {
+  margin: 16px 0;
+  border: 0;
+  border-top: 1px solid #9ca3af;
+}
+
+.lp-list {
+  margin: 0 0 8px;
+  padding-left: 22px;
+}
+
+.lp-list li {
+  margin-bottom: 3px;
+}
+
+.lp-list li.numbered {
+  display: flex;
+  gap: 6px;
+  list-style: none;
+}
+
+.lp-marker {
+  flex-shrink: 0;
+}
+
+.lp-table-wrap {
+  margin: 8px 0 12px;
+  overflow-x: auto;
+}
+
+.lp-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.lp-table th,
+.lp-table td {
+  padding: 6px 10px;
+  border: 1px solid #374151;
+  text-align: left;
+  vertical-align: top;
+}
+
+.lp-table th {
+  background: #f3f4f6;
+  text-align: center;
+}
+
+/* Sửa giáo án */
+.lp-editor {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  height: calc(100vh - 240px);
+  min-height: 480px;
+}
+
+.lp-editor-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+
+.lp-editor-pane > small {
+  color: var(--text-3);
+}
+
+.lp-editor textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  padding: 14px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  resize: none;
+}
+
+@media (max-width: 900px) {
+  .lp-editor {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .lp-editor textarea {
+    min-height: 420px;
+  }
+
+  .lp-editor .lp-paper.scroll {
+    max-height: 520px;
+  }
+}
+
+@media (max-width: 640px) {
+  .lp-span-2 {
+    grid-column: auto;
+  }
+
+  .lp-paper {
+    padding: 20px 16px;
+  }
+
+  .lp-doc {
+    font-size: 15px;
+  }
+}
+
+/* Nhiều ảnh + năng lực số */
+.lp-thumbs-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.lp-thumbs-head span {
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+}
+
+.lp-thumbs {
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+.lp-digital {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.lp-digital.on {
+  border-color: var(--primary-soft-2);
+  background: var(--primary-soft);
+}
+
+.lp-warn {
+  color: var(--orange);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.lp-tags span.nls {
+  background: var(--green-soft);
+  color: var(--green-strong);
+}

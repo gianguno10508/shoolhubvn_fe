@@ -5,24 +5,25 @@ import { listAssignments } from "../../api/assignments";
 import { useAuth } from "../../context/AuthContext";
 import { hasPermission } from "../../utils/permissions";
 import { assignmentState, formatDateTime, formatScore, timeLeft } from "./assignmentUtils";
-import ObstacleGame from "./game/ObstacleGame";
+import GameHub, { gameOf } from "./game/GameHub";
 
 /* Bài tập & Tự chấm — 2 chế độ:
  *  - Cổ điển : danh sách bài tập đã giao (mọi chức danh trừ học sinh / cờ đỏ)
- *  - Trò chơi: vượt chướng ngại vật từ đề PDF, chơi ngay trên lớp, không lưu điểm */
+ *  - Trò chơi: vượt chướng ngại vật / ai là triệu phú / bắn zombie từ đề PDF, chơi ngay trên lớp, không lưu điểm */
 export default function AssignmentListPage() {
   const [params, setParams] = useSearchParams();
   const mode = params.get("mode") === "game" ? "game" : "classic";
+  const game = gameOf(params.get("game"));
 
   return (
     <div className="page as-page">
       <div className="page-head">
-        <span className="page-head-icon as-icon">{mode === "game" ? "🏃" : "📝"}</span>
+        <span className="page-head-icon as-icon">{mode === "game" ? game.icon : "📝"}</span>
         <div>
           <h2>Bài tập & Tự chấm</h2>
           <p>
             {mode === "game"
-              ? "Vượt chướng ngại vật: trả lời đúng liên tục để về đích, sai hoặc hết giờ là dừng cuộc chơi."
+              ? game.intro
               : "Giao bài trắc nghiệm từ file PDF, học sinh làm trực tuyến và được chấm điểm tự động."}
           </p>
         </div>
@@ -38,12 +39,16 @@ export default function AssignmentListPage() {
         <button className={mode === "classic" ? "active" : ""} onClick={() => setParams({})}>
           📝 Cổ điển
         </button>
-        <button className={mode === "game" ? "active" : ""} onClick={() => setParams({ mode: "game" })}>
+        <button className={mode === "game" ? "active" : ""} onClick={() => setParams({ mode: "game", game: game.key })}>
           🎮 Trò chơi
         </button>
       </div>
 
-      {mode === "game" ? <ObstacleGame /> : <ClassicList />}
+      {mode === "game" ? (
+        <GameHub game={game.key} onSelect={(key) => setParams({ mode: "game", game: key })} />
+      ) : (
+        <ClassicList />
+      )}
     </div>
   );
 }

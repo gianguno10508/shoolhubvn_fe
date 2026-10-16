@@ -21,6 +21,8 @@ import AssignmentResultPage from "./pages/assignments/AssignmentResultPage";
 import StudentAssignmentsPage from "./pages/assignments/StudentAssignmentsPage";
 import TakeAssignmentPage from "./pages/assignments/TakeAssignmentPage";
 import SubmissionResultPage from "./pages/assignments/SubmissionResultPage";
+import LessonPlanListPage from "./pages/lessonPlans/LessonPlanListPage";
+import LessonPlanDetailPage from "./pages/lessonPlans/LessonPlanDetailPage";
 import DisciplinePage from "./pages/discipline/DisciplinePage";
 import NotificationsPage from "./pages/notifications/NotificationsPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -78,6 +80,12 @@ export default function App() {
             <Route path="giao-vien/bai-tap" element={<AssignmentListPage />} />
             <Route path="giao-vien/bai-tap/moi" element={<AssignmentCreatePage />} />
             <Route path="giao-vien/bai-tap/:id" element={<AssignmentResultPage />} />
+          </Route>
+
+          {/* Giáo án AI: giáo viên soạn kế hoạch bài dạy từ ảnh sách giáo khoa */}
+          <Route element={<RequirePermission anyOf={["exam.manage", "assignment.manage"]} fallback="/" requireSchool />}>
+            <Route path="giao-vien/giao-an" element={<LessonPlanListPage />} />
+            <Route path="giao-vien/giao-an/:id" element={<LessonPlanDetailPage />} />
           </Route>
 
           {/* Thi đua & Nề nếp: xem (GVCN, BGH), chấm (cờ đỏ, Đoàn TN), cấu hình (Đoàn TN) */}

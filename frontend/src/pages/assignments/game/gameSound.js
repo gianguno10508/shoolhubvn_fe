@@ -11,7 +11,8 @@ function audio() {
   return ctx;
 }
 
-/* Mỗi âm: [tần số Hz, thời lượng giây, kiểu sóng?] phát nối tiếp nhau */
+/* Mỗi âm: [tần số Hz, thời lượng giây, kiểu sóng?, tần số cuối?] phát nối tiếp nhau.
+ * Kiểu "noise" = tiếng ồn trắng qua bộ lọc (tần số = tần số lọc) — dùng cho tiếng súng, tiếng chém. */
 const SOUNDS = {
   correct: [
     [660, 0.08],
@@ -49,22 +50,70 @@ const SOUNDS = {
     [330, 0.16, "triangle"],
     [262, 0.34, "triangle"],
   ],
+  // Bắn zombie
+  shot: [
+    [1800, 0.05, "noise"],
+    [160, 0.16, "square", 50],
+  ],
+  slash: [
+    [3200, 0.18, "noise"],
+    [180, 0.3, "sawtooth", 70],
+  ],
+  groan: [[140, 0.6, "sawtooth", 90]],
+  zombieDie: [
+    [220, 0.3, "sawtooth", 120],
+    [120, 0.6, "sawtooth", 40],
+  ],
+  // Ai là triệu phú
+  intro: [
+    [392, 0.1],
+    [523, 0.1],
+    [659, 0.22],
+  ],
+  suspense: [
+    [196, 0.5, "triangle"],
+    [207, 0.5, "triangle"],
+    [220, 0.6, "triangle"],
+  ],
 };
+
+let noiseBuffer = null;
+
+function noise(ac) {
+  if (!noiseBuffer) {
+    noiseBuffer = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  }
+  return noiseBuffer;
+}
 
 export function playSound(name) {
   const notes = SOUNDS[name];
   const ac = notes && audio();
   if (!ac) return;
   let t = ac.currentTime + 0.01;
-  for (const [freq, dur, type = "sine"] of notes) {
-    const osc = ac.createOscillator();
+  for (const [freq, dur, type = "sine", endFreq] of notes) {
     const gain = ac.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, t);
+    let osc;
+    if (type === "noise") {
+      osc = ac.createBufferSource();
+      osc.buffer = noise(ac);
+      const filter = ac.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(freq, t);
+      osc.connect(filter).connect(gain);
+    } else {
+      osc = ac.createOscillator();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t);
+      if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, t + dur);
+      osc.connect(gain);
+    }
     gain.gain.setValueAtTime(0.0001, t);
-    gain.gain.exponentialRampToValueAtTime(type === "sine" ? 0.22 : 0.09, t + 0.01);
+    gain.gain.exponentialRampToValueAtTime(type === "sine" ? 0.22 : type === "noise" ? 0.35 : 0.09, t + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    osc.connect(gain).connect(ac.destination);
+    gain.connect(ac.destination);
     osc.start(t);
     osc.stop(t + dur + 0.02);
     t += dur * 0.9;

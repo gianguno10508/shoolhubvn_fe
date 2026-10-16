@@ -10,10 +10,13 @@ const assignmentRoutes = require("./routes/assignments");
 const disciplineRoutes = require("./routes/discipline");
 const dashboardRoutes = require("./routes/dashboard");
 const notificationRoutes = require("./routes/notifications");
+const lessonPlanRoutes = require("./routes/lessonPlans");
 
 const app = express();
 
 app.use(cors({ origin: process.env.CLIENT_ORIGIN || "*" }));
+// Giáo án AI nhận nhiều ảnh SGK (base64) nên cần giới hạn lớn hơn — đặt trước express.json chung
+app.use("/api/lesson-plans", express.json({ limit: "45mb" }), lessonPlanRoutes);
 app.use(express.json({ limit: "5mb" }));
 
 app.use("/api/auth", authRoutes);

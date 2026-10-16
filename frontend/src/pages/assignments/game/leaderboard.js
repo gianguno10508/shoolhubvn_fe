@@ -4,8 +4,10 @@ const PREFIX = "og_lb:";
 const NAME_KEY = "og_player";
 export const BOARD_SIZE = 10;
 
-export function boardKey(fileName, questionCount) {
-  return `${PREFIX}${fileName}|${questionCount}`;
+/** Mỗi trò chơi một bảng riêng; "obstacle" giữ khoá cũ để không mất bảng đã lưu */
+export function boardKey(fileName, questionCount, game = "obstacle") {
+  const scope = game === "obstacle" ? "" : `${game}:`;
+  return `${PREFIX}${scope}${fileName}|${questionCount}`;
 }
 
 export function loadBoard(key) {

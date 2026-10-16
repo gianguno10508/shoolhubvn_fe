@@ -29,5 +29,7 @@
 @import "./pages/admin-users.css";
 @import "./pages/assignments.css";
 @import "./pages/obstacle-game.css";
+@import "./pages/games.css";
+@import "./pages/lesson-plans.css";
 @import "./pages/discipline.css";
 @import "./pages/profile.css";
