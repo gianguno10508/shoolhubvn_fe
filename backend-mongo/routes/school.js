@@ -9,6 +9,7 @@ const loadUser = require("../middleware/loadUser");
 const requirePermission = require("../middleware/requirePermission");
 const requireSchoolVip = require("../middleware/requireSchoolVip");
 const { ROLES, PERMISSIONS: P, ROLES_WITH_CLASS, creatableRolesOf } = require("../config/roles");
+const { DEFAULT_PASSWORD, parseBirthDate, uniqueUsername } = require("../utils/accountName");
 
 const router = express.Router();
 
@@ -223,6 +224,60 @@ async function resolveRoleAndClass(user, role, classId, targetId = null) {
   return { role, classId: cls._id };
 }
 
+/** Chức danh mặc định khi tạo: tài khoản trường → giáo viên, GVCN → học sinh */
+function defaultRoleOf(user) {
+  const roles = creatableRolesOf(user.role);
+  return roles.includes(ROLES.TEACHER) ? ROLES.TEACHER : roles[0];
+}
+
+/** Đọc ngày sinh từ body: undefined = không gửi, null = xoá, ném lỗi 400 nếu sai định dạng */
+function readBirthDate(value) {
+  if (value === undefined) return undefined;
+  if (!value) return null;
+  const date = parseBirthDate(value);
+  if (!date) throw Object.assign(new Error("Ngày sinh không hợp lệ (dd/mm/yyyy)."), { status: 400 });
+  return date;
+}
+
+/** Tạo 1 tài khoản; tên đăng nhập bỏ trống → sinh từ họ tên + ngày sinh, mật khẩu bỏ trống → Abc@123 */
+async function createAccount(currentUser, school, data, { role, classId }, reserved) {
+  const name = String(data.name || "").trim();
+  const birthDate = readBirthDate(data.birthDate) || null;
+  let username = String(data.username || "").trim().toLowerCase();
+  if (username) {
+    if (!/^[a-z0-9._-]{3,40}$/.test(username)) {
+      throw Object.assign(new Error("Tên đăng nhập chỉ gồm chữ không dấu, số, dấu . _ - (3–40 ký tự)."), { status: 400 });
+    }
+    if (reserved.has(username) || (await User.exists({ username }))) {
+      throw Object.assign(new Error(`Tên đăng nhập "${username}" đã tồn tại.`), { status: 409 });
+    }
+    reserved.add(username);
+  } else {
+    if (!name || !birthDate) {
+      throw Object.assign(new Error("Cần nhập họ tên và ngày sinh để tạo tên đăng nhập."), { status: 400 });
+    }
+    username = await uniqueUsername(User, name, birthDate, reserved);
+    if (!username) throw Object.assign(new Error("Không tạo được tên đăng nhập từ họ tên này."), { status: 400 });
+  }
+  const password = data.password ? String(data.password) : DEFAULT_PASSWORD;
+  const user = await User.create({
+    username,
+    password,
+    name,
+    birthDate,
+    email: data.email,
+    phone: data.phone,
+    studentCode: data.studentCode,
+    role,
+    classId,
+    school: school._id,
+    createdBy: currentUser._id,
+    mustChangePassword: password === DEFAULT_PASSWORD,
+  });
+  await user.populate(["school", "classId"]);
+  return user;
+}
+
 router.get("/users", async (req, res) => {
   try {
     const filter = visibleUsersFilter(req.currentUser);
@@ -244,29 +299,52 @@ router.post(
   requireSchoolVip,
   async (req, res) => {
     try {
-      const { username, password, name, email, phone, studentCode } = req.body;
-      if (!username || !password) return res.status(400).json({ error: "Thiếu username hoặc password." });
-      const existed = await User.findOne({ username: username.toLowerCase() });
-      if (existed) return res.status(409).json({ error: "Username này đã tồn tại." });
-
-      const { role, classId } = await resolveRoleAndClass(req.currentUser, req.body.role, req.body.classId);
-      const user = await User.create({
-        username,
-        password,
-        name,
-        email,
-        phone,
-        studentCode,
-        role,
-        classId,
-        school: req.school._id,
-        createdBy: req.currentUser._id,
-      });
-      await user.populate(["school", "classId"]);
+      const target = await resolveRoleAndClass(
+        req.currentUser,
+        req.body.role || defaultRoleOf(req.currentUser),
+        req.body.classId,
+      );
+      const user = await createAccount(req.currentUser, req.school, req.body, target, new Set());
       res.json(user.toPublicJSON());
     } catch (err) {
       if (err.status) return res.status(err.status).json({ error: err.message });
       fail(res, err, "Lỗi máy chủ khi tạo tài khoản.");
+    }
+  },
+);
+
+/* Tạo hàng loạt: { role?, classId?, users: [{ name, birthDate, studentCode? }] } — dùng chung chức danh + lớp */
+router.post(
+  "/users/bulk",
+  requirePermission(P.USERS_MANAGE, P.OWN_CLASS_STUDENTS_MANAGE),
+  requireSchoolVip,
+  async (req, res) => {
+    try {
+      const list = Array.isArray(req.body.users) ? req.body.users : [];
+      if (!list.length) return res.status(400).json({ error: "Danh sách tài khoản đang trống." });
+      if (list.length > 300) return res.status(400).json({ error: "Mỗi lần tạo tối đa 300 tài khoản." });
+
+      const target = await resolveRoleAndClass(
+        req.currentUser,
+        req.body.role || defaultRoleOf(req.currentUser),
+        req.body.classId,
+      );
+      const reserved = new Set();
+      const created = [];
+      const errors = [];
+      for (let i = 0; i < list.length; i++) {
+        try {
+          const user = await createAccount(req.currentUser, req.school, { ...list[i], username: "", password: "" }, target, reserved);
+          created.push(user.toPublicJSON());
+        } catch (err) {
+          if (!err.status) console.error(err);
+          errors.push({ index: i, name: list[i]?.name || "", error: err.status ? err.message : "Lỗi máy chủ." });
+        }
+      }
+      res.json({ created, errors, defaultPassword: DEFAULT_PASSWORD });
+    } catch (err) {
+      if (err.status) return res.status(err.status).json({ error: err.message });
+      fail(res, err, "Lỗi máy chủ khi tạo tài khoản hàng loạt.");
     }
   },
 );
@@ -284,8 +362,14 @@ router.patch(
       for (const f of ["name", "email", "phone", "studentCode"]) {
         if (req.body[f] !== undefined) target[f] = req.body[f];
       }
+      const birthDate = readBirthDate(req.body.birthDate);
+      if (birthDate !== undefined) target.birthDate = birthDate;
       if (req.body.status !== undefined) target.status = req.body.status;
-      if (req.body.password) target.password = req.body.password;
+      // Đặt lại mật khẩu (mặc định Abc@123) → người dùng được nhắc tự đổi khi đăng nhập
+      if (req.body.resetPassword || req.body.password) {
+        target.password = req.body.password || DEFAULT_PASSWORD;
+        target.mustChangePassword = true;
+      }
       if (req.body.role !== undefined || req.body.classId !== undefined) {
         const { role, classId } = await resolveRoleAndClass(
           req.currentUser,

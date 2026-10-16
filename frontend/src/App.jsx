@@ -23,6 +23,7 @@ import TakeAssignmentPage from "./pages/assignments/TakeAssignmentPage";
 import SubmissionResultPage from "./pages/assignments/SubmissionResultPage";
 import DisciplinePage from "./pages/discipline/DisciplinePage";
 import NotificationsPage from "./pages/notifications/NotificationsPage";
+import ProfilePage from "./pages/ProfilePage";
 import { homePath } from "./utils/permissions";
 
 export default function App() {
@@ -58,6 +59,7 @@ export default function App() {
       <Route element={<HomeLayout />}>
         <Route index element={<Navigate to={homePath(user)} replace />} />
         <Route path="lien-he" element={<ContactPage />} />
+        <Route path="ca-nhan" element={<ProfilePage />} />
 
         {/* Mọi chức năng bên dưới cần trường còn hạn VIP */}
         <Route element={<RequireVip />}>

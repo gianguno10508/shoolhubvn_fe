@@ -29,12 +29,14 @@ export function shuffleArray(array) {
    PDF PARSER
 ========================================================= */
 
-export async function extractPdfText(file) {
+/** Mở file PDF bằng pdf.js (dùng chung cho các trình đọc PDF khác, vd. sổ đầu bài) */
+export async function openPdf(file) {
   const buffer = await file.arrayBuffer();
+  return pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+}
 
-  const pdf = await pdfjsLib.getDocument({
-    data: new Uint8Array(buffer),
-  }).promise;
+export async function extractPdfText(file) {
+  const pdf = await openPdf(file);
 
   const pages = [];
 

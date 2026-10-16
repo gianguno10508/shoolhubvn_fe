@@ -1,0 +1,1159 @@
+/* =========================================================
+   TRÒ CHƠI VƯỢT CHƯỚNG NGẠI VẬT (mục Bài tập → Trò chơi)
+   og-*
+========================================================= */
+
+/* ---------- Chọn chế độ Cổ điển / Trò chơi ---------- */
+.og-mode {
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.og-mode button {
+  padding: 8px 18px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-3);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color var(--t-fast),
+    color var(--t-fast);
+}
+
+.og-mode button:hover {
+  color: var(--primary);
+}
+
+.og-mode button.active {
+  background: var(--primary-gradient);
+  color: #fff;
+  box-shadow: var(--shadow-primary);
+}
+
+/* ---------- Cài đặt thời gian từng câu ---------- */
+.og-times {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.og-times summary {
+  padding: 10px 14px;
+  color: var(--primary-strong);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.og-time-list {
+  max-height: 360px;
+  margin: 0;
+  padding: 0 14px 12px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.og-time-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border-light);
+}
+
+.og-time-num {
+  flex-shrink: 0;
+  width: 26px;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  text-align: right;
+}
+
+.og-time-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.og-time-list input {
+  width: 72px;
+  height: var(--control-h-sm);
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-family: inherit;
+  text-align: center;
+}
+
+.og-time-list small {
+  color: var(--text-3);
+}
+
+/* ---------- Khung trò chơi ---------- */
+.og-game {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.og-game.is-fullscreen {
+  justify-content: center;
+  padding: 24px max(24px, calc((100vw - 1100px) / 2));
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+.og-hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.og-hud-item {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.og-hud-item small {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.og-hud-item strong {
+  color: var(--text);
+  font-size: var(--fs-lg);
+}
+
+/* ---------- Đường chạy ---------- */
+.og-stage {
+  position: relative;
+  height: 210px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, #bfe3ff 0%, #e0f2fe 62%, #fef3c7 100%);
+  box-shadow: var(--shadow-sm);
+  user-select: none;
+}
+
+.og-cloud {
+  position: absolute;
+  font-size: 34px;
+  opacity: 0.85;
+  animation: og-cloud 26s linear infinite;
+}
+
+.og-cloud.c1 {
+  top: 18px;
+  left: 60%;
+}
+
+.og-cloud.c2 {
+  top: 50px;
+  left: 20%;
+  font-size: 24px;
+  animation-duration: 38s;
+}
+
+@keyframes og-cloud {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-120vw);
+  }
+}
+
+.og-world {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  transition: transform var(--og-jump, 900ms) linear;
+}
+
+.og-ground {
+  position: absolute;
+  right: -100vw;
+  bottom: 0;
+  left: -100vw;
+  height: 44px;
+  border-top: 4px solid #65a30d;
+  background: repeating-linear-gradient(90deg, #a16207 0 28px, #b45309 28px 56px);
+}
+
+.og-obstacle,
+.og-finish {
+  position: absolute;
+  bottom: 40px;
+  z-index: 1;
+  font-size: 42px;
+  line-height: 1;
+  transform: translateX(-50%);
+  transition: opacity 0.4s;
+}
+
+.og-obstacle.passed {
+  opacity: 0.35;
+}
+
+.og-obstacle.hit {
+  filter: drop-shadow(0 0 10px var(--red-bright));
+  animation: og-shake 0.4s 2;
+}
+
+.og-finish {
+  font-size: 54px;
+  transform: none;
+}
+
+.og-runner {
+  position: absolute;
+  bottom: 40px;
+  z-index: 2;
+  font-size: 48px;
+  line-height: 1;
+  transform: translateX(-50%);
+}
+
+/* Emoji 🏃 nhìn sang trái → lật lại cho chạy sang phải */
+.og-runner > span {
+  display: inline-block;
+  transform: scaleX(-1);
+}
+
+.og-runner.question > span,
+.og-runner.countdown > span {
+  animation: og-run var(--og-run, 0.5s) ease-in-out infinite;
+}
+
+.og-runner.jump {
+  animation: og-jump var(--og-jump, 900ms) ease-in-out;
+}
+
+.og-runner.crash > span,
+.og-runner.over > span {
+  transform: scaleX(-1) rotate(-80deg) translateY(10px);
+  transition: transform 0.35s;
+}
+
+.og-runner.win > span {
+  animation: og-bounce 0.6s ease-in-out infinite;
+}
+
+@keyframes og-run {
+  50% {
+    transform: scaleX(-1) translateY(-4px);
+  }
+}
+
+@keyframes og-jump {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-95px);
+  }
+}
+
+@keyframes og-bounce {
+  50% {
+    transform: scaleX(-1) translateY(-14px);
+  }
+}
+
+@keyframes og-shake {
+  25% {
+    transform: translateX(-56%);
+  }
+  75% {
+    transform: translateX(-44%);
+  }
+}
+
+.og-countdown {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.25);
+  color: #fff;
+  font-size: 72px;
+  font-weight: 900;
+  text-shadow: 0 4px 18px rgba(15, 23, 42, 0.45);
+}
+
+/* ---------- Đồng hồ ---------- */
+.og-timer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.og-timer-bar {
+  flex: 1;
+  height: 12px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--gray-200);
+}
+
+.og-timer-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--green-bright), var(--primary));
+  transition: width 0.1s linear;
+}
+
+.og-timer-bar.urgent span {
+  background: linear-gradient(90deg, var(--red-bright), var(--orange-bright));
+}
+
+.og-timer strong {
+  min-width: 48px;
+  color: var(--text);
+  font-size: var(--fs-xl);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.og-timer strong.urgent {
+  color: var(--red);
+  animation: pulse 1s infinite;
+}
+
+/* ---------- Câu hỏi ---------- */
+.og-question {
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.og-question-text {
+  display: flex;
+  gap: 10px;
+  margin: 0 0 16px;
+  color: var(--text);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.og-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.og-option {
+  --og-color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-md);
+  line-height: 1.45;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--t-fast),
+    border-color var(--t-fast),
+    background-color var(--t-fast);
+}
+
+.og-option.opt-A {
+  --og-color: #e11d48;
+}
+.og-option.opt-B {
+  --og-color: #2563eb;
+}
+.og-option.opt-C {
+  --og-color: #d97706;
+}
+.og-option.opt-D {
+  --og-color: #16a34a;
+}
+
+.og-option:hover:not(:disabled) {
+  border-color: var(--og-color);
+  transform: translateY(-2px);
+}
+
+.og-option:disabled {
+  cursor: default;
+}
+
+.og-option-letter {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--og-color);
+  color: #fff;
+  font-weight: 800;
+}
+
+.og-option.right {
+  border-color: var(--green-bright);
+  background: var(--green-soft);
+}
+
+.og-option.right .og-option-letter {
+  background: var(--green-bright);
+}
+
+.og-option.wrong {
+  border-color: var(--red-bright);
+  background: var(--red-soft);
+}
+
+.og-option.wrong .og-option-letter {
+  background: var(--red-bright);
+}
+
+.og-hint {
+  margin: 12px 0 0;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+/* ---------- Kết quả ---------- */
+.og-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+  overflow-y: auto;
+  border-radius: var(--radius-lg);
+  background: rgba(15, 23, 42, 0.45);
+  animation: fade-in 0.2s ease;
+}
+
+.og-result {
+  width: min(440px, 100%);
+  padding: 26px 24px;
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  animation: modal-in 0.25s var(--ease);
+}
+
+.og-result-icon {
+  display: block;
+  font-size: 56px;
+}
+
+.og-result h3 {
+  margin: 8px 0 4px;
+  color: var(--red-strong);
+  font-size: var(--fs-2xl);
+}
+
+.og-result.win h3 {
+  color: var(--green-strong);
+}
+
+.og-result p {
+  margin: 0;
+  color: var(--text-2);
+}
+
+.og-result-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--green-border);
+  border-radius: var(--radius-md);
+  background: var(--green-soft);
+  text-align: left;
+}
+
+.og-result-answer small {
+  color: var(--green-strong);
+  font-weight: 700;
+}
+
+.og-result-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@media (max-width: 640px) {
+  .og-hud-item {
+    padding: 4px 10px;
+  }
+
+  .og-hud-item strong {
+    font-size: var(--fs-md);
+  }
+
+  .og-stats {
+    gap: 6px;
+  }
+
+  .og-lifeline kbd {
+    display: none;
+  }
+
+  .og-stage {
+    height: 170px;
+  }
+
+  .og-options {
+    grid-template-columns: 1fr;
+  }
+
+  .og-question-text {
+    font-size: var(--fs-md);
+  }
+}
+
+/* =========================================================
+   NÂNG CẤP: mạng, điểm, combo, trợ giúp, bảng xếp hạng
+========================================================= */
+
+/* ---------- HUD ---------- */
+.og-lives strong {
+  display: flex;
+  gap: 2px;
+  font-size: var(--fs-md);
+}
+
+.og-lives .off {
+  opacity: 0.45;
+}
+
+.og-hud-item strong.og-score {
+  display: inline-block;
+  color: var(--primary-strong);
+  font-variant-numeric: tabular-nums;
+  animation: og-bump 0.35s ease;
+}
+
+.og-combo strong {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.og-combo em {
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, var(--orange-bright), var(--red-bright));
+  color: #fff;
+  font-size: var(--fs-xs);
+  font-style: normal;
+  font-weight: 800;
+}
+
+.og-combo.hot {
+  border-color: var(--orange-border);
+  background: var(--orange-soft);
+  animation: og-bump 0.45s ease;
+}
+
+@keyframes og-bump {
+  40% {
+    transform: scale(1.18);
+  }
+}
+
+/* ---------- Cảnh nền nhiều lớp (parallax) ---------- */
+.og-sun {
+  position: absolute;
+  top: 14px;
+  right: 22px;
+  font-size: 38px;
+  animation: og-spin 30s linear infinite;
+}
+
+@keyframes og-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.og-layer {
+  position: absolute;
+  bottom: 40px;
+  left: 0;
+  transition: transform var(--og-jump, 900ms) linear;
+  pointer-events: none;
+}
+
+.og-hills {
+  height: 90px;
+  background:
+    radial-gradient(ellipse 120px 70px at 90px 100%, #86c06c 98%, transparent 100%) 0 0 / 260px 100% repeat-x,
+    radial-gradient(ellipse 160px 90px at 200px 100%, #a3d18b 98%, transparent 100%) 0 0 / 380px 100% repeat-x;
+  opacity: 0.85;
+}
+
+.og-trees {
+  height: 60px;
+}
+
+.og-trees span {
+  position: absolute;
+  bottom: 0;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+.og-stage.shake {
+  animation: og-stage-shake 0.4s;
+}
+
+@keyframes og-stage-shake {
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+
+.og-stage.on-fire {
+  box-shadow:
+    var(--shadow-sm),
+    inset 0 0 0 3px rgba(249, 115, 22, 0.55);
+}
+
+.og-obstacle.broken {
+  opacity: 0.5;
+  filter: grayscale(0.6);
+  transform: translateX(-50%) rotate(70deg) translateY(10px);
+}
+
+.og-trail {
+  position: absolute;
+  top: 10px;
+  right: 100%;
+  font-size: 28px;
+  animation: og-trail 0.4s linear infinite;
+}
+
+@keyframes og-trail {
+  50% {
+    opacity: 0.4;
+    transform: translateX(-6px);
+  }
+}
+
+/* ---------- Chữ bay lên: +điểm, COMBO, trợ giúp ---------- */
+.og-pop {
+  position: absolute;
+  bottom: 120px;
+  left: 70px;
+  z-index: 4;
+  color: var(--green-strong);
+  font-size: 26px;
+  font-weight: 900;
+  white-space: nowrap;
+  text-shadow:
+    0 2px 0 #fff,
+    0 4px 12px rgba(15, 23, 42, 0.25);
+  pointer-events: none;
+  animation: og-pop 1.3s ease-out forwards;
+}
+
+.og-pop.combo {
+  bottom: 70px;
+  left: 50%;
+  color: var(--orange);
+  font-size: 40px;
+  animation-name: og-pop-center;
+}
+
+.og-pop.power {
+  bottom: 100px;
+  left: 50%;
+  color: var(--primary-strong);
+  font-size: 28px;
+  animation-name: og-pop-center;
+}
+
+@keyframes og-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.7);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(1);
+  }
+}
+
+@keyframes og-pop-center {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-40px) scale(1);
+  }
+}
+
+.og-countdown {
+  animation: og-count 0.8s ease-out;
+}
+
+@keyframes og-count {
+  from {
+    font-size: 120px;
+    opacity: 0.3;
+  }
+}
+
+/* ---------- Tiến độ về đích ---------- */
+.og-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 4px;
+}
+
+.og-progress-track {
+  position: relative;
+  flex: 1;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--gray-200);
+}
+
+.og-progress-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: inherit;
+  background: var(--primary-gradient);
+  transition: width 0.9s linear;
+}
+
+.og-progress-dot {
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gray-400);
+  transform: translate(-50%, -50%);
+}
+
+.og-progress-dot.right {
+  background: var(--green-bright);
+}
+
+.og-progress-dot.wrong,
+.og-progress-dot.timeout {
+  background: var(--red-bright);
+}
+
+.og-progress-dot.skip {
+  background: var(--amber-bright);
+}
+
+.og-progress-dot.current {
+  width: 9px;
+  height: 9px;
+  background: #fff;
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.og-progress-runner {
+  position: absolute;
+  top: 50%;
+  font-size: 18px;
+  transform: translate(-50%, -60%) scaleX(-1);
+  transition: left 0.9s linear;
+}
+
+.og-progress-flag {
+  font-size: 20px;
+}
+
+/* ---------- Quyền trợ giúp ---------- */
+.og-lifelines {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.og-lifeline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border: 2px solid var(--primary-soft-2);
+  border-radius: var(--radius-pill);
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform var(--t-fast),
+    border-color var(--t-fast);
+}
+
+.og-lifeline:hover:not(:disabled) {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.og-lifeline:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.og-lifeline.used {
+  border-color: var(--border);
+  background: var(--gray-100);
+  color: var(--text-3);
+  text-decoration: line-through;
+}
+
+.og-lifeline kbd {
+  padding: 0 6px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.og-option.gone {
+  opacity: 0.25;
+  filter: grayscale(1);
+  text-decoration: line-through;
+}
+
+.og-hint.good {
+  color: var(--green-strong);
+  font-weight: 700;
+}
+
+.og-hint.bad {
+  color: var(--red-strong);
+  font-weight: 700;
+}
+
+/* ---------- Màn hình kết quả ---------- */
+.og-result {
+  position: relative;
+}
+
+.og-stars {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 4px 0 8px;
+  font-size: 40px;
+  line-height: 1;
+}
+
+.og-stars span {
+  color: var(--gray-300);
+}
+
+.og-stars span.lit {
+  color: var(--gold);
+  text-shadow: 0 2px 10px rgba(250, 204, 21, 0.6);
+  animation: og-star 0.5s ease both;
+}
+
+@keyframes og-star {
+  from {
+    opacity: 0;
+    transform: scale(0.2) rotate(-90deg);
+  }
+}
+
+.og-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.og-stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.og-stats small {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.og-stats strong {
+  color: var(--text);
+  font-size: var(--fs-lg);
+}
+
+.og-missed {
+  margin-top: 14px;
+  border: 1px solid var(--red-border);
+  border-radius: var(--radius-md);
+  background: var(--red-soft);
+  text-align: left;
+}
+
+.og-missed summary {
+  padding: 8px 12px;
+  color: var(--red-strong);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.og-missed ol {
+  max-height: 220px;
+  margin: 0;
+  padding: 0 12px 10px 28px;
+  overflow-y: auto;
+}
+
+.og-missed li {
+  padding: 6px 0;
+  border-top: 1px solid var(--red-border);
+  font-size: var(--fs-sm);
+}
+
+.og-missed-q,
+.og-missed-a {
+  display: block;
+}
+
+.og-missed-q {
+  color: var(--text-2);
+}
+
+.og-missed-a {
+  color: var(--green-strong);
+  font-weight: 700;
+}
+
+.og-missed-a em {
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.og-name-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--amber-border);
+  border-radius: var(--radius-md);
+  background: var(--amber-soft);
+  text-align: left;
+}
+
+.og-name-form label {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+  color: var(--amber-strong);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.og-name-form input {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-family: inherit;
+}
+
+.og-result-board {
+  margin-top: 16px;
+  text-align: left;
+}
+
+.og-result-board > small {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* ---------- Bảng xếp hạng ---------- */
+.og-board {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.og-board li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+}
+
+.og-board li:nth-child(odd) {
+  background: var(--surface-2);
+}
+
+.og-board li.me {
+  background: var(--primary-soft);
+  box-shadow: inset 0 0 0 2px var(--primary-soft-2);
+}
+
+.og-board-rank {
+  width: 26px;
+  color: var(--text-3);
+  font-weight: 800;
+  text-align: center;
+}
+
+.og-board-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.og-board-meta {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.og-board li strong {
+  min-width: 64px;
+  color: var(--primary-strong);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.og-board-empty {
+  margin: 0;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+}
+
+/* ---------- Pháo giấy ---------- */
+.og-confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.og-confetti span {
+  position: absolute;
+  top: -20px;
+  border-radius: 2px;
+  animation: og-confetti linear forwards;
+}
+
+@keyframes og-confetti {
+  to {
+    top: 105%;
+    transform: rotate(720deg) translateX(40px);
+  }
+}
+
+@media (max-width: 640px) {
+  .og-stats {
+    gap: 6px;
+  }
+
+  .og-stats strong {
+    font-size: var(--fs-md);
+  }
+
+  .og-pop.combo {
+    font-size: 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .og-confetti,
+  .og-sun,
+  .og-trail {
+    display: none;
+  }
+}

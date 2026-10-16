@@ -140,6 +140,9 @@ export default function AppShell() {
                   <span>@{user?.username}</span>
                   {user?.school && <span>{user.school.name}</span>}
                 </div>
+                <NavLink to="/ca-nhan" className="shell-menu-item" onClick={() => setMenuOpen(false)}>
+                  👤 Thông tin cá nhân & mật khẩu
+                </NavLink>
                 <NavLink to="/lien-he" className="shell-menu-item" onClick={() => setMenuOpen(false)}>
                   💬 Liên hệ hỗ trợ
                 </NavLink>
@@ -152,6 +155,13 @@ export default function AppShell() {
         </header>
 
         <main className="shell-content">
+          {user?.mustChangePassword && location.pathname !== "/ca-nhan" && (
+            <div className="pf-banner">
+              <span>🔐</span>
+              Bạn đang dùng mật khẩu mặc định do nhà trường cấp — hãy đổi mật khẩu để bảo mật tài khoản.
+              <NavLink to="/ca-nhan">Đổi mật khẩu →</NavLink>
+            </div>
+          )}
           <Outlet />
         </main>
       </div>

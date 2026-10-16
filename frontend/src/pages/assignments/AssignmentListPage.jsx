@@ -1,13 +1,54 @@
 // pages/assignments/AssignmentListPage.jsx
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { listAssignments } from "../../api/assignments";
 import { useAuth } from "../../context/AuthContext";
 import { hasPermission } from "../../utils/permissions";
 import { assignmentState, formatDateTime, formatScore, timeLeft } from "./assignmentUtils";
+import ObstacleGame from "./game/ObstacleGame";
 
-/* Danh sách bài tập đã giao (mọi chức danh trừ học sinh / cờ đỏ) */
+/* Bài tập & Tự chấm — 2 chế độ:
+ *  - Cổ điển : danh sách bài tập đã giao (mọi chức danh trừ học sinh / cờ đỏ)
+ *  - Trò chơi: vượt chướng ngại vật từ đề PDF, chơi ngay trên lớp, không lưu điểm */
 export default function AssignmentListPage() {
+  const [params, setParams] = useSearchParams();
+  const mode = params.get("mode") === "game" ? "game" : "classic";
+
+  return (
+    <div className="page as-page">
+      <div className="page-head">
+        <span className="page-head-icon as-icon">{mode === "game" ? "🏃" : "📝"}</span>
+        <div>
+          <h2>Bài tập & Tự chấm</h2>
+          <p>
+            {mode === "game"
+              ? "Vượt chướng ngại vật: trả lời đúng liên tục để về đích, sai hoặc hết giờ là dừng cuộc chơi."
+              : "Giao bài trắc nghiệm từ file PDF, học sinh làm trực tuyến và được chấm điểm tự động."}
+          </p>
+        </div>
+        <div className="spacer" />
+        {mode === "classic" && (
+          <Link className="btn btn-primary" to="/giao-vien/bai-tap/moi">
+            + Giao bài mới
+          </Link>
+        )}
+      </div>
+
+      <div className="og-mode" role="tablist">
+        <button className={mode === "classic" ? "active" : ""} onClick={() => setParams({})}>
+          📝 Cổ điển
+        </button>
+        <button className={mode === "game" ? "active" : ""} onClick={() => setParams({ mode: "game" })}>
+          🎮 Trò chơi
+        </button>
+      </div>
+
+      {mode === "game" ? <ObstacleGame /> : <ClassicList />}
+    </div>
+  );
+}
+
+function ClassicList() {
   const { user } = useAuth();
   const canSeeAll = hasPermission(user, "users.view");
 
@@ -28,19 +69,7 @@ export default function AssignmentListPage() {
   useEffect(load, [scope]);
 
   return (
-    <div className="page as-page">
-      <div className="page-head">
-        <span className="page-head-icon as-icon">📝</span>
-        <div>
-          <h2>Bài tập & Tự chấm</h2>
-          <p>Giao bài trắc nghiệm từ file PDF, học sinh làm trực tuyến và được chấm điểm tự động.</p>
-        </div>
-        <div className="spacer" />
-        <Link className="btn btn-primary" to="/giao-vien/bai-tap/moi">
-          + Giao bài mới
-        </Link>
-      </div>
-
+    <>
       {canSeeAll && (
         <div className="tabs">
           <button className={"tab" + (scope === "mine" ? " active" : "")} onClick={() => setScope("mine")}>
@@ -125,6 +154,6 @@ export default function AssignmentListPage() {
           })}
         </div>
       )}
-    </div>
+    </>
   );
 }

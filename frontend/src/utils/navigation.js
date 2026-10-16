@@ -75,6 +75,7 @@ export function pageTitle(pathname) {
     [/^\/truong\/tai-khoan/, "Tài khoản trường"],
     [/^\/admin/, "Quản trị hệ thống"],
     [/^\/lien-he/, "Liên hệ & nâng cấp"],
+    [/^\/ca-nhan/, "Thông tin cá nhân"],
   ];
   const hit = rules.find(([re]) => re.test(pathname));
   return hit ? hit[1] : "";

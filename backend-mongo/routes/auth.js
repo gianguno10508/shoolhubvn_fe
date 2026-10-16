@@ -5,6 +5,7 @@ const School = require("../models/School");
 const auth = require("../middleware/auth");
 const loadUser = require("../middleware/loadUser");
 const { ROLES } = require("../config/roles");
+const { parseBirthDate } = require("../utils/accountName");
 
 const router = express.Router();
 
@@ -77,6 +78,57 @@ router.post("/login", async (req, res) => {
 
 router.get("/me", auth, loadUser, (req, res) => {
   res.json(req.currentUser.toPublicJSON());
+});
+
+/* Người dùng tự sửa thông tin cá nhân (tên đăng nhập, chức danh, lớp do nhà trường quản lý) */
+router.patch("/me", auth, loadUser, async (req, res) => {
+  try {
+    const user = req.currentUser;
+    for (const f of ["name", "email", "phone"]) {
+      if (req.body[f] !== undefined) user[f] = String(req.body[f] || "").trim();
+    }
+    if (req.body.birthDate !== undefined) {
+      if (!req.body.birthDate) user.birthDate = null;
+      else {
+        const date = parseBirthDate(req.body.birthDate);
+        if (!date) return res.status(400).json({ error: "Ngày sinh không hợp lệ." });
+        user.birthDate = date;
+      }
+    }
+    if (!user.name) return res.status(400).json({ error: "Họ và tên không được để trống." });
+    if (user.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)) {
+      return res.status(400).json({ error: "Email không hợp lệ." });
+    }
+    await user.save();
+    res.json(user.toPublicJSON());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Lỗi máy chủ khi cập nhật thông tin." });
+  }
+});
+
+router.post("/change-password", auth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!newPassword || String(newPassword).length < 6) {
+      return res.status(400).json({ error: "Mật khẩu mới cần ít nhất 6 ký tự." });
+    }
+    const user = await User.findById(req.userId).select("+password");
+    if (!user) return res.status(401).json({ error: "Không tìm thấy tài khoản." });
+    if (!(await user.comparePassword(currentPassword || ""))) {
+      return res.status(400).json({ error: "Mật khẩu hiện tại không đúng." });
+    }
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ error: "Mật khẩu mới phải khác mật khẩu hiện tại." });
+    }
+    user.password = newPassword;
+    user.mustChangePassword = false;
+    await user.save();
+    res.json({ ok: true, user: await publicUser(user._id) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Lỗi máy chủ khi đổi mật khẩu." });
+  }
 });
 
 module.exports = router;

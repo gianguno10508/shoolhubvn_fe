@@ -11,6 +11,7 @@ const userSchema = new Schema(
     name: { type: String, default: "" },
     email: { type: String, default: "", trim: true },
     phone: { type: String, default: "", trim: true },
+    birthDate: { type: Date, default: null },
 
     // admin hệ thống không thuộc trường nào (school = null)
     school: { type: Schema.Types.ObjectId, ref: "School", default: null },
@@ -20,6 +21,8 @@ const userSchema = new Schema(
     studentCode: { type: String, default: "", trim: true },
 
     status: { type: String, enum: ["active", "locked"], default: "active" },
+    // Tạo bằng mật khẩu mặc định / được đặt lại → nhắc người dùng tự đổi mật khẩu
+    mustChangePassword: { type: Boolean, default: false },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
   },
   { timestamps: true },
@@ -63,6 +66,8 @@ userSchema.methods.toPublicJSON = function () {
     name: this.name,
     email: this.email,
     phone: this.phone,
+    birthDate: this.birthDate,
+    mustChangePassword: !!this.mustChangePassword,
     role: this.role,
     status: this.status,
     studentCode: this.studentCode,

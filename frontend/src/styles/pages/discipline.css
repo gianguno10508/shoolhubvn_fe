@@ -711,3 +711,182 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Sổ đầu bài (ll-*) ---------- */
+.ll-errors {
+  margin-top: 14px;
+}
+
+.ll-errors p {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ll-files {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ll-file-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.ll-file-head > div:not(.spacer) {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ll-file-head strong {
+  overflow: hidden;
+  color: var(--text);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ll-file-head small {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+.ll-table {
+  max-width: 720px;
+}
+
+.ll-table td {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.ll-table tr.ll-new-day td {
+  border-top: 2px solid var(--primary-soft-2);
+}
+
+.ll-table tr.ll-new-session td:not(:first-child) {
+  border-top: 1px dashed var(--amber-border);
+}
+
+.ll-mid {
+  width: 96px;
+}
+
+.ll-session {
+  width: 100%;
+  height: var(--control-h-sm);
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-family: inherit;
+  font-weight: 700;
+}
+
+.ll-session.am {
+  border-color: var(--primary-soft-2);
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
+.ll-session.pm {
+  border-color: var(--amber-border);
+  background: var(--amber-soft);
+  color: var(--amber-strong);
+}
+
+.ll-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ll-stat {
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.ll-stat small {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.ll-stat strong {
+  color: var(--text);
+  font-size: var(--fs-xl);
+}
+
+.ll-stat.am strong {
+  color: var(--primary-strong);
+}
+
+.ll-stat.pm strong {
+  color: var(--amber-strong);
+}
+
+.ll-body {
+  display: grid;
+  grid-template-columns: minmax(0, 720px) minmax(260px, 340px);
+  gap: 16px;
+  align-items: start;
+}
+
+.ll-summary .ll-center {
+  text-align: center;
+}
+
+@media (max-width: 1100px) {
+  .ll-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.ll-table input {
+  width: 100%;
+  height: var(--control-h-sm);
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+}
+
+.ll-table input:hover {
+  border-color: var(--border);
+}
+
+.ll-table input:focus {
+  border-color: var(--primary);
+  outline: none;
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--primary-ring);
+}
+
+.ll-table .ll-center {
+  text-align: center;
+}
+
+.ll-table .ll-missing {
+  background: var(--amber-soft);
+}
+
+.ll-narrow {
+  width: 90px;
+}
+
+.ll-act {
+  width: 40px;
+  text-align: center;
+}

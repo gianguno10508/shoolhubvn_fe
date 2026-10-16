@@ -6,11 +6,13 @@ import { hasPermission } from "../../utils/permissions";
 import SummaryTab from "./SummaryTab";
 import ScoreTab from "./ScoreTab";
 import ConfigTab from "./ConfigTab";
+import LessonLogTab from "./LessonLogTab";
 
 /* Thi đua & Nề nếp
  *  - Tổng hợp : GVCN, BGH, Đoàn TN, cờ đỏ xem điểm tuần / tháng
  *  - Chấm điểm: Cờ đỏ, Đoàn TN
- *  - Cấu hình : Đoàn TN, tài khoản trường */
+ *  - Cấu hình : Đoàn TN, tài khoản trường
+ *  - Sổ đầu bài: mọi người vào được trang — đọc PDF, xuất Excel Thứ / Tiết / Điểm */
 export default function DisciplinePage() {
   const { user } = useAuth();
   const canScore = hasPermission(user, "discipline.score");
@@ -20,6 +22,7 @@ export default function DisciplinePage() {
     ["summary", "Bảng xếp hạng"],
     ...(canScore ? [["score", "Chấm điểm"]] : []),
     ...(canConfig ? [["config", "Cấu hình chấm"]] : []),
+    ["lessonLog", "Sổ đầu bài"],
   ];
 
   const [tab, setTab] = useState(user?.role === "red_flag" ? "score" : "summary");
@@ -72,11 +75,12 @@ export default function DisciplinePage() {
         </div>
       )}
 
-      {!config && !error && <p className="as-empty">Đang tải...</p>}
+      {!config && !error && tab !== "lessonLog" && <p className="as-empty">Đang tải...</p>}
 
       {config && tab === "summary" && <SummaryTab user={user} />}
       {config && tab === "score" && <ScoreTab user={user} config={config} showToast={showToast} />}
       {config && tab === "config" && <ConfigTab config={config} onSaved={setConfig} showToast={showToast} />}
+      {tab === "lessonLog" && <LessonLogTab user={user} showToast={showToast} />}
     </div>
   );
 }

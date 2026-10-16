@@ -52,8 +52,19 @@ export function AuthProvider({ children }) {
     acceptSession(await authApi.register(payload));
   }
 
+  async function updateProfile(payload) {
+    const updated = await authApi.updateProfile(payload);
+    setUser(updated);
+    return updated;
+  }
+
+  async function changePassword(currentPassword, newPassword) {
+    const res = await authApi.changePassword({ currentPassword, newPassword });
+    if (res?.user) setUser(res.user);
+  }
+
   return (
-    <AuthContext.Provider value={{ token, user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ token, user, loading, login, register, logout, updateProfile, changePassword }}>
       {children}
     </AuthContext.Provider>
   );

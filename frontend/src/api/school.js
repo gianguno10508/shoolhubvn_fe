@@ -34,9 +34,15 @@ export function listSchoolUsers() {
   return apiFetch("/school/users");
 }
 
-/** @param {{username,password,name,role,classId?,email?,phone?,studentCode?}} payload */
+/** Bỏ trống username → tự tạo từ họ tên + ngày sinh; bỏ trống password → Abc@123
+ * @param {{username?,password?,name,birthDate?,role?,classId?,email?,phone?,studentCode?}} payload */
 export function createSchoolUser(payload) {
   return apiFetch("/school/users", { method: "POST", body: payload });
+}
+
+/** Tạo hàng loạt: { role?, classId?, users: [{ name, birthDate, studentCode? }] } → { created, errors } */
+export function bulkCreateSchoolUsers(payload) {
+  return apiFetch("/school/users/bulk", { method: "POST", body: payload });
 }
 
 export function updateSchoolUser(id, payload) {
