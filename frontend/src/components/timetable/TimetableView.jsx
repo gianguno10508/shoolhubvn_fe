@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import PanelTitle from "../common/PanelTitle";
 import { getDays, getSessions, getTiets, slotKey, cellKey, parseCell } from "../../utils/helpers";
+import { autoSchedule } from "../../utils/scheduler";
+import { resolvePeriodTimes } from "../../utils/periodTimes";
 
 export default function TimetableView({
   config,
@@ -24,6 +26,7 @@ export default function TimetableView({
   const sessions = useMemo(() => getSessions(config.soBuoi), [config.soBuoi]);
   const tiets = useMemo(() => getTiets(config.soTiet), [config.soTiet]);
   const rowsPerDay = sessions.length * tiets.length;
+  const times = useMemo(() => resolvePeriodTimes(config), [config]);
 
   const [selectedId, setSelectedId] = useState(null);
   const [flash, setFlash] = useState("");
@@ -31,6 +34,7 @@ export default function TimetableView({
   const [filterClass, setFilterClass] = useState("");
   const [filterTeacher, setFilterTeacher] = useState("");
   const [highlightClassId, setHighlightClassId] = useState(null);
+  const [busy, setBusy] = useState(false);
   const thRefs = useRef({});
 
   const offByClass = useMemo(() => {
@@ -243,164 +247,41 @@ export default function TimetableView({
     showFlash("Đã gỡ các tiết xếp tay. Tiết cố định vẫn giữ nguyên.");
   }
 
-  /* ---------------------------------------------------------------------
-   * Xếp tự động — tôn trọng "Cấu hình tiết liên tiếp" của từng phân công:
-   * các tiết chưa xếp của cùng 1 phân công (assignment) được gom thành
-   * từng cụm đúng bằng số tiết liên tiếp, rồi tìm một dải tiết LIỀN KỀ
-   * nhau (cùng ngày, cùng buổi) còn trống để xếp cả cụm vào đó.
-   * Nếu không tìm được vị trí liền kề cho cả cụm, sẽ xếp tạm từng tiết
-   * lẻ (fallback) để không bỏ sót tiết nào.
-   * ------------------------------------------------------------------- */
-  function autoFill() {
-    const next = { ...schedule };
-    const working = { ...effectiveSchedule };
-    let placed = 0;
-    const maxPerSession =
-      Number(constraints.lopToiDaTietTrenBuoi) || tiets.length;
-
-    function sessionLoadOf(day, session, classId) {
-      return Object.keys(working).filter((k) => {
-        const pos = parseCell(k);
-        return (
-          pos.day === day && pos.session === session && pos.classId === classId
-        );
-      }).length;
-    }
-
-    function teacherBusyAtSlot(teacherId, slot) {
-      if (!teacherId) return false;
-      return Object.entries(working).some(([k, id]) => {
-        const pos = parseCell(k);
-        const l = lessonById[id];
-        return l && l.teacherId === teacherId && pos.slot === slot;
-      });
-    }
-
-    /* Lấy khoảng tiết [min, max] mà một phân công (assignmentId) đã CHIẾM
-     * trong đúng buổi (day, session) này của lớp classId. Trả về null nếu
-     * môn đó chưa có tiết nào trong buổi này. Dùng để đảm bảo mọi tiết của
-     * cùng 1 môn trong cùng 1 buổi luôn nằm liền thành 1 khối duy nhất,
-     * không bao giờ bị cách quãng (ví dụ không thể có tiết 1 và tiết 3 mà
-     * bỏ trống tiết 2 ở giữa). */
-    function getAssignmentRange(day, session, classId, assignmentId) {
-      let min = null;
-      let max = null;
-      tiets.forEach((tiet) => {
-        const key = cellKey(day, session, tiet, classId);
-        const lesson = lessonById[working[key]];
-        if (lesson && lesson.assignmentId === assignmentId) {
-          if (min === null || tiet < min) min = tiet;
-          if (max === null || tiet > max) max = tiet;
-        }
-      });
-      return min === null ? null : { min, max };
-    }
-
-    /* Thử xếp 1 cụm (block) gồm 1 hoặc nhiều tiết liên tiếp vào 1 dải tiết
-     * liền kề nhau trong cùng ngày, cùng buổi. Với block chỉ 1 tiết, hàm
-     * này cũng chính là cách xếp "từng tiết lẻ".
-     *
-     * Luật CỨNG (luôn áp dụng, không tùy chọn): nếu buổi đó đã có tiết nào
-     * của cùng phân công rồi, cụm mới CHỈ được xếp ngay sát khối đã có
-     * (nối liền phía trước hoặc phía sau) — tuyệt đối không được xếp cách
-     * quãng để bỏ trống 1 tiết ở giữa.
-     *
-     * Khi avoidAdjacent = true: nếu buổi đó đã có tiết của cùng phân công,
-     * sẽ bỏ qua buổi này luôn (ưu tiên tìm 1 buổi hoàn toàn trống của môn
-     * đó) để không vô tình nối dài vượt quá số tiết liên tiếp cấu hình.
-     * Khi avoidAdjacent = false: cho phép nối liền vào khối đã có (dùng làm
-     * phương án cuối khi hết chỗ trống khác). */
-    function placeBlock(block, avoidAdjacent) {
-      const classId = block[0].classId;
-      const teacherId = block[0].teacherId;
-      const assignmentId = block[0].assignmentId;
-      const size = block.length;
-
-      for (const day of days) {
-        for (const session of sessions) {
-          if (sessionLoadOf(day, session, classId) + size > maxPerSession)
-            continue;
-
-          const occ = getAssignmentRange(day, session, classId, assignmentId);
-
-          for (let start = 0; start + size <= tiets.length; start += 1) {
-            const tietSlice = tiets.slice(start, start + size);
-
-            let ok = true;
-            for (let i = 0; i < size; i += 1) {
-              const tiet = tietSlice[i];
-              const slot = slotKey(day, session, tiet);
-              const key = cellKey(day, session, tiet, classId);
-              if (working[key]) { ok = false; break; }
-              if (offByClass[classId] && offByClass[classId].has(slot)) {
-                ok = false;
-                break;
-              }
-              if ((block[i].avoid || []).includes(slot)) { ok = false; break; }
-              if (teacherBusyAtSlot(teacherId, slot)) { ok = false; break; }
-            }
-            if (!ok) continue;
-
-            if (occ) {
-              const touchesAfter = tietSlice[0] === occ.max + 1;
-              const touchesBefore = tietSlice[size - 1] === occ.min - 1;
-              // Cách quãng với khối đã có trong buổi này -> luôn từ chối.
-              if (!touchesAfter && !touchesBefore) continue;
-              // Liền kề với khối đã có -> chỉ chấp nhận ở lượt cho phép nối dài.
-              if (avoidAdjacent) continue;
-            }
-
-            tietSlice.forEach((tiet, i) => {
-              const key = cellKey(day, session, tiet, classId);
-              working[key] = block[i].id;
-              next[key] = block[i].id;
-              placed += 1;
-            });
-            return true;
-          }
-        }
+  /* Xếp tự động (utils/scheduler.js). mode "fill": giữ các tiết đã xếp, chỉ xếp tiết còn thiếu;
+   * mode "all": gỡ hết tiết xếp tay rồi xếp lại toàn bộ (tiết cố định luôn giữ nguyên). */
+  function runAuto(mode) {
+    if (busy) return;
+    if (
+      mode === "all" &&
+      Object.keys(schedule).length > 0 &&
+      !window.confirm("Xếp lại toàn bộ sẽ gỡ các tiết đã xếp tay (tiết cố định vẫn giữ). Tiếp tục?")
+    )
+      return;
+    setBusy(true);
+    setSelectedId(null);
+    // Nhường 1 nhịp cho giao diện hiện trạng thái "Đang xếp..." trước khi tính
+    window.setTimeout(() => {
+      try {
+        const base =
+          mode === "all"
+            ? Object.fromEntries(Object.entries(effectiveSchedule).filter(([k]) => pinnedKeys.has(k)))
+            : effectiveSchedule;
+        const result = autoSchedule({ config, constraints, classes, lessons, base, lessonById });
+        setSchedule(mode === "all" ? result.placements : { ...schedule, ...result.placements });
+        if (result.total === 0) showFlash("Không còn tiết nào cần xếp.");
+        else if (result.unplaced.length === 0)
+          showFlash(
+            `Đã xếp ${result.placed} tiết${result.gaps ? `, còn ${result.gaps} tiết trống xen giữa` : ", không trùng giờ, không tiết trống"}.`,
+          );
+        else
+          showFlash(
+            `Đã xếp ${result.placed}/${result.total} tiết. ${result.unplaced.length} tiết chưa có chỗ — kiểm tra số tiết, tiết nghỉ/tránh hoặc GV dạy quá nhiều.`,
+            "error",
+          );
+      } finally {
+        setBusy(false);
       }
-      return false;
-    }
-
-    /* Gom các tiết chưa xếp theo từng phân công, giữ nguyên thứ tự xuất hiện */
-    const groups = [];
-    const groupIndex = {};
-    unscheduled.forEach((lesson) => {
-      const gId = lesson.assignmentId;
-      if (!(gId in groupIndex)) {
-        groupIndex[gId] = groups.length;
-        groups.push([]);
-      }
-      groups[groupIndex[gId]].push(lesson);
-    });
-
-    groups.forEach((groupLessons) => {
-      const lienTiep = Math.max(1, Number(groupLessons[0].tietLienTiep) || 1);
-      let queue = groupLessons;
-
-      while (queue.length > 0) {
-        const size = Math.min(lienTiep, queue.length);
-        const block = queue.slice(0, size);
-        queue = queue.slice(size);
-
-        const okBlock = placeBlock(block, true) || placeBlock(block, false);
-        if (!okBlock) {
-          // Không tìm được dải liền kề đủ chỗ cho cả cụm — xếp tạm từng tiết lẻ
-          block.forEach((lesson) => {
-            placeBlock([lesson], true) || placeBlock([lesson], false);
-          });
-        }
-      }
-    });
-
-    setSchedule(next);
-    showFlash(
-      placed > 0
-        ? `Đã xếp tự động ${placed} tiết.`
-        : "Không còn chỗ trống phù hợp.",
-      placed > 0 ? "ok" : "error",
-    );
+    }, 30);
   }
 
   if (classes.length === 0 || lessons.length === 0) {
@@ -432,8 +313,21 @@ export default function TimetableView({
         </div>
         <div className="tt-tools">
           <span className={"flash " + flashType}>{flash}</span>
-          <button className="btn btn-info btn-sm" onClick={autoFill}>
-            Xếp tự động
+          <button
+            className="btn btn-info btn-sm"
+            onClick={() => runAuto("fill")}
+            disabled={busy}
+            title="Giữ các tiết đã xếp, tự xếp các tiết còn thiếu"
+          >
+            {busy ? "Đang xếp..." : "⚡ Xếp tự động"}
+          </button>
+          <button
+            className="btn btn-light btn-sm"
+            onClick={() => runAuto("all")}
+            disabled={busy}
+            title="Gỡ các tiết xếp tay rồi xếp lại toàn bộ cho tối ưu (giữ tiết cố định)"
+          >
+            ↻ Xếp lại toàn bộ
           </button>
           <button className="btn btn-export btn-sm" onClick={handleExport}>
             Xuất Excel
@@ -444,11 +338,8 @@ export default function TimetableView({
           >
             Excel từng lớp
           </button>
-          <button className="btn btn-danger btn-sm" onClick={clearAll}>
+          <button className="btn btn-danger btn-sm" onClick={clearAll} disabled={busy}>
             Gỡ tiết xếp tay
-          </button>
-          <button className="btn btn-primary btn-sm" onClick={onBack}>
-            Về các bước
           </button>
         </div>
       </div>
@@ -497,7 +388,10 @@ export default function TimetableView({
                             {session}
                           </td>
                         )}
-                        <td className="cell-tiet">{tiet}</td>
+                        <td className="cell-tiet">
+                          {tiet}
+                          <small className="pt-time">{times[session]?.[ti]?.start}</small>
+                        </td>
                         {classes.map((c) => {
                           const key = cellKey(day, session, tiet, c.id);
                           const lesson = lessonById[effectiveSchedule[key]];

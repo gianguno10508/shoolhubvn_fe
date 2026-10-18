@@ -15,7 +15,7 @@ export default function GradesStep({
     if (!v) return;
     setGrades((prev) => [
       ...prev,
-      { id: nextId("g"), name: v, laDiemTruong: false },
+      { id: nextId("g"), name: v },
     ]);
     setDraft("");
   }
@@ -31,7 +31,6 @@ export default function GradesStep({
           <tr>
             <th className="w-stt">STT</th>
             <th>Tên Nhóm lớp (Khối)</th>
-            <th className="w-act">Là điểm trường</th>
             <th className="w-act">Khung Chương trình</th>
             <th className="w-act">Hành động</th>
           </tr>
@@ -51,23 +50,6 @@ export default function GradesStep({
                     )
                   }
                 />
-              </td>
-              <td className="center">
-                <button
-                  className={"toggle" + (g.laDiemTruong ? " on" : "")}
-                  onClick={() =>
-                    setGrades((prev) =>
-                      prev.map((x) =>
-                        x.id === g.id
-                          ? { ...x, laDiemTruong: !x.laDiemTruong }
-                          : x,
-                      ),
-                    )
-                  }
-                  aria-pressed={g.laDiemTruong}
-                >
-                  <span />
-                </button>
               </td>
               <td className="center">
                 <button
@@ -105,7 +87,7 @@ export default function GradesStep({
                 onKeyDown={(e) => e.key === "Enter" && add()}
               />
             </td>
-            <td colSpan={3} className="center">
+            <td colSpan={2} className="center">
               <button className="btn btn-add" onClick={add}>
                 +
               </button>

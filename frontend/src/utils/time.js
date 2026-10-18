@@ -10,6 +10,14 @@ export function timeAgo(value) {
   return new Date(value).toLocaleDateString("vi-VN");
 }
 
+/** "14:30 · Thứ Hai, 20/10/2026" — thời gian của sự việc trong thông báo */
+export function formatEventTime(value) {
+  const d = new Date(value);
+  const time = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+  const date = d.toLocaleDateString("vi-VN", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" });
+  return `${time} · ${date.charAt(0).toUpperCase()}${date.slice(1)}`;
+}
+
 export function formatDateTimeVi(value) {
   return new Date(value).toLocaleString("vi-VN", {
     hour: "2-digit",

@@ -80,4 +80,37 @@ function buildUserPrompt({ title, subject, grade, bookSeries, periods, notes, im
   return lines.filter(Boolean).join("\n");
 }
 
-module.exports = { SYSTEM_PROMPT, digitalCompetencePrompt, buildUserPrompt };
+/* ---------- Slide trình chiếu: chuyển giáo án đã soạn thành dàn ý slide (JSON) ---------- */
+
+const SLIDES_PROMPT = `Bạn là giáo viên giỏi ở Việt Nam, chuyên thiết kế bài giảng trình chiếu (PowerPoint) sinh động cho học sinh.
+
+Nhiệm vụ: từ giáo án (kế hoạch bài dạy) được gửi kèm, thiết kế bộ slide để giáo viên TRÌNH CHIẾU TRÊN LỚP cho học sinh xem.
+
+Nguyên tắc:
+- Slide dành cho HỌC SINH xem: ngắn gọn, mỗi ý một dòng (tối đa khoảng 15 từ), không chép nguyên văn giáo án, không ghi "Bước 1: Chuyển giao nhiệm vụ"...
+- Lời dẫn, câu hỏi gợi mở, đáp án chi tiết dành cho GIÁO VIÊN ghi vào "notes".
+- Đi đúng trình tự giáo án: Khởi động → Hình thành kiến thức (mỗi mục kiến thức 1–3 slide) → Luyện tập → Vận dụng → Tổng kết, dặn dò.
+- Bám sát nội dung giáo án: dùng đúng định nghĩa, công thức, ví dụ, bài tập trong giáo án; không bịa kiến thức mới.
+- Có 2–5 câu hỏi trắc nghiệm (kind "quiz") ở phần Khởi động hoặc Luyện tập để học sinh tương tác.
+- Mỗi slide có "emoji": MỘT emoji minh hoạ đúng nội dung slide đó (ví dụ 🌋 núi lửa, 🧪 thí nghiệm, 📐 hình học, 🌾 nông nghiệp, 🗺️ bản đồ, 🦠 vi khuẩn, ✍️ viết bài). Không dùng emoji lá cờ.
+- Công thức viết bằng ký hiệu văn bản thường (x^2, H2O, a/b), không dùng LaTeX, không dùng Markdown (không có ** hay #).
+- Tổng cộng 12–22 slide (không tính slide tiêu đề đầu tiên, slide này hệ thống tự tạo).
+
+Trả về DUY NHẤT một JSON hợp lệ theo dạng:
+{
+  "slides": [
+    { "kind": "section", "title": "Khởi động", "subtitle": "câu dẫn ngắn (có thể bỏ trống)", "emoji": "🚀" },
+    { "kind": "content", "title": "...", "bullets": ["...", "..."], "notes": "...", "emoji": "🔬" },
+    { "kind": "activity", "title": "...", "task": "nhiệm vụ học sinh cần làm", "bullets": ["gợi ý / các bước"], "time": "5 phút", "notes": "...", "emoji": "👥" },
+    { "kind": "quiz", "title": "...", "question": "...", "options": ["...", "...", "...", "..."], "answer": 0, "notes": "giải thích đáp án", "emoji": "❓" },
+    { "kind": "summary", "title": "Ghi nhớ" , "bullets": ["..."], "notes": "...", "emoji": "⭐" }
+  ]
+}
+Quy định: "section" dùng để mở đầu mỗi hoạt động lớn; "content" tối đa 6 gạch đầu dòng; "activity" là phiếu nhiệm vụ / thảo luận nhóm; "quiz" có đúng 4 lựa chọn, "answer" là chỉ số 0–3 của đáp án đúng; slide cuối là "summary" dặn dò về nhà.`;
+
+function buildSlidesPrompt({ title, subject, grade, content }) {
+  const info = [`Thiết kế bộ slide trình chiếu cho bài: ${title}`, subject && `Môn: ${subject}`, grade && `Lớp: ${grade}`];
+  return [...info.filter(Boolean), "", "GIÁO ÁN:", content].join("\n");
+}
+
+module.exports = { SYSTEM_PROMPT, digitalCompetencePrompt, buildUserPrompt, SLIDES_PROMPT, buildSlidesPrompt };

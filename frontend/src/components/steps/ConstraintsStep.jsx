@@ -7,9 +7,9 @@ export default function ConstraintsStep({ constraints, setConstraints }) {
     <div className="panel">
       <PanelTitle title="Cài đặt ràng buộc" />
       <p className="hint">
-        Các ràng buộc này áp dụng khi kiểm tra dữ liệu và khi xếp tiết. Giáo
-        viên không bị giới hạn số tiết trong ngày — chỉ lớp học mới bị giới hạn
-        số tiết tối đa trong một buổi.
+        Áp dụng khi bấm “Xếp tự động”. Luôn đảm bảo: không trùng giờ giáo viên,
+        không xếp vào tiết nghỉ / tiết tránh, các tiết cùng môn trong một buổi
+        luôn liền nhau và mỗi môn được rải đều sang các ngày khác nhau.
       </p>
       <div className="constraint-list">
         <label className="switch-row">
@@ -34,7 +34,7 @@ export default function ConstraintsStep({ constraints, setConstraints }) {
             checked={constraints.uuTienMonChinhBuoiSang}
             onChange={(e) => set("uuTienMonChinhBuoiSang", e.target.checked)}
           />
-          Ưu tiên xếp môn chính vào buổi sáng
+          Ưu tiên xếp môn chính vào buổi sáng (đánh dấu môn chính ở mục Môn học)
         </label>
         <label className="switch-row number">
           Số tiết tối đa của một lớp học trong một buổi

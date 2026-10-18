@@ -156,3 +156,14 @@ a.tkb-row-title:hover {
     grid-column: 1 / -1;
   }
 }
+
+.tkb-published {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 12px;
+  font-weight: 700;
+  vertical-align: middle;
+}

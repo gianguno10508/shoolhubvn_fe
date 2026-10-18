@@ -86,39 +86,6 @@
   cursor: pointer;
 }
 
-.ed-stage {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 6px 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  background: var(--gray-50);
-}
-
-.ed-stage-ring {
-  --p: 0;
-
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background:
-    radial-gradient(closest-side, var(--gray-50) 55%, transparent 58%),
-    conic-gradient(var(--primary) calc(var(--p) * 360deg), var(--gray-200) 0);
-}
-
-.ed-stage select {
-  width: auto;
-  min-height: 30px;
-  padding: 0 4px;
-  border: 0;
-  background: transparent;
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  box-shadow: none !important;
-}
-
 .ed-actions {
   display: flex;
   flex-shrink: 0;
@@ -946,4 +913,49 @@ td.cell.dup .lesson {
   .panel {
     padding: 16px;
   }
+}
+
+/* Giờ học */
+.pt-time {
+  display: block;
+  color: var(--text-3, #64748b);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.pt-auto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.pt-auto input {
+  width: 64px;
+  margin: 0 4px;
+}
+
+.pt-sessions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.pt-session-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.pt-table input[type="time"] {
+  width: 100%;
+}
+
+.pt-table input.pt-bad {
+  border-color: #dc2626;
+  color: #dc2626;
 }

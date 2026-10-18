@@ -1,15 +1,22 @@
 const express = require("express");
 const LessonPlan = require("../models/LessonPlan");
+const AiUsage = require("../models/AiUsage");
 const auth = require("../middleware/auth");
 const loadUser = require("../middleware/loadUser");
 const requirePermission = require("../middleware/requirePermission");
 const requireSchoolVip = require("../middleware/requireSchoolVip");
 const { PERMISSIONS: P } = require("../config/roles");
-const { SYSTEM_PROMPT, digitalCompetencePrompt, buildUserPrompt } = require("../config/lessonPlanPrompt");
+const {
+  SYSTEM_PROMPT,
+  digitalCompetencePrompt,
+  buildUserPrompt,
+  SLIDES_PROMPT,
+  buildSlidesPrompt,
+} = require("../config/lessonPlanPrompt");
 const { loadDigitalCompetence, competenceTable } = require("../utils/digitalCompetence");
 const { generateFromImages } = require("../utils/gemini");
 
-/* Giáo án AI: giáo viên tải ảnh SGK → Gemini soạn giáo án theo prompt có sẵn → lưu, sửa, xuất Word */
+/* Giáo án AI: giáo viên tải ảnh SGK → Gemini soạn giáo án theo prompt có sẵn → lưu, sửa, xuất Word / PowerPoint */
 
 const router = express.Router();
 
@@ -17,7 +24,9 @@ const MAX_IMAGES = 30; // 1 bài thường gồm nhiều ảnh chụp màn hình
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const MAX_TOTAL_BYTES = 30 * 1024 * 1024;
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
-const DAILY_LIMIT = Number(process.env.LESSON_PLAN_DAILY_LIMIT) || 20; // lượt soạn / giáo viên / ngày
+const DAILY_LIMIT = Number(process.env.LESSON_PLAN_DAILY_LIMIT) || 2; // giáo án / tài khoản / ngày
+const SLIDES_DAILY_LIMIT = Number(process.env.SLIDES_DAILY_LIMIT) || 2; // lần tạo PowerPoint bằng AI / tài khoản / ngày
+const VN_OFFSET_MS = 7 * 60 * 60 * 1000; // ngày tính theo giờ Việt Nam (UTC+7)
 
 router.use(auth, loadUser, (req, res, next) => {
   const school = req.currentUser.school;
@@ -26,7 +35,7 @@ router.use(auth, loadUser, (req, res, next) => {
   next();
 });
 router.use(requireSchoolVip);
-router.use(requirePermission(P.EXAM_MANAGE, P.ASSIGNMENT_MANAGE));
+router.use(requirePermission(P.LESSON_PLAN));
 
 function httpError(status, message) {
   return Object.assign(new Error(message), { status });
@@ -58,7 +67,13 @@ function toSummary(p) {
 }
 
 function toDetail(p) {
-  return { ...toSummary(p), notes: p.notes, content: p.content, model: p.model };
+  return {
+    ...toSummary(p),
+    notes: p.notes,
+    content: p.content,
+    model: p.model,
+    hasSlides: !!p.slides?.length,
+  };
 }
 
 async function findOwn(req) {
@@ -98,7 +113,7 @@ function cleanMarkdown(text) {
 router.get("/", async (req, res) => {
   try {
     const list = await LessonPlan.find({ school: req.school._id, createdBy: req.currentUser._id, deletedAt: null })
-      .select("-content -notes")
+      .select("-content -notes -slides")
       .sort({ createdAt: -1 })
       .limit(200);
     res.json(list.map(toSummary));
@@ -107,17 +122,22 @@ router.get("/", async (req, res) => {
   }
 });
 
-/* Số lượt soạn còn lại hôm nay */
-async function usedToday(user) {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  return LessonPlan.countDocuments({ createdBy: user._id, createdAt: { $gte: start } });
+/* Số giáo án đã soạn hôm nay (tính cả giáo án đã xoá để không xoá đi soạn lại được) */
+function startOfTodayVN() {
+  const now = Date.now() + VN_OFFSET_MS;
+  return new Date(now - (now % 86400000) - VN_OFFSET_MS);
 }
+
+async function usedToday(user) {
+  return LessonPlan.countDocuments({ createdBy: user._id, createdAt: { $gte: startOfTodayVN() } });
+}
+
+const slidesUsedToday = (user) => AiUsage.countDocuments({ user: user._id, kind: "slides", createdAt: { $gte: startOfTodayVN() } });
 
 router.get("/quota", async (req, res) => {
   try {
-    const used = await usedToday(req.currentUser);
-    res.json({ used, limit: DAILY_LIMIT, maxImages: MAX_IMAGES });
+    const [used, slidesUsed] = await Promise.all([usedToday(req.currentUser), slidesUsedToday(req.currentUser)]);
+    res.json({ used, limit: DAILY_LIMIT, maxImages: MAX_IMAGES, slidesUsed, slidesLimit: SLIDES_DAILY_LIMIT });
   } catch (err) {
     fail(res, err, "Không kiểm tra được lượt dùng.");
   }
@@ -138,7 +158,7 @@ router.post("/generate", async (req, res) => {
     };
 
     if ((await usedToday(req.currentUser)) >= DAILY_LIMIT) {
-      throw httpError(429, `Mỗi giáo viên được soạn tối đa ${DAILY_LIMIT} giáo án mỗi ngày. Vui lòng quay lại vào ngày mai.`);
+      throw httpError(429, `Mỗi tài khoản được soạn tối đa ${DAILY_LIMIT} giáo án mỗi ngày. Vui lòng quay lại vào ngày mai.`);
     }
 
     let system = SYSTEM_PROMPT;
@@ -193,6 +213,95 @@ router.patch("/:id", async (req, res) => {
     res.json(toDetail(plan));
   } catch (err) {
     fail(res, err, "Không lưu được giáo án.");
+  }
+});
+
+/* ---------- Slide trình chiếu ---------- */
+
+const text = (v, max) => (typeof v === "string" ? v.replace(/\*\*|__|`/g, "").replace(/\s+/g, " ").trim().slice(0, max) : "");
+const textList = (v, maxItems, max) => (Array.isArray(v) ? v.map((x) => text(x, max)).filter(Boolean).slice(0, maxItems) : []);
+const SLIDE_KINDS = ["section", "content", "activity", "quiz", "summary"];
+
+/** Emoji minh hoạ: chỉ nhận 1 emoji ngắn, bỏ cờ (Windows hiển thị cờ thành chữ cái) */
+function cleanEmoji(v) {
+  const e = typeof v === "string" ? v.trim() : "";
+  if (!e || e.length > 12 || !/\p{Extended_Pictographic}/u.test(e) || /\p{Regional_Indicator}/u.test(e)) return "";
+  return e;
+}
+
+/** Làm sạch JSON AI trả về: chỉ giữ các trường biết trước, cắt độ dài để slide không tràn */
+function cleanSlides(raw) {
+  let data;
+  try {
+    data = JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, ""));
+  } catch {
+    throw httpError(502, "AI trả về dàn ý slide không hợp lệ, vui lòng thử lại.");
+  }
+  const list = Array.isArray(data) ? data : data?.slides;
+  if (!Array.isArray(list)) throw httpError(502, "AI trả về dàn ý slide không hợp lệ, vui lòng thử lại.");
+
+  const slides = [];
+  for (const s of list.slice(0, 40)) {
+    const kind = SLIDE_KINDS.includes(s?.kind) ? s.kind : "content";
+    const slide = { kind, title: text(s?.title, 120), notes: text(s?.notes, 3000), emoji: cleanEmoji(s?.emoji) };
+    if (kind === "section") slide.subtitle = text(s.subtitle, 200);
+    if (kind === "content" || kind === "summary") slide.bullets = textList(s.bullets, 7, 220);
+    if (kind === "activity") {
+      slide.task = text(s.task, 400);
+      slide.bullets = textList(s.bullets, 6, 200);
+      slide.time = text(s.time, 30);
+    }
+    if (kind === "quiz") {
+      slide.question = text(s.question, 300);
+      slide.options = textList(s.options, 4, 150);
+      const answer = Number(s.answer);
+      slide.answer = Number.isInteger(answer) && answer >= 0 && answer < slide.options.length ? answer : 0;
+      if (slide.options.length < 2 || !slide.question) continue;
+    }
+    if (!slide.title && kind !== "quiz") continue;
+    slides.push(slide);
+  }
+  if (slides.length < 3) throw httpError(502, "AI tạo quá ít slide, vui lòng thử lại.");
+  return slides;
+}
+
+/* Lấy dàn ý slide; tạo bằng AI nếu chưa có, giáo án đã sửa sau lần tạo trước, hoặc giáo viên yêu cầu tạo lại.
+ * Mỗi lần AI tạo slide tính 1 lượt (tối đa SLIDES_DAILY_LIMIT / tài khoản / ngày); dùng lại slide cũ không tính. */
+router.post("/:id/slides", async (req, res) => {
+  try {
+    const plan = await findOwn(req);
+    const user = req.currentUser;
+    const stale = !plan.slides?.length || (plan.slidesAt && plan.updatedAt > plan.slidesAt);
+    const used = await slidesUsedToday(user);
+    const left = (n) => Math.max(0, SLIDES_DAILY_LIMIT - n);
+
+    if (stale || req.body.refresh === true) {
+      if (used >= SLIDES_DAILY_LIMIT) {
+        if (plan.slides?.length && !req.body.refresh) return res.json({ slides: plan.slides, slidesLeft: 0, reused: true });
+        throw httpError(
+          429,
+          `Mỗi tài khoản được tạo PowerPoint bằng AI tối đa ${SLIDES_DAILY_LIMIT} lần mỗi ngày. Vui lòng quay lại vào ngày mai.`,
+        );
+      }
+      const result = await generateFromImages({
+        system: SLIDES_PROMPT,
+        prompt: buildSlidesPrompt(plan),
+        json: true,
+      });
+      const slides = cleanSlides(result.text);
+      const now = new Date();
+      // updateOne để không làm thay đổi updatedAt (dùng để biết giáo án có sửa sau khi tạo slide)
+      await LessonPlan.updateOne(
+        { _id: plan._id },
+        { $set: { slides, slidesAt: now, updatedAt: plan.updatedAt }, $inc: { slidesCount: 1 } },
+        { timestamps: false },
+      );
+      await AiUsage.create({ user: user._id, kind: "slides", ref: plan._id });
+      return res.json({ slides, slidesLeft: left(used + 1) });
+    }
+    res.json({ slides: plan.slides, slidesLeft: left(used), reused: true });
+  } catch (err) {
+    fail(res, err, "Không tạo được slide trình chiếu.");
   }
 });
 

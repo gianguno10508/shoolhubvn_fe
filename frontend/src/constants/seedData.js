@@ -18,10 +18,8 @@ export const SEED_SUBJECTS = [
   id: nextId("su"),
   name: s.name,
   short: "",
-  gioiHan: "",
   tietLienTiep: s.tietLienTiep,
-  buoiToiDa: "",
-  tietTranh: 0,
+  monChinh: ["Toán", "Ngữ văn", "Tiếng Anh"].includes(s.name),
 }));
 
 export const SEED_DEPARTMENTS = ["KHTN", "KHXH"].map((name) => ({
@@ -49,7 +47,6 @@ export const SEED_TEACHERS = [
 export const SEED_GRADES = ["KHỐI 10", "KHỐI 11", "KHỐI 12"].map((name) => ({
   id: nextId("g"),
   name,
-  laDiemTruong: false,
 }));
 
 export const SEED_CLASSES = ["10A1", "10A2", "10A3", "10A4", "10A5", "10A6"].map(
@@ -57,7 +54,6 @@ export const SEED_CLASSES = ["10A1", "10A2", "10A3", "10A4", "10A5", "10A6"].map
     id: nextId("c"),
     name,
     gradeId: SEED_GRADES[0].id,
-    campusId: "",
     offSlots: [],
   }),
 );

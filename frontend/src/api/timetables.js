@@ -38,3 +38,8 @@ export function restoreTimetable(id) {
 export function deleteTimetableForever(id) {
   return apiFetch(`/timetables/${id}/permanent`, { method: "DELETE" });
 }
+
+/** Áp dụng TKB cho cả trường (giáo viên, học sinh xem trên app); published=false để thôi áp dụng */
+export function publishTimetable(id, published = true) {
+  return apiFetch(`/timetables/${id}/publish`, { method: "POST", body: { published } });
+}

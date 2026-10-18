@@ -33,7 +33,7 @@ router.get("/", async (req, res) => {
   try {
     const trash = req.query.trash === "1";
     const list = await Timetable.find({ ...scope(req), ...(trash ? TRASHED : ACTIVE) })
-      .select("name createdAt updatedAt deletedAt")
+      .select("name createdAt updatedAt deletedAt published publishedAt")
       .sort(trash ? { deletedAt: -1 } : { createdAt: -1 });
     res.json(list);
   } catch (err) {
@@ -83,6 +83,22 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+/* Áp dụng TKB này cho cả trường (bỏ áp dụng các TKB khác); { published: false } để thôi áp dụng */
+router.post("/:id/publish", async (req, res) => {
+  try {
+    const publish = req.body.published !== false;
+    const doc = await Timetable.findOne({ _id: req.params.id, ...scope(req), ...ACTIVE });
+    if (!doc) return res.status(404).json({ error: "Không tìm thấy thời khóa biểu." });
+    if (publish) await Timetable.updateMany({ ...scope(req), published: true }, { published: false, publishedAt: null });
+    doc.published = publish;
+    doc.publishedAt = publish ? new Date() : null;
+    await doc.save();
+    res.json({ ok: true, published: doc.published });
+  } catch (err) {
+    fail(res, err, "Lỗi máy chủ khi áp dụng thời khóa biểu.");
+  }
+});
+
 router.post("/:id/duplicate", async (req, res) => {
   try {
     const src = await Timetable.findOne({ _id: req.params.id, ...scope(req), ...ACTIVE });
@@ -103,7 +119,7 @@ router.delete("/:id", async (req, res) => {
   try {
     const doc = await Timetable.findOneAndUpdate(
       { _id: req.params.id, ...scope(req), ...ACTIVE },
-      { deletedAt: new Date() },
+      { deletedAt: new Date(), published: false, publishedAt: null },
     );
     if (!doc) return res.status(404).json({ error: "Không tìm thấy thời khóa biểu." });
     res.json({ ok: true });

@@ -29,3 +29,18 @@ export function deleteDisciplineRecord(classId, date) {
 export function getDisciplineSummary(period, date) {
   return apiFetch(`/discipline/summary?period=${period}&date=${date}`);
 }
+
+/** Học sinh bị ghi tên trong sổ thi đua của lớp (GVCN: lớp mình) → { className, start, end, students: [...] } */
+export function getDisciplineStudents(period, date, classId) {
+  const q = new URLSearchParams({ period, date, ...(classId ? { classId } : {}) }).toString();
+  return apiFetch(`/discipline/students?${q}`);
+}
+
+/** Phân công chấm chéo → { pairs: [{ scorerClassId, targetClassIds }] } */
+export function getScoringPairs() {
+  return apiFetch("/discipline/pairs");
+}
+
+export function saveScoringPairs(pairs) {
+  return apiFetch("/discipline/pairs", { method: "PUT", body: { pairs } });
+}

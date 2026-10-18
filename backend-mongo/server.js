@@ -11,6 +11,7 @@ const disciplineRoutes = require("./routes/discipline");
 const dashboardRoutes = require("./routes/dashboard");
 const notificationRoutes = require("./routes/notifications");
 const lessonPlanRoutes = require("./routes/lessonPlans");
+const myTimetableRoutes = require("./routes/myTimetable");
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use("/api/assignments", assignmentRoutes);
 app.use("/api/discipline", disciplineRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/my-timetable", myTimetableRoutes);
 
 app.get("/", (req, res) => res.send("TKB backend (MongoDB) đang chạy ✅"));
 

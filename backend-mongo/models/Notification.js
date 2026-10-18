@@ -22,6 +22,7 @@ const notificationSchema = new Schema(
     title: { type: String, required: true, trim: true, maxlength: 150 },
     body: { type: String, default: "", trim: true, maxlength: 5000 },
     priority: { type: String, enum: ["normal", "important"], default: "normal" },
+    eventAt: { type: Date, default: null }, // thời gian (ngày, giờ phút) của sự việc được thông báo, không bắt buộc
 
     audience: {
       type: { type: String, enum: ["staff", "all", "roles", "classes"], required: true },

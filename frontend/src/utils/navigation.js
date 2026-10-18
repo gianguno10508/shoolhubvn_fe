@@ -3,13 +3,12 @@ import {
   canAccessDiscipline,
   canAccessSchoolUsers,
   canManageAssignments,
+  canMakeLessonPlans,
   canManageTimetables,
   hasPermission,
   isAdmin,
   isLearner,
 } from "./permissions";
-
-const canMakeLessonPlans = (user) => hasPermission(user, "exam.manage") || hasPermission(user, "assignment.manage");
 
 /** Trả về các nhóm menu: [{ title, items: [{ to, label, icon, end?, badge? }] }] */
 export function buildNav(user) {
@@ -20,10 +19,7 @@ export function buildNav(user) {
     return [
       {
         title: "Học tập",
-        items: [
-          { to: "/bai-tap", label: "Bài tập", icon: "📚" },
-          ...(canAccessDiscipline(user) ? [{ to: "/thi-dua", label: "Chấm thi đua", icon: "🏆" }] : []),
-        ],
+        items: [{ to: "/bai-tap", label: "Bài tập", icon: "📚" }],
       },
       { title: "Liên lạc", items: [{ to: "/thong-bao", label: "Thông báo", icon: "🔔", badge: "unread" }] },
       { title: "Hỗ trợ", items: [{ to: "/lien-he", label: "Liên hệ", icon: "💬" }] },
@@ -41,7 +37,7 @@ export function buildNav(user) {
         ...(canManageTimetables(user) || isAdmin(user) ? [{ to: "/tkb", label: "Thời khóa biểu", icon: "🗓️" }] : []),
         ...(hasSchool && canManageAssignments(user) ? [{ to: "/giao-vien/bai-tap", label: "Bài tập & Tự chấm", icon: "📝" }] : []),
         ...(hasPermission(user, "exam.manage") ? [{ to: "/giao-vien/tron-de", label: "Trộn đề kiểm tra", icon: "🔀" }] : []),
-        ...(hasSchool && canMakeLessonPlans(user) ? [{ to: "/giao-vien/giao-an", label: "Giáo án AI", icon: "📖" }] : []),
+        ...(canMakeLessonPlans(user) ? [{ to: "/giao-vien/giao-an", label: "Giáo án AI", icon: "📖" }] : []),
         ...(hasSchool && canAccessDiscipline(user) ? [{ to: "/thi-dua", label: "Thi đua & Nề nếp", icon: "🏆" }] : []),
       ],
     },

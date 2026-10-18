@@ -7,25 +7,28 @@ import SummaryTab from "./SummaryTab";
 import ScoreTab from "./ScoreTab";
 import ConfigTab from "./ConfigTab";
 import LessonLogTab from "./LessonLogTab";
+import PairsTab from "./PairsTab";
 
-/* Thi đua & Nề nếp
- *  - Tổng hợp : GVCN, BGH, Đoàn TN, cờ đỏ xem điểm tuần / tháng
- *  - Chấm điểm: Cờ đỏ, Đoàn TN
- *  - Cấu hình : Đoàn TN, tài khoản trường
- *  - Sổ đầu bài: mọi người vào được trang — đọc PDF, xuất Excel Thứ / Tiết / Điểm */
+/* Thi đua & Nề nếp (web)
+ *  - Tổng hợp : tài khoản trường, BGH, Đoàn TN xem cả trường; GVCN xem lớp mình + danh sách HS bị ghi sổ
+ *  - Chấm điểm: Đoàn TN (sửa phiếu các tuần) — cờ đỏ chấm trên app di động
+ *  - Cấu hình : Đoàn TN (mục chấm, ngày bắt đầu tuần 1) + phân công chấm chéo lớp nào chấm lớp nào
+ *  - Sổ đầu bài: Đoàn TN — đọc PDF, xuất Excel Thứ / Tiết / Điểm */
 export default function DisciplinePage() {
   const { user } = useAuth();
-  const canScore = hasPermission(user, "discipline.score");
+  // Web: chấm điểm cho Đoàn TN (sửa phiếu các tuần); cờ đỏ chấm trên app di động
+  const canScore = hasPermission(user, "discipline.score") && user?.role !== "red_flag";
   const canConfig = hasPermission(user, "discipline.config");
+  const canLessonLog = hasPermission(user, "lesson_log.import");
 
   const tabs = [
     ["summary", "Bảng xếp hạng"],
     ...(canScore ? [["score", "Chấm điểm"]] : []),
-    ...(canConfig ? [["config", "Cấu hình chấm"]] : []),
-    ["lessonLog", "Sổ đầu bài"],
+    ...(canConfig ? [["config", "Cấu hình chấm"], ["pairs", "Phân công chấm"]] : []),
+    ...(canLessonLog ? [["lessonLog", "Sổ đầu bài"]] : []),
   ];
 
-  const [tab, setTab] = useState(user?.role === "red_flag" ? "score" : "summary");
+  const [tab, setTab] = useState("summary");
   const [config, setConfig] = useState(null);
   const [error, setError] = useState("");
   const [toast, setToast] = useState(null);
@@ -80,6 +83,7 @@ export default function DisciplinePage() {
       {config && tab === "summary" && <SummaryTab user={user} />}
       {config && tab === "score" && <ScoreTab user={user} config={config} showToast={showToast} />}
       {config && tab === "config" && <ConfigTab config={config} onSaved={setConfig} showToast={showToast} />}
+      {tab === "pairs" && <PairsTab showToast={showToast} />}
       {tab === "lessonLog" && <LessonLogTab user={user} showToast={showToast} />}
     </div>
   );

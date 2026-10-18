@@ -18,10 +18,8 @@ export default function SubjectsStep({ subjects, setSubjects }) {
         id: nextId("su"),
         name: v,
         short: "",
-        gioiHan: "",
         tietLienTiep: 1,
-        buoiToiDa: "",
-        tietTranh: 0,
+        monChinh: false,
       },
     ]);
     setDraft("");
@@ -29,18 +27,11 @@ export default function SubjectsStep({ subjects, setSubjects }) {
 
   return (
     <div className="panel">
-      <PanelTitle
-        title="Môn học"
-        actions={
-          <div className="btn-row tight">
-            <button className="btn btn-info btn-sm">Tiết tránh</button>
-            <button className="btn btn-primary btn-sm">Chọn môn học</button>
-            <button className="btn btn-primary btn-sm">
-              Nhập danh sách môn
-            </button>
-          </div>
-        }
-      />
+      <PanelTitle title="Môn học" />
+      <p className="hint">
+        Tiết liên tiếp là số tiết học liền nhau mặc định khi thêm môn vào Khung CT (ví dụ Toán 2 tiết liền). Đánh dấu
+        môn chính để được ưu tiên xếp buổi sáng (bật trong Ràng buộc xếp lịch).
+      </p>
       <table className="grid-table">
         <thead>
           <tr>
@@ -48,15 +39,9 @@ export default function SubjectsStep({ subjects, setSubjects }) {
             <th>Tên môn</th>
             <th>Rút gọn</th>
             <th>
-              Giới hạn <small>Giới hạn cùng thời điểm</small>
+              Tiết liên tiếp <small>Số tiết học liền nhau</small>
             </th>
-            <th>
-              Tiết liên tiếp <small>Số tiết liên tiếp tối đa</small>
-            </th>
-            <th>
-              Buổi tối đa <small>Số buổi tối đa trong một ngày</small>
-            </th>
-            <th className="w-act">Tiết tránh</th>
+            <th className="w-act">Môn chính</th>
             <th className="w-act" />
           </tr>
         </thead>
@@ -79,31 +64,23 @@ export default function SubjectsStep({ subjects, setSubjects }) {
               </td>
               <td>
                 <input
-                  value={s.gioiHan}
-                  placeholder="Không giới hạn"
-                  onChange={(e) => update(s.id, { gioiHan: e.target.value })}
-                />
-              </td>
-              <td>
-                <input
                   type="number"
                   min={1}
+                  max={4}
                   value={s.tietLienTiep}
                   onChange={(e) =>
                     update(s.id, { tietLienTiep: e.target.value })
                   }
                 />
               </td>
-              <td>
-                <input
-                  value={s.buoiToiDa}
-                  placeholder="Không giới hạn"
-                  onChange={(e) => update(s.id, { buoiToiDa: e.target.value })}
-                />
-              </td>
-              <td>
-                <button className="btn btn-primary btn-sm block">
-                  {s.tietTranh} tiết
+              <td className="center">
+                <button
+                  className={"toggle" + (s.monChinh ? " on" : "")}
+                  onClick={() => update(s.id, { monChinh: !s.monChinh })}
+                  aria-pressed={!!s.monChinh}
+                  aria-label={`Môn chính: ${s.name}`}
+                >
+                  <span />
                 </button>
               </td>
               <td>
@@ -128,7 +105,7 @@ export default function SubjectsStep({ subjects, setSubjects }) {
                 onKeyDown={(e) => e.key === "Enter" && add()}
               />
             </td>
-            <td colSpan={5} />
+            <td colSpan={3} />
             <td>
               <button className="btn btn-add" onClick={add}>
                 +

@@ -115,6 +115,7 @@ function configJSON(d) {
     basePoints: d.basePoints,
     weekStartDay: d.weekStartDay,
     scoreDays: d.scoreDays,
+    weekOneStart: d.weekOneStart || "",
     categories: d.categories.map((c) => ({
       id: c._id,
       name: c.name,
@@ -143,7 +144,7 @@ const asId = (v) => (v && mongoose.isValidObjectId(v) ? v : undefined);
 
 router.put("/config", canConfig, requireSchoolVip, async (req, res) => {
   try {
-    const { basePoints, weekStartDay, scoreDays, categories } = req.body;
+    const { basePoints, weekStartDay, scoreDays, categories, weekOneStart } = req.body;
     if (!Array.isArray(categories)) throw httpError(400, "Thiếu danh sách mục chấm.");
     const clean = categories.map((c, ci) => {
       if (!String(c.name || "").trim()) throw httpError(400, `Mục lớn thứ ${ci + 1} chưa có tên.`);
@@ -171,6 +172,7 @@ router.put("/config", canConfig, requireSchoolVip, async (req, res) => {
     if (basePoints !== undefined) d.basePoints = Math.max(0, Number(basePoints) || 0);
     if (weekStartDay !== undefined) d.weekStartDay = Math.min(6, Math.max(0, Number(weekStartDay) || 0));
     if (Array.isArray(scoreDays)) d.scoreDays = [...new Set(scoreDays.map(Number).filter((n) => n >= 0 && n <= 6))].sort();
+    if (weekOneStart !== undefined) d.weekOneStart = weekOneStart ? checkDate(weekOneStart) : "";
     d.categories = clean;
     d.configured = true;
     await req.school.save();
@@ -245,13 +247,27 @@ async function loadClass(req) {
   return cls;
 }
 
-const isFullScorer = (user) => user.hasPermission(P.DISCIPLINE_CONFIG); // Đoàn TN, tài khoản trường
+const isFullScorer = (user) => user.hasPermission(P.DISCIPLINE_CONFIG); // Đoàn TN
+
+/** Các lớp cờ đỏ của lớp `classId` được chấm theo phân công của Đoàn TN.
+ *  null = Đoàn chưa phân công lớp nào (chấm được mọi lớp trừ lớp mình) */
+function assignedTargets(config, classId) {
+  const pairs = config.scoringPairs || [];
+  if (!pairs.length) return null;
+  const mine = pairs.find((p) => String(p.scorer) === String(classId));
+  return mine ? mine.targets.map(String) : [];
+}
 
 function checkScoreAccess(user, cls, date, config) {
   if (date > todayVN()) throw httpError(400, "Không chấm trước cho ngày trong tương lai.");
   if (isFullScorer(user)) return;
-  if (user.role === ROLES.RED_FLAG && user.classId && String(user.classId._id) === String(cls._id)) {
+  const ownId = user.classId ? String(user.classId._id || user.classId) : null;
+  if (user.role === ROLES.RED_FLAG && ownId === String(cls._id)) {
     throw httpError(403, "Cờ đỏ không chấm lớp của mình.");
+  }
+  const targets = ownId ? assignedTargets(config, ownId) : null;
+  if (targets && !targets.includes(String(cls._id))) {
+    throw httpError(403, targets.length ? "Lớp bạn không được phân công chấm lớp này." : "Đoàn trường chưa phân công lớp chấm cho lớp bạn.");
   }
   // Cờ đỏ chỉ chấm / sửa trong tuần hiện tại
   if (weekStartOf(date, config.weekStartDay) !== weekStartOf(todayVN(), config.weekStartDay)) {
@@ -319,6 +335,29 @@ function rankRows(rows) {
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
+/** GVCN chỉ xem thi đua lớp mình: trả về id lớp (chuỗi) hoặc null nếu được xem cả trường */
+function ownClassOnly(user) {
+  if (user.role !== ROLES.HOMEROOM_TEACHER) return null;
+  if (!user.classId) throw httpError(403, "Bạn chưa được gán lớp chủ nhiệm.");
+  return String(user.classId._id || user.classId);
+}
+
+/** Khoảng ngày của kỳ tổng hợp: tuần chứa `date` hoặc các tuần bắt đầu trong tháng của `date` */
+function periodRange(period, date, config) {
+  if (period === "week") {
+    const start = weekStartOf(date, config.weekStartDay);
+    return { start, end: addDays(start, 6), weeks: [start] };
+  }
+  const month = date.slice(0, 7);
+  const start = `${month}-01`;
+  const [y, m] = month.split("-").map(Number);
+  const end = fmtDay(Date.UTC(y, m, 0));
+  let weeks = [];
+  for (let w = weekStartOf(start, config.weekStartDay); w <= end; w = addDays(w, 7)) if (w >= start) weeks.push(w);
+  if (!weeks.length) weeks = [weekStartOf(start, config.weekStartDay)];
+  return { start, end, weeks };
+}
+
 /** period = week | month, date = 1 ngày bất kỳ trong kỳ */
 router.get("/summary", canView, async (req, res) => {
   try {
@@ -327,23 +366,7 @@ router.get("/summary", canView, async (req, res) => {
     const config = await getConfig(req.school);
     const base = config.basePoints;
 
-    let start;
-    let end;
-    let weeks = [];
-    if (period === "week") {
-      start = weekStartOf(date, config.weekStartDay);
-      end = addDays(start, 6);
-    } else {
-      const month = date.slice(0, 7);
-      start = `${month}-01`;
-      const [y, m] = month.split("-").map(Number);
-      end = fmtDay(Date.UTC(y, m, 0));
-      // Các tuần có ngày đầu tuần nằm trong tháng
-      for (let w = weekStartOf(start, config.weekStartDay); w <= end; w = addDays(w, 7)) {
-        if (w >= start) weeks.push(w);
-      }
-      if (!weeks.length) weeks = [weekStartOf(start, config.weekStartDay)];
-    }
+    const { start, end, weeks } = periodRange(period, date, config);
 
     const rangeEnd = period === "month" ? addDays(weeks[weeks.length - 1], 6) : end;
     const rangeStart = period === "month" ? weeks[0] : start;
@@ -417,6 +440,9 @@ router.get("/summary", canView, async (req, res) => {
       };
     });
 
+    // GVCN: chỉ trả về lớp mình (thứ hạng vẫn tính trên toàn trường)
+    const own = ownClassOnly(req.currentUser);
+    const ranked = rankRows(rows);
     res.json({
       period,
       date,
@@ -425,10 +451,148 @@ router.get("/summary", canView, async (req, res) => {
       basePoints: base,
       columns,
       categories: config.categories.map((c) => c.name),
-      rows: rankRows(rows),
+      totalClasses: ranked.length,
+      ownClassOnly: !!own,
+      rows: own ? ranked.filter((r) => String(r.classId) === own) : ranked,
     });
   } catch (err) {
     fail(res, err, "Lỗi máy chủ khi tổng hợp điểm.");
+  }
+});
+
+/* =========================================
+   PHÂN CÔNG CHẤM CHÉO & MÀN HÌNH CHẤM CỦA CỜ ĐỎ
+========================================= */
+
+const WEEKDAY_FULL = ["Chủ nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+
+/** Ngày đầu tuần 1 của năm học: Đoàn TN đặt, hoặc tuần chứa ngày khai giảng 05/09 gần nhất (không sau hôm nay) */
+function weekOneOf(config, date) {
+  if (config.weekOneStart) return weekStartOf(config.weekOneStart, config.weekStartDay);
+  const year = Number(date.slice(0, 4));
+  const opening = `${year}-09-05` <= date ? `${year}-09-05` : `${year - 1}-09-05`;
+  return weekStartOf(opening, config.weekStartDay);
+}
+
+function weekInfo(config, date) {
+  const start = weekStartOf(date, config.weekStartDay);
+  const n = Math.floor((parseDay(start) - parseDay(weekOneOf(config, date))) / (7 * DAY_MS)) + 1;
+  return { number: n >= 1 ? n : null, start, end: addDays(start, 6) };
+}
+
+router.get("/pairs", canView, async (req, res) => {
+  try {
+    const config = await getConfig(req.school);
+    res.json({ pairs: (config.scoringPairs || []).map((p) => ({ scorerClassId: p.scorer, targetClassIds: p.targets })) });
+  } catch (err) {
+    fail(res, err, "Lỗi máy chủ khi tải phân công chấm.");
+  }
+});
+
+/* Đoàn TN lưu phân công: { pairs: [{ scorerClassId, targetClassIds: [] }] } */
+router.put("/pairs", canConfig, async (req, res) => {
+  try {
+    const raw = Array.isArray(req.body.pairs) ? req.body.pairs : [];
+    const classes = await Class.find({ school: req.school._id, deletedAt: null }).select("_id");
+    const valid = new Set(classes.map((c) => String(c._id)));
+    const pairs = [];
+    const seen = new Set();
+    for (const p of raw) {
+      const scorer = String(p.scorerClassId || "");
+      if (!valid.has(scorer) || seen.has(scorer)) continue;
+      const targets = [...new Set((p.targetClassIds || []).map(String))].filter((t) => valid.has(t) && t !== scorer);
+      if (!targets.length) continue;
+      seen.add(scorer);
+      pairs.push({ scorer, targets });
+    }
+    const config = await getConfig(req.school);
+    config.scoringPairs = pairs;
+    await req.school.save();
+    res.json({ pairs: config.scoringPairs.map((p) => ({ scorerClassId: p.scorer, targetClassIds: p.targets })) });
+  } catch (err) {
+    fail(res, err, "Lỗi máy chủ khi lưu phân công chấm.");
+  }
+});
+
+/* Bước 1 màn hình chấm (app cờ đỏ): hôm nay thứ mấy, tuần mấy, các lớp được chấm + đã chấm chưa */
+router.get("/my-scoring", canScore, async (req, res) => {
+  try {
+    const user = req.currentUser;
+    const config = await getConfig(req.school);
+    const today = todayVN();
+    const ownId = user.classId ? String(user.classId._id || user.classId) : null;
+
+    const classes = await Class.find({ school: req.school._id, deletedAt: null }).sort({ grade: 1, name: 1 });
+    let targets = null;
+    if (!isFullScorer(user) && ownId) targets = assignedTargets(config, ownId);
+    const list = classes.filter((c) => {
+      const id = String(c._id);
+      if (targets) return targets.includes(id);
+      return isFullScorer(user) || id !== ownId;
+    });
+
+    const records = await DisciplineRecord.find({ school: req.school._id, date: today, classId: { $in: list.map((c) => c._id) } });
+    const byClass = new Map(records.map((r) => [String(r.classId), r]));
+    res.json({
+      today,
+      weekday: WEEKDAY_FULL[weekdayOf(today)],
+      isScoreDay: config.scoreDays.includes(weekdayOf(today)),
+      week: weekInfo(config, today),
+      basePoints: config.basePoints,
+      scorerClass: user.classId?.name ? { id: user.classId._id, name: user.classId.name } : null,
+      pairsConfigured: (config.scoringPairs || []).length > 0,
+      assigned: !!targets,
+      targets: list.map((c) => {
+        const r = byClass.get(String(c._id));
+        return {
+          id: c._id,
+          name: c.name,
+          recorded: !!r,
+          totalPenalty: r ? r.totalPenalty : 0,
+          totalBonus: r ? r.totalBonus : 0,
+          recordedByName: r ? r.recordedByName : "",
+        };
+      }),
+    });
+  } catch (err) {
+    fail(res, err, "Lỗi máy chủ khi tải thông tin chấm.");
+  }
+});
+
+/* Danh sách học sinh bị ghi tên trong sổ thi đua của 1 lớp (GVCN: lớp mình) theo tuần / tháng */
+router.get("/students", canView, async (req, res) => {
+  try {
+    const period = req.query.period === "month" ? "month" : "week";
+    const date = checkDate(req.query.date || todayVN());
+    const config = await getConfig(req.school);
+    const classId = ownClassOnly(req.currentUser) || req.query.classId;
+    if (!classId) throw httpError(400, "Vui lòng chọn lớp.");
+    const cls = await Class.findOne({ _id: classId, school: req.school._id, deletedAt: null });
+    if (!cls) throw httpError(404, "Không tìm thấy lớp.");
+
+    const { start, end, weeks } = periodRange(period, date, config);
+    const from = period === "month" ? weeks[0] : start;
+    const to = period === "month" ? addDays(weeks[weeks.length - 1], 6) : end;
+    const records = await DisciplineRecord.find({ school: req.school._id, classId: cls._id, date: { $gte: from, $lte: to } }).sort({ date: 1 });
+
+    const byName = new Map();
+    for (const r of records) {
+      for (const e of r.entries) {
+        for (const raw of e.studentNames || []) {
+          const name = raw.replace(/\s+/g, " ").trim();
+          const key = name.toLocaleLowerCase("vi");
+          if (!byName.has(key)) byName.set(key, { name, count: 0, totalPoints: 0, items: [] });
+          const st = byName.get(key);
+          st.count += 1;
+          st.totalPoints += e.kind === "penalty" ? e.points : -e.points;
+          st.items.push({ date: r.date, categoryName: e.categoryName, itemName: e.itemName, kind: e.kind, points: e.points });
+        }
+      }
+    }
+    const students = [...byName.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "vi"));
+    res.json({ period, classId: cls._id, className: cls.name, start: from, end: to, students });
+  } catch (err) {
+    fail(res, err, "Lỗi máy chủ khi tải danh sách học sinh.");
   }
 });
 

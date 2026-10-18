@@ -412,7 +412,11 @@ export default function FrameworkView({
             <td>
               <select
                 value={draftSubject}
-                onChange={(e) => setDraftSubject(e.target.value)}
+                onChange={(e) => {
+                  setDraftSubject(e.target.value);
+                  const subject = subjects.find((x) => x.id === e.target.value);
+                  if (subject) setDraftLienTiep(Math.max(1, Number(subject.tietLienTiep) || 1));
+                }}
               >
                 <option value="">Mời chọn môn</option>
                 {subjects.map((s) => (

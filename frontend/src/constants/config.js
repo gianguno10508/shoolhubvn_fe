@@ -5,8 +5,6 @@ export const DEFAULT_CONFIG = {
   soNgay: 6,
   soBuoi: 2,
   soTiet: 5,
-  phuongSai: 1,
-  thuatToan: "Thuật toán 4 (tối ưu)",
 };
 
 export const DEFAULT_CONSTRAINTS = {
@@ -15,15 +13,6 @@ export const DEFAULT_CONSTRAINTS = {
   uuTienMonChinhBuoiSang: false,
   chaoCoTiet1Thu2: true,
 };
-
-export const STATUS_STAGES = [
-  "Khởi tạo",
-  "Chỉnh sửa",
-  "Khóa dữ liệu",
-  "Thủ công",
-  "Đang chạy",
-  "Đã có kết quả",
-];
 
 /* Các bước soạn thời khóa biểu (sidebar trình soạn). `count` = khóa đếm số lượng hiển thị bên phải */
 export const NAV_GROUPS = [
@@ -45,7 +34,6 @@ export const NAV_GROUPS = [
     title: "Khối & lớp",
     items: [
       { key: "grades", label: "Khối lớp", count: "grades" },
-      { key: "campuses", label: "Điểm trường", count: "campuses", small: true },
       { key: "classes", label: "Lớp học", count: "classes" },
       { key: "assignments", label: "Phân công giảng dạy", count: "assignments" },
     ],

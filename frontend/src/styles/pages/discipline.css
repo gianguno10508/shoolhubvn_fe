@@ -890,3 +890,65 @@
   width: 40px;
   text-align: center;
 }
+
+/* GVCN: danh sách học sinh bị ghi sổ */
+.dc-students {
+  margin-bottom: 16px;
+}
+
+.dc-student-list {
+  margin: 0;
+  padding: 0 16px 12px;
+  list-style: none;
+}
+
+.dc-student-list > li {
+  border-bottom: 1px solid var(--border);
+}
+
+.dc-student-list > li > button {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 4px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dc-student-list > li > ul {
+  margin: 0 0 10px;
+  padding-left: 22px;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+}
+
+/* Phân công chấm chéo */
+.dc-pairs .btn-row {
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.dc-pairs .spacer {
+  flex: 1;
+}
+
+.dc-pairs-table select {
+  width: 100%;
+  min-width: 120px;
+}
+
+.dc-chip-x {
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}

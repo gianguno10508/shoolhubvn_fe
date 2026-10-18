@@ -73,7 +73,9 @@ export default function App() {
           </Route>
 
           <Route path="giao-vien" element={<TeacherPage />} />
-          <Route path="giao-vien/tron-de" element={<ShuffleExamPage />} />
+          <Route element={<RequirePermission permission="exam.manage" fallback="/" />}>
+            <Route path="giao-vien/tron-de" element={<ShuffleExamPage />} />
+          </Route>
 
           {/* Bài tập & Tự chấm — người giao bài: mọi chức danh trừ học sinh / cờ đỏ */}
           <Route element={<RequirePermission permission="assignment.manage" fallback="/bai-tap" requireSchool />}>
@@ -83,15 +85,14 @@ export default function App() {
           </Route>
 
           {/* Giáo án AI: giáo viên soạn kế hoạch bài dạy từ ảnh sách giáo khoa */}
-          <Route element={<RequirePermission anyOf={["exam.manage", "assignment.manage"]} fallback="/" requireSchool />}>
+          <Route element={<RequirePermission permission="lesson_plan.create" fallback="/" requireSchool />}>
             <Route path="giao-vien/giao-an" element={<LessonPlanListPage />} />
             <Route path="giao-vien/giao-an/:id" element={<LessonPlanDetailPage />} />
           </Route>
 
-          {/* Thi đua & Nề nếp: xem (GVCN, BGH), chấm (cờ đỏ, Đoàn TN), cấu hình (Đoàn TN) */}
-          <Route
-            element={<RequirePermission anyOf={["discipline.view", "discipline.score", "discipline.config"]} fallback="/" requireSchool />}
-          >
+          {/* Thi đua & Nề nếp trên web: xem tổng kết (tài khoản trường, BGH, GVCN lớp mình), cấu hình + sổ đầu bài (Đoàn TN).
+              Cờ đỏ chấm thi đua trên app di động. */}
+          <Route element={<RequirePermission anyOf={["discipline.view", "discipline.config"]} fallback="/" requireSchool />}>
             <Route path="thi-dua" element={<DisciplinePage />} />
           </Route>
 

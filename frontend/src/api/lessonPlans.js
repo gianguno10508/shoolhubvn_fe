@@ -26,3 +26,8 @@ export function updateLessonPlan(id, payload) {
 export function deleteLessonPlan(id) {
   return apiFetch(`/lesson-plans/${id}`, { method: "DELETE" });
 }
+
+/** Dàn ý slide trình chiếu do AI tạo từ giáo án → { slides, slidesLeft, reused } */
+export function getLessonPlanSlides(id, refresh = false) {
+  return apiFetch(`/lesson-plans/${id}/slides`, { method: "POST", body: { refresh } });
+}

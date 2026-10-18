@@ -8,6 +8,7 @@ import {
   ROLE_LABEL,
   canAccessDiscipline,
   canAccessSchoolUsers,
+  canMakeLessonPlans,
   canManageAssignments,
   hasPermission,
 } from "../utils/permissions";
@@ -16,8 +17,7 @@ import { timeAgo } from "../utils/time";
 const canSendNotice = (user) =>
   hasPermission(user, "notification.send_school") || hasPermission(user, "notification.send_class");
 
-const hasSchoolLessonPlans = (user) =>
-  !!user?.schoolId && (hasPermission(user, "exam.manage") || hasPermission(user, "assignment.manage"));
+const hasSchoolLessonPlans = canMakeLessonPlans;
 
 const pad2 = (n) => String(n ?? 0).padStart(2, "0");
 
@@ -114,7 +114,7 @@ export default function TeacherPage() {
     canSendNotice(user) && { icon: "📣", title: "Gửi thông báo", path: "/thong-bao" },
     canAccessSchoolUsers(user) && { icon: "👤", title: "Tạo tài khoản học sinh", path: "/truong/tai-khoan" },
     hasSchoolLessonPlans(user) && { icon: "📖", title: "Soạn giáo án AI", path: "/giao-vien/giao-an" },
-    { icon: "📄", title: "Trộn đề kiểm tra", path: "/giao-vien/tron-de" },
+    hasPermission(user, "exam.manage") && { icon: "📄", title: "Trộn đề kiểm tra", path: "/giao-vien/tron-de" },
   ].filter(Boolean);
   const displayName = user?.name || user?.username || "Thầy/Cô";
   const myClass = data?.discipline?.myClass;

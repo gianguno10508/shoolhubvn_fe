@@ -26,18 +26,7 @@ export default function TeachersStep({ teachers, setTeachers, departments, assig
 
   return (
     <div className="panel">
-      <PanelTitle
-        title="Giáo viên"
-        actions={
-          <div className="btn-row tight">
-            <button className="btn btn-info btn-sm">Ràng buộc</button>
-            <button className="btn btn-primary btn-sm">Chọn giáo viên</button>
-            <button className="btn btn-primary btn-sm">
-              Nhập danh sách giáo viên
-            </button>
-          </div>
-        }
-      />
+      <PanelTitle title="Giáo viên" />
       <p className="hint">
         Tên rút gọn tự sinh từ họ tên: viết tắt họ và chữ đệm, giữ nguyên tên
         cuối. Ví dụ Nguyễn Văn An → N.V.An. Bạn vẫn sửa lại được.
@@ -120,9 +109,9 @@ export default function TeachersStep({ teachers, setTeachers, departments, assig
                   </div>
                 </td>
                 <td className="actions">
-                  <button className="btn btn-primary btn-sm">
-                    Chi tiết ({soTiet} tiết)
-                  </button>
+                  <span className="muted" title="Tổng số tiết/tuần được phân công">
+                    {soTiet} tiết
+                  </span>
                   <button
                     className="btn btn-danger btn-sm"
                     onClick={() =>

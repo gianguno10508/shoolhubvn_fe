@@ -1,0 +1,17 @@
+* ReactJS Web
+- Ban giám hiệu: Tạo thông báo, xem điểm tổng kết thi đua tháng và tuần, tạo tài khoản cho giáo viên
+- Tài khoản trường: Tạo thông báo, xem điểm tổng kết thi đua tháng và tuần, tạo thời khóa biểu, tạo tài khoản cho giáo viên
+- Giáo viên chủ nhiệm: Xem điểm tổng kết thi đua tháng và tuần của lớp. Lưu lại danh sách học sinh bị ghi sổ thi đua lớp mình, giao bài tập, tạo thông báo cho lớp, xem thông báo, tạo tài khoản cho học sinh lớp, trộn đề, tạo giáo án
+- Giáo viên: giao bài tập cho học sinh, xem thông báo, trộn đề, tạo giáo án
+- Đoàn thanh niên: Setup cấu hình chấm thi đua, xem điểm tổng kết thi đua tháng và tuần, import pdf sổ đầu bài
+- Cờ đỏ: Xem thông báo, làm bài tập thầy cô giao cho lớp
+- Học sinh: Xem thông báo, làm bài tập thầy cô giao cho lớp
+* React native
+- Ban giám hiệu: Tạo thông báo, xem điểm tổng kết thi đua tháng và tuần
+- Tài khoản trường: Tạo thông báo, xem điểm tổng kết thi đua tháng và tuần
+- Giáo viên chủ nhiệm: Xem điểm tổng kết thi đua tháng và tuần của lớp. Lưu lại danh sách học sinh bị ghi sổ thi đua lớp mình, xem kết quả bài tập mình giao, tạo thông báo cho lớp, xem thông báo, xem thời khóa biểu của mình
+- Giáo viên: xem kết quả bài tập giao cho học sinh, xem thông báo, xem thời khóa biểu của mình
+- Đoàn thanh niên: Xem điểm tổng kết thi đua tháng và tuần
+- Cờ đỏ: Chấm thi đua, xem thời khóa biểu lớp mình, vào thi khi có giáo viên giao
+- Học sinh: Xem thời khóa biểu, vào thi khi có giáo viên giao
+=>>Tất cả đều có đổi mật khẩu, đổi thông tin và đăng xuất

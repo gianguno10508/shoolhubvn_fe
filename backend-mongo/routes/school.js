@@ -39,7 +39,8 @@ function fail(res, err, fallback) {
   return res.status(500).json({ error: fallback });
 }
 
-const isGlobalManager = (user) => user.hasPermission(P.USERS_MANAGE);
+// Không bị giới hạn theo lớp: tài khoản trường, BGH (chỉ tạo được giáo viên — xem CREATABLE_ROLES)
+const isGlobalManager = (user) => user.hasPermission(P.USERS_MANAGE) || user.hasPermission(P.TEACHERS_MANAGE);
 const ownClassId = (user) => (user.classId ? String(user.classId._id || user.classId) : null);
 
 /* =========================================
@@ -295,7 +296,7 @@ router.get("/users", async (req, res) => {
 
 router.post(
   "/users",
-  requirePermission(P.USERS_MANAGE, P.OWN_CLASS_STUDENTS_MANAGE),
+  requirePermission(P.USERS_MANAGE, P.TEACHERS_MANAGE, P.OWN_CLASS_STUDENTS_MANAGE),
   requireSchoolVip,
   async (req, res) => {
     try {
@@ -316,7 +317,7 @@ router.post(
 /* Tạo hàng loạt: { role?, classId?, users: [{ name, birthDate, studentCode? }] } — dùng chung chức danh + lớp */
 router.post(
   "/users/bulk",
-  requirePermission(P.USERS_MANAGE, P.OWN_CLASS_STUDENTS_MANAGE),
+  requirePermission(P.USERS_MANAGE, P.TEACHERS_MANAGE, P.OWN_CLASS_STUDENTS_MANAGE),
   requireSchoolVip,
   async (req, res) => {
     try {
@@ -351,7 +352,7 @@ router.post(
 
 router.patch(
   "/users/:id",
-  requirePermission(P.USERS_MANAGE, P.OWN_CLASS_STUDENTS_MANAGE),
+  requirePermission(P.USERS_MANAGE, P.TEACHERS_MANAGE, P.OWN_CLASS_STUDENTS_MANAGE),
   requireSchoolVip,
   async (req, res) => {
     try {
@@ -392,7 +393,7 @@ router.patch(
 
 router.delete(
   "/users/:id",
-  requirePermission(P.USERS_MANAGE, P.OWN_CLASS_STUDENTS_MANAGE),
+  requirePermission(P.USERS_MANAGE, P.TEACHERS_MANAGE, P.OWN_CLASS_STUDENTS_MANAGE),
   requireSchoolVip,
   async (req, res) => {
     try {

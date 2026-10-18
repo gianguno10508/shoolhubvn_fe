@@ -11,7 +11,6 @@ export function emptyTimetableData(name) {
     departments: [],
     teachers: [],
     grades: [],
-    campuses: [],
     classes: [],
     assignments: [],
     gradeAssignments: [],

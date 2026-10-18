@@ -6,7 +6,6 @@ export default function ClassesStep({
   classes,
   setClasses,
   grades,
-  campuses,
   assignments,
   config,
   onOpenFramework,
@@ -27,7 +26,6 @@ export default function ClassesStep({
         id: nextId("c"),
         name: v,
         gradeId: draftGrade,
-        campusId: "",
         offSlots: [],
       },
     ]);
@@ -36,25 +34,13 @@ export default function ClassesStep({
 
   return (
     <div className="panel">
-      <PanelTitle
-        title="Lớp học"
-        actions={
-          <div className="btn-row tight">
-            <button className="btn btn-info btn-sm">Tiết học</button>
-            <button className="btn btn-primary btn-sm">Chọn lớp học</button>
-            <button className="btn btn-primary btn-sm">
-              Nhập danh sách lớp
-            </button>
-          </div>
-        }
-      />
+      <PanelTitle title="Lớp học" />
       <table className="grid-table">
         <thead>
           <tr>
             <th className="w-stt">STT</th>
             <th>Tên Lớp học</th>
             <th>Nhóm lớp (Khối)</th>
-            <th>Điểm trường</th>
             <th className="w-act">Khung Chương trình</th>
             <th className="w-act">Hành động</th>
           </tr>
@@ -82,25 +68,6 @@ export default function ClassesStep({
                       </option>
                     ))}
                   </select>
-                </td>
-                <td>
-                  {campuses.length === 0 ? (
-                    <span className="muted">Không có điểm trường</span>
-                  ) : (
-                    <select
-                      value={c.campusId}
-                      onChange={(e) =>
-                        update(c.id, { campusId: e.target.value })
-                      }
-                    >
-                      <option value="">Không có điểm trường</option>
-                      {campuses.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
                 </td>
                 <td className="center">
                   <button
@@ -146,7 +113,7 @@ export default function ClassesStep({
                 ))}
               </select>
             </td>
-            <td colSpan={2} />
+            <td />
             <td className="center">
               <button className="btn btn-add" onClick={add}>
                 +

@@ -11,7 +11,24 @@ import {
   markNotificationRead,
   sendNotification,
 } from "../../api/notifications";
-import { formatDateTimeVi, timeAgo } from "../../utils/time";
+import { formatDateTimeVi, formatEventTime, timeAgo } from "../../utils/time";
+
+/** Nhãn ngày giờ của thông báo; mờ đi khi thời điểm đã qua */
+function EventTime({ value }) {
+  if (!value) return null;
+  const past = new Date(value).getTime() < Date.now();
+  return (
+    <span className={"nt-when" + (past ? " past" : "")} title={past ? "Đã qua" : "Thời gian"}>
+      🕒 {formatEventTime(value)}
+    </span>
+  );
+}
+
+const pad = (n) => String(n).padStart(2, "0");
+const todayInput = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
 
 const TYPE_LABEL = {
   staff: "Toàn bộ giáo viên & cán bộ",
@@ -177,6 +194,7 @@ export default function NotificationsPage() {
                       {n.priority === "important" && <em className="nt-flag">Quan trọng</em>}
                       <strong>{n.title}</strong>
                     </span>
+                    <EventTime value={n.eventAt} />
                     <span className="nt-item-meta">
                       {n.senderName} · {n.senderRoleLabel} → {n.audienceLabel}
                     </span>
@@ -216,6 +234,7 @@ export default function NotificationsPage() {
                       {n.priority === "important" && <em className="nt-flag">Quan trọng</em>}
                       <strong>{n.title}</strong>
                     </span>
+                    <EventTime value={n.eventAt} />
                     <span className="nt-item-meta">
                       Gửi tới {n.audienceLabel} · {formatDateTimeVi(n.createdAt)}
                     </span>
@@ -263,6 +282,8 @@ function ComposeModal({ audiences, onClose, onSent }) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [priority, setPriority] = useState("normal");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -271,9 +292,12 @@ function ComposeModal({ audiences, onClose, onSent }) {
   async function submit(e) {
     e.preventDefault();
     setError("");
+    if (time && !date) return setError("Vui lòng chọn ngày.");
+    if (date && !time) return setError("Vui lòng nhập giờ, phút.");
+    const eventAt = date ? new Date(`${date}T${time}`).toISOString() : null;
     setBusy(true);
     try {
-      const n = await sendNotification({ title, body, priority, audience: { type, roles, classIds } });
+      const n = await sendNotification({ title, body, priority, eventAt, audience: { type, roles, classIds } });
       onSent(n);
     } catch (err) {
       setError(err.message || "Không gửi được thông báo.");
@@ -344,6 +368,31 @@ function ComposeModal({ audiences, onClose, onSent }) {
           <span>Nội dung</span>
           <textarea rows={6} value={body} onChange={(e) => setBody(e.target.value)} maxLength={5000} placeholder="Nội dung thông báo..." />
         </label>
+        <div className="field">
+          <span>Thời gian (ngày, giờ phút) — không bắt buộc</span>
+          <div className="nt-when-row">
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Ngày" />
+            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="Giờ phút" />
+            {!date && (
+              <button type="button" className="btn btn-sm btn-light" onClick={() => setDate(todayInput())}>
+                Hôm nay
+              </button>
+            )}
+            {(date || time) && (
+              <button
+                type="button"
+                className="btn btn-sm btn-light"
+                onClick={() => {
+                  setDate("");
+                  setTime("");
+                }}
+              >
+                Bỏ
+              </button>
+            )}
+          </div>
+          {date && time && <small className="nt-when-preview">🕒 {formatEventTime(`${date}T${time}`)}</small>}
+        </div>
         <label className="nt-important">
           <input type="checkbox" checked={priority === "important"} onChange={(e) => setPriority(e.target.checked ? "important" : "normal")} />
           Đánh dấu <b>quan trọng</b>

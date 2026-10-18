@@ -43,6 +43,15 @@ const disciplineCategorySchema = new Schema({
   items: { type: [disciplineItemSchema], default: [] },
 });
 
+// Phân công chấm chéo: cờ đỏ lớp `scorer` chấm các lớp `targets` (vd 11A1 chấm 11A2)
+const scoringPairSchema = new Schema(
+  {
+    scorer: { type: Schema.Types.ObjectId, ref: "Class", required: true },
+    targets: [{ type: Schema.Types.ObjectId, ref: "Class" }],
+  },
+  { _id: false },
+);
+
 const disciplineSettingsSchema = new Schema(
   {
     configured: { type: Boolean, default: false }, // false = chưa lưu lần nào, dùng mẫu mặc định
@@ -50,6 +59,8 @@ const disciplineSettingsSchema = new Schema(
     weekStartDay: { type: Number, default: 1, min: 0, max: 6 }, // 1 = thứ 2
     scoreDays: { type: [Number], default: [1, 2, 3, 4, 5, 6] }, // các ngày trong tuần có chấm (0 = CN)
     categories: { type: [disciplineCategorySchema], default: [] },
+    weekOneStart: { type: String, default: "" }, // YYYY-MM-DD: ngày thuộc tuần 1 của năm học (trống = tự tính từ 05/09)
+    scoringPairs: { type: [scoringPairSchema], default: [] },
   },
   { _id: false },
 );

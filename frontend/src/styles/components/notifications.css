@@ -457,3 +457,44 @@ button.nt-item-head {
     display: none;
   }
 }
+
+/* Ngày giờ của thông báo */
+.nt-when {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  width: fit-content;
+  margin: 2px 0;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.nt-when.past {
+  background: var(--surface-2, #f1f5f9);
+  color: var(--muted);
+}
+
+.nt-when-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.nt-when-row input[type="date"],
+.nt-when-row input[type="time"] {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.nt-when-preview {
+  display: block;
+  margin-top: 6px;
+  color: var(--primary-strong);
+  font-weight: 600;
+}

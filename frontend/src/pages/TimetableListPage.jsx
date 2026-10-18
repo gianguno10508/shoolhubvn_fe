@@ -7,6 +7,7 @@ import {
   trashTimetable,
   restoreTimetable,
   deleteTimetableForever,
+  publishTimetable,
 } from "../api/timetables";
 import { emptyTimetableData } from "../hooks/useTimetable";
 
@@ -96,6 +97,16 @@ export default function TimetableListPage() {
     run(t._id, () => deleteTimetableForever(t._id), "Đã xóa vĩnh viễn.");
   }
 
+  function handlePublish(t) {
+    if (t.published) {
+      if (!window.confirm(`Thôi áp dụng "${t.name}"? Giáo viên, học sinh sẽ không xem được TKB trên app.`)) return;
+      run(t._id, () => publishTimetable(t._id, false), "Đã thôi áp dụng thời khóa biểu.");
+      return;
+    }
+    if (!window.confirm(`Áp dụng "${t.name}" cho cả trường? Giáo viên, học sinh sẽ xem TKB này trên app di động.`)) return;
+    run(t._id, () => publishTimetable(t._id, true), "Đã áp dụng — giáo viên, học sinh đã xem được trên app.");
+  }
+
   async function submitCreate(e) {
     e.preventDefault();
     const name = newName.trim();
@@ -177,6 +188,7 @@ export default function TimetableListPage() {
                   ) : (
                     <Link className="tkb-row-title" to={`/tkb/${t._id}`}>
                       📅 {t.name}
+                      {t.published && <span className="tkb-published">Đang áp dụng</span>}
                     </Link>
                   )}
                   <small className="tkb-row-date">
@@ -213,6 +225,14 @@ export default function TimetableListPage() {
                     </>
                   ) : (
                     <>
+                      <button
+                        className={"btn btn-sm " + (t.published ? "btn-light" : "btn-primary")}
+                        disabled={busy}
+                        onClick={() => handlePublish(t)}
+                        title="Giáo viên xem lịch dạy, học sinh xem TKB lớp trên app di động"
+                      >
+                        {t.published ? "Thôi áp dụng" : "📱 Áp dụng cho app"}
+                      </button>
                       <button
                         className="btn btn-sm btn-orange"
                         disabled={busy}

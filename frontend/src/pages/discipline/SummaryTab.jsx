@@ -1,8 +1,8 @@
 // pages/discipline/SummaryTab.jsx
 import { Fragment, useEffect, useState } from "react";
-import { getDisciplineSummary, listDisciplineRecords } from "../../api/discipline";
+import { getDisciplineStudents, getDisciplineSummary, listDisciplineRecords } from "../../api/discipline";
 import { hasPermission } from "../../utils/permissions";
-import { exportDisciplineExcel } from "../../utils/disciplineExport";
+import { exportDisciplineExcel, exportDisciplineStudentsExcel } from "../../utils/disciplineExport";
 import { addDays, addMonths, formatPoints, today, viDate, weekdayName } from "./disciplineUtils";
 
 /* Bảng xếp hạng thi đua theo tuần / tháng + chi tiết vi phạm từng lớp */
@@ -15,7 +15,7 @@ export default function SummaryTab({ user }) {
   const [openClass, setOpenClass] = useState(null);
   const [details, setDetails] = useState({}); // classId -> records
   const [exporting, setExporting] = useState(false);
-  const canExport = hasPermission(user, "discipline.config"); // Đoàn thanh niên, tài khoản trường
+  const canExport = hasPermission(user, "discipline.config"); // Đoàn thanh niên
 
   async function handleExport() {
     if (!data) return;
@@ -113,7 +113,7 @@ export default function SummaryTab({ user }) {
           <div className="dc-mine-rank">
             <span>Hạng</span>
             <strong>{mine.rank}</strong>
-            <small>/{data.rows.length} lớp</small>
+            <small>/{data.totalClasses ?? data.rows.length} lớp</small>
           </div>
           <div className="dc-mine-info">
             <span className="dc-eyebrow">LỚP CHỦ NHIỆM</span>
@@ -137,11 +137,13 @@ export default function SummaryTab({ user }) {
         </div>
       )}
 
+      {data?.ownClassOnly && <StudentList period={period} date={date} schoolName={user?.school?.name || ""} />}
+
       <div className="admin-users-panel">
         <div className="admin-toolbar">
           <div className="admin-toolbar-title">
             <div>
-              <h3>Bảng xếp hạng thi đua</h3>
+              <h3>{data?.ownClassOnly ? "Điểm thi đua lớp chủ nhiệm" : "Bảng xếp hạng thi đua"}</h3>
               <span>
                 Điểm gốc {data?.basePoints ?? "—"} ·{" "}
                 {period === "week" ? "điểm tuần = gốc − trừ + cộng" : "điểm tháng = trung bình điểm các tuần"} · bấm vào
@@ -248,6 +250,72 @@ export default function SummaryTab({ user }) {
         )}
       </div>
     </>
+  );
+}
+
+/* GVCN: học sinh lớp mình bị ghi tên trong sổ thi đua trong kỳ — xem và lưu lại ra Excel */
+function StudentList({ period, date, schoolName }) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const [open, setOpen] = useState(null);
+
+  useEffect(() => {
+    setData(null);
+    setError("");
+    getDisciplineStudents(period, date)
+      .then(setData)
+      .catch((err) => setError(err.message || "Không tải được danh sách học sinh."));
+  }, [period, date]);
+
+  async function save() {
+    try {
+      await exportDisciplineStudentsExcel(data, { schoolName });
+    } catch (err) {
+      setError(err.message || "Không xuất được file Excel.");
+    }
+  }
+
+  return (
+    <div className="admin-users-panel dc-students">
+      <div className="admin-toolbar">
+        <div className="admin-toolbar-title">
+          <div>
+            <h3>Học sinh bị ghi sổ thi đua</h3>
+            <span>
+              {data ? `Lớp ${data.className} · ${viDate(data.start)} – ${viDate(data.end)} · bấm vào tên để xem chi tiết` : "Đang tải..."}
+            </span>
+          </div>
+        </div>
+        <button className="btn btn-export" onClick={save} disabled={!data || data.students.length === 0}>
+          ⤓ Lưu danh sách (Excel)
+        </button>
+      </div>
+      {error && <p className="dc-detail-empty bad-text">{error}</p>}
+      {data && data.students.length === 0 && <p className="dc-detail-empty">✓ Không có học sinh nào bị ghi tên trong kỳ này.</p>}
+      {data && data.students.length > 0 && (
+        <ul className="dc-student-list">
+          {data.students.map((st) => (
+            <li key={st.name} className={open === st.name ? "open" : ""}>
+              <button type="button" onClick={() => setOpen(open === st.name ? null : st.name)}>
+                <strong>{st.name}</strong>
+                <span>
+                  {st.count} lần · <b className="bad-text">−{formatPoints(st.totalPoints)}</b>
+                </span>
+              </button>
+              {open === st.name && (
+                <ul>
+                  {st.items.map((it, i) => (
+                    <li key={i}>
+                      {weekdayName(it.date)}, {viDate(it.date)} — {it.categoryName}: {it.itemName}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

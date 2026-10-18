@@ -30,7 +30,8 @@ const EMPTY_CLASS = { name: "", grade: "" };
 export default function SchoolUsersPage() {
   const { user: me } = useAuth();
 
-  const canManageUsers = hasPermission(me, "users.manage");
+  // Không giới hạn theo lớp: tài khoản trường (mọi chức danh), BGH (chỉ giáo viên — theo creatableRoles)
+  const canManageUsers = hasPermission(me, "users.manage") || hasPermission(me, "users.manage_teachers");
   const canManageClasses = hasPermission(me, "classes.manage");
   const creatableRoles = me?.creatableRoles || [];
   const canCreate = creatableRoles.length > 0 && me?.isVip;

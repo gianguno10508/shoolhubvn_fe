@@ -7,6 +7,9 @@ const timetableSchema = new mongoose.Schema(
     school: { type: mongoose.Schema.Types.ObjectId, ref: "School", default: null },
     name: { type: String, required: true, trim: true },
     data: { type: mongoose.Schema.Types.Mixed, required: true },
+    // TKB đang áp dụng của trường (mỗi trường tối đa 1) — giáo viên, học sinh xem trên app di động
+    published: { type: Boolean, default: false },
+    publishedAt: { type: Date, default: null },
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true },

@@ -71,6 +71,7 @@ function toJSON(n, read) {
     title: n.title,
     body: n.body,
     priority: n.priority,
+    eventAt: n.eventAt || null,
     senderName: n.senderName,
     senderRole: n.senderRole,
     senderRoleLabel: ROLE_LABEL[n.senderRole] || "",
@@ -205,6 +206,11 @@ router.post("/", async (req, res) => {
     const user = req.currentUser;
     const title = String(req.body.title || "").trim();
     if (!title) throw httpError(400, "Vui lòng nhập tiêu đề.");
+    let eventAt = null;
+    if (req.body.eventAt) {
+      eventAt = new Date(req.body.eventAt);
+      if (Number.isNaN(eventAt.getTime())) throw httpError(400, "Ngày giờ không hợp lệ.");
+    }
     const { audience, label } = await cleanAudience(user, req.body.audience, req.school._id);
     const recipientCount = await User.countDocuments(recipientFilter(req.school._id, audience, user._id));
     if (!recipientCount) throw httpError(400, "Không có ai trong nhóm người nhận đã chọn.");
@@ -216,6 +222,7 @@ router.post("/", async (req, res) => {
       title,
       body: String(req.body.body || "").trim(),
       priority: req.body.priority === "important" ? "important" : "normal",
+      eventAt,
       audience,
       audienceLabel: label,
       recipientCount,

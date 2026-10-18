@@ -22,6 +22,11 @@ const lessonPlanSchema = new Schema(
     imageCount: { type: Number, default: 0 },
     model: { type: String, default: "" },
 
+    // Dàn ý slide trình chiếu do AI tạo từ giáo án (trình duyệt dựng file .pptx từ đây)
+    slides: { type: [Schema.Types.Mixed], default: undefined },
+    slidesAt: { type: Date, default: null },
+    slidesCount: { type: Number, default: 0 }, // số lần đã tạo slide cho giáo án này
+
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true },

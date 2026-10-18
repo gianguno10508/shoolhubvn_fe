@@ -19,7 +19,6 @@ import SubjectsStep from "./components/steps/SubjectsStep";
 import DepartmentsStep from "./components/steps/DepartmentsStep";
 import TeachersStep from "./components/steps/TeachersStep";
 import GradesStep from "./components/steps/GradesStep";
-import CampusesStep from "./components/steps/CampusesStep";
 import ClassesStep from "./components/steps/ClassesStep";
 import AssignmentsStep from "./components/steps/AssignmentsStep";
 import ConstraintsStep from "./components/steps/ConstraintsStep";
@@ -32,7 +31,6 @@ export default function TimetableApp({
   onSave,
   onBack,
 }) {
-  const [stage, setStage] = useState("Thủ công");
   const [step, setStep] = useState("config");
   const [view, setView] = useState("steps"); // steps | framework | timetable
   const [frameworkScope, setFrameworkScope] = useState(null);
@@ -43,7 +41,6 @@ export default function TimetableApp({
   const [departments, setDepartments] = useState(initialData.departments);
   const [teachers, setTeachers] = useState(initialData.teachers);
   const [grades, setGrades] = useState(initialData.grades);
-  const [campuses, setCampuses] = useState(initialData.campuses);
   const [classes, setClasses] = useState(initialData.classes);
   const [assignments, setAssignments] = useState(initialData.assignments);
   const [gradeAssignments, setGradeAssignments] = useState(
@@ -82,6 +79,8 @@ export default function TimetableApp({
           classId: a.classId,
           subjectId: a.subjectId,
           subjectName: subject ? subject.short || subject.name : "?",
+          subjectFullName: subject ? subject.name : "",
+          main: !!(subject && subject.monChinh),
           teacherId: a.teacherId,
           teacherName: teacher ? teacher.short : "",
           avoid: a.avoid || [],
@@ -243,7 +242,6 @@ export default function TimetableApp({
         departments,
         teachers,
         grades,
-        campuses,
         classes,
         assignments,
         gradeAssignments,
@@ -270,7 +268,6 @@ export default function TimetableApp({
     setTeachers(SEED_TEACHERS);
     setGrades(SEED_GRADES);
     setClasses(SEED_CLASSES);
-    setCampuses([]);
     setAssignments([]);
     setGradeAssignments([]);
     setSchedule({});
@@ -283,7 +280,6 @@ export default function TimetableApp({
     setDepartments([]);
     setTeachers([]);
     setGrades([]);
-    setCampuses([]);
     setClasses([]);
     setAssignments([]);
     setGradeAssignments([]);
@@ -329,8 +325,6 @@ export default function TimetableApp({
     <div className="editor">
       <EditorHeader
         config={config}
-        stage={stage}
-        onChangeStage={setStage}
         shareUrl={shareUrl}
         view={view}
         onBack={onBack}
@@ -354,7 +348,6 @@ export default function TimetableApp({
             departments: departments.length,
             teachers: teachers.length,
             grades: grades.length,
-            campuses: campuses.length,
             classes: classes.length,
             assignments: assignments.length,
           }}
@@ -449,19 +442,11 @@ export default function TimetableApp({
                   onOpenFramework={openFramework}
                 />
               )}
-              {step === "campuses" && (
-                <CampusesStep
-                  campuses={campuses}
-                  setCampuses={setCampuses}
-                  classes={classes}
-                />
-              )}
               {step === "classes" && (
                 <ClassesStep
                   classes={classes}
                   setClasses={setClasses}
                   grades={grades}
-                  campuses={campuses}
                   assignments={assignments}
                   config={config}
                   onOpenFramework={openFramework}

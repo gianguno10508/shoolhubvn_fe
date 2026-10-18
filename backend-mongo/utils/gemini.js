@@ -13,10 +13,11 @@ function httpError(status, message) {
 }
 
 /**
- * @param {{ system: string, prompt: string, images: { mimeType: string, data: string }[] }} input — data là base64
+ * @param {{ system: string, prompt: string, images?: { mimeType: string, data: string }[], json?: boolean }} input — data là base64;
+ *   json = true: yêu cầu AI trả về JSON thuần
  * @returns {Promise<{ text: string, truncated: boolean, model: string }>}
  */
-async function generateFromImages({ system, prompt, images }) {
+async function generateFromImages({ system, prompt, images = [], json = false }) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw httpError(503, "Máy chủ chưa cấu hình GEMINI_API_KEY nên chưa soạn được giáo án.");
 
@@ -28,7 +29,11 @@ async function generateFromImages({ system, prompt, images }) {
         parts: [...images.map((img) => ({ inlineData: { mimeType: img.mimeType, data: img.data } })), { text: prompt }],
       },
     ],
-    generationConfig: { temperature: 0.4, maxOutputTokens: 32768 },
+    generationConfig: {
+      temperature: 0.4,
+      maxOutputTokens: 32768,
+      ...(json ? { responseMimeType: "application/json" } : {}),
+    },
   };
 
   let res;

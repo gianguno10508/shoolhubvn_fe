@@ -1,12 +1,9 @@
 // components/layout/EditorHeader.jsx
 import { useState } from "react";
-import { STATUS_STAGES } from "../../constants/config";
 
-/* Thanh tiêu đề trình soạn TKB: tên + trạng thái + các thao tác chính */
+/* Thanh tiêu đề trình soạn TKB: tên + các thao tác chính */
 export default function EditorHeader({
   config,
-  stage,
-  onChangeStage,
   shareUrl,
   view,
   onBack,
@@ -24,8 +21,6 @@ export default function EditorHeader({
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
   }
-
-  const progress = STATUS_STAGES.indexOf(stage) / (STATUS_STAGES.length - 1);
 
   return (
     <header className="ed-header">
@@ -46,17 +41,6 @@ export default function EditorHeader({
           </button>
         </div>
       </div>
-
-      <label className="ed-stage" title="Trạng thái thời khóa biểu">
-        <span className="ed-stage-ring" style={{ "--p": progress }} />
-        <select value={stage} onChange={(e) => onChangeStage(e.target.value)}>
-          {STATUS_STAGES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </label>
 
       <div className="ed-actions">
         <button className="btn btn-light" onClick={onCheck}>

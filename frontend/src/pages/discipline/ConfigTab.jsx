@@ -13,6 +13,7 @@ export default function ConfigTab({ config, onSaved, showToast }) {
     basePoints: config.basePoints,
     weekStartDay: config.weekStartDay,
     scoreDays: config.scoreDays,
+    weekOneStart: config.weekOneStart || "",
     categories: config.categories.map((c) => ({ ...c, key: c.id, items: c.items.map((i) => ({ ...i, key: i.id })) })),
   }));
   const [saving, setSaving] = useState(false);
@@ -40,6 +41,7 @@ export default function ConfigTab({ config, onSaved, showToast }) {
         basePoints: Number(draft.basePoints),
         weekStartDay: Number(draft.weekStartDay),
         scoreDays: draft.scoreDays,
+        weekOneStart: draft.weekOneStart || "",
         categories: draft.categories.map((c) => ({
           id: c.id,
           name: c.name,
@@ -82,6 +84,15 @@ export default function ConfigTab({ config, onSaved, showToast }) {
                 </option>
               ))}
             </select>
+          </label>
+          <label className="field">
+            <span>Ngày thuộc tuần 1 năm học</span>
+            <input
+              type="date"
+              value={draft.weekOneStart}
+              onChange={(e) => update((d) => (d.weekOneStart = e.target.value))}
+              title="Dùng để đánh số tuần (Tuần 1, 2...). Bỏ trống: tự tính từ ngày 05/09."
+            />
           </label>
           <div className="field">
             <span>Các ngày có chấm</span>

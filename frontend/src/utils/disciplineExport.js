@@ -142,3 +142,24 @@ export async function exportDisciplineExcel({ period, summary, schoolName = "" }
   });
   return download(wb, fileSafe(`Thi-dua_thang_${month.replace("/", "-")}.xlsx`));
 }
+
+/** Danh sách học sinh bị ghi sổ thi đua của 1 lớp (GVCN lưu lại) — data từ getDisciplineStudents */
+export async function exportDisciplineStudentsExcel(data, { schoolName = "" } = {}) {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "SchoolHub";
+  wb.created = new Date();
+  const ws = wb.addWorksheet(`Lớp ${data.className}`.slice(0, 31));
+  const headers = ["STT", "Học sinh", "Số lần", "Điểm trừ", "Chi tiết (ngày · mục)"];
+  styleSheet(ws, {
+    title: `HỌC SINH BỊ GHI SỔ THI ĐUA — LỚP ${data.className}`,
+    subtitle: `${schoolName} · Từ ${vi(data.start)} đến ${vi(data.end)}`,
+    headers,
+    widths: [6, 28, 9, 10, 90],
+  });
+  data.students.forEach((st, i) => {
+    const detail = st.items.map((it) => `${ddmm(it.date)} ${it.itemName}`).join("; ");
+    addBodyRow(ws, 5 + i, [i + 1, st.name, st.count, st.totalPoints, detail], { avgCol: 3 });
+    ws.getRow(5 + i).getCell(5).alignment = { wrapText: true, vertical: "middle" };
+  });
+  return download(wb, fileSafe(`HS-ghi-so_${data.className}_${vi(data.start)}-${vi(data.end)}.xlsx`));
+}

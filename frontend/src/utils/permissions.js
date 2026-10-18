@@ -48,6 +48,7 @@ export function canAccessSchoolUsers(user) {
     !!user.schoolId &&
     (hasPermission(user, "users.view") ||
       hasPermission(user, "users.manage") ||
+      hasPermission(user, "users.manage_teachers") ||
       hasPermission(user, "students.manage_own_class"))
   );
 }
@@ -78,9 +79,14 @@ export function homePath(user) {
   return isAdmin(user) ? "/admin/users" : "/tkb";
 }
 
-/** Được vào mục Thi đua & Nề nếp (xem / chấm / cấu hình) */
+/** Được vào mục Thi đua & Nề nếp trên web (xem tổng kết / cấu hình). Cờ đỏ chấm thi đua trên app di động. */
 export function canAccessDiscipline(user) {
-  return ["discipline.view", "discipline.score", "discipline.config"].some((p) => hasPermission(user, p));
+  return ["discipline.view", "discipline.config"].some((p) => hasPermission(user, p));
+}
+
+/** Soạn giáo án AI */
+export function canMakeLessonPlans(user) {
+  return !!user?.schoolId && hasPermission(user, "lesson_plan.create");
 }
 
 /** Trường chưa có / hết hạn VIP: khóa toàn bộ chức năng (admin hệ thống không bị khóa) */

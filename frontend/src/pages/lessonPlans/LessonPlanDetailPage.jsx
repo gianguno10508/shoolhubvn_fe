@@ -1,4 +1,4 @@
-// pages/lessonPlans/LessonPlanDetailPage.jsx — xem, sửa, xuất Word giáo án
+// pages/lessonPlans/LessonPlanDetailPage.jsx — xem, sửa, xuất Word / PowerPoint giáo án
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { deleteLessonPlan, getLessonPlan, updateLessonPlan } from "../../api/lessonPlans";
@@ -6,6 +6,7 @@ import { exportLessonPlanDocx } from "../../utils/lessonPlanDocx";
 import { plainText, parseMarkdown } from "../../utils/markdownBlocks";
 import { formatDateTime } from "../assignments/assignmentUtils";
 import MarkdownView from "./MarkdownView";
+import SlideDesignModal from "./SlideDesignModal";
 
 /** Văn bản thuần để dán vào nơi khác (bỏ ký hiệu Markdown) */
 function toPlain(markdown) {
@@ -28,6 +29,7 @@ export default function LessonPlanDetailPage() {
   const [draft, setDraft] = useState({ title: "", content: "" });
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
+  const [designing, setDesigning] = useState(false);
 
   useEffect(() => {
     setError("");
@@ -177,6 +179,14 @@ export default function LessonPlanDetailPage() {
               <button className="btn btn-sm btn-primary" type="button" onClick={exportWord}>
                 ⬇ Tải Word
               </button>
+              <button
+                className="btn btn-sm btn-primary lp-ppt-btn"
+                type="button"
+                onClick={() => setDesigning(true)}
+                title="Chọn phong cảnh, AI chuyển giáo án thành bộ slide trình chiếu"
+              >
+                📊 Tạo PowerPoint
+              </button>
             </>
           )}
         </div>
@@ -189,6 +199,20 @@ export default function LessonPlanDetailPage() {
         </div>
       )}
       {notice && <div className="lp-notice">✓ {notice}</div>}
+
+      {designing && (
+        <SlideDesignModal
+          plan={plan}
+          onClose={() => setDesigning(false)}
+          onDone={(slidesLeft, note) => {
+            setDesigning(false);
+            setPlan((p) => ({ ...p, hasSlides: true }));
+            setNotice(
+              `Đã tạo file PowerPoint trình chiếu. ${note || `Hôm nay còn ${slidesLeft} lượt tạo bằng AI.`}`,
+            );
+          }}
+        />
+      )}
 
       {editing ? (
         <div className="lp-editor">
