@@ -9,7 +9,8 @@ import GameHub, { gameOf } from "./game/GameHub";
 
 /* Bài tập & Tự chấm — 2 chế độ:
  *  - Cổ điển : danh sách bài tập đã giao (mọi chức danh trừ học sinh / cờ đỏ)
- *  - Trò chơi: vượt chướng ngại vật / ai là triệu phú / bắn zombie từ đề PDF, chơi ngay trên lớp, không lưu điểm */
+ *  - Trò chơi: vượt chướng ngại vật / ai là triệu phú / bắn zombie từ đề PDF, chơi ngay trên lớp, không lưu điểm;
+ *    hoặc “Giao cho học sinh chơi” → bài tập có `game`, học sinh chơi trên web hoặc app và được chấm điểm */
 export default function AssignmentListPage() {
   const [params, setParams] = useSearchParams();
   const mode = params.get("mode") === "game" ? "game" : "classic";
@@ -28,9 +29,13 @@ export default function AssignmentListPage() {
           </p>
         </div>
         <div className="spacer" />
-        {mode === "classic" && (
+        {mode === "classic" ? (
           <Link className="btn btn-primary" to="/giao-vien/bai-tap/moi">
             + Giao bài mới
+          </Link>
+        ) : (
+          <Link className="btn btn-primary" to={`/giao-vien/bai-tap/moi?game=${game.key}`} title="Học sinh chơi trên web hoặc app, tự chấm điểm">
+            📲 Giao cho học sinh chơi
           </Link>
         )}
       </div>
@@ -117,6 +122,7 @@ function ClassicList() {
               <Link key={a.id} to={`/giao-vien/bai-tap/${a.id}`} className="as-item">
                 <div className="as-item-top">
                   <span className={"as-badge " + state.key}>{state.label}</span>
+                  {a.game && <span className="as-game-tag">{gameOf(a.game).icon} {gameOf(a.game).name}</span>}
                   {state.key === "open" && <span className="as-item-left">{timeLeft(a.dueAt)}</span>}
                 </div>
                 <h3>{a.title}</h3>

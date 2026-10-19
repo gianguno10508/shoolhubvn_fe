@@ -1,11 +1,15 @@
 // screens/ChangePasswordScreen.js — đổi mật khẩu (bắt buộc khi đang dùng mật khẩu mặc định)
+// Mật khẩu mới: ≥ 8 ký tự, có chữ thường, chữ in hoa, ký tự đặc biệt (máy chủ kiểm tra lại)
 import { useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 import { Button, ErrorBox, Field, Muted, Screen } from "../components/ui";
-import { api } from "../api/client";
+import { api, saveToken } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { colors, space } from "../theme";
+import { PASSWORD_RULES, passwordError } from "../utils/passwordPolicy";
 
 export default function ChangePasswordScreen({ navigation, forced = false }) {
-  const { setUser, logout } = useAuth();
+  const { user: me, setUser, logout } = useAuth();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [again, setAgain] = useState("");
@@ -13,12 +17,15 @@ export default function ChangePasswordScreen({ navigation, forced = false }) {
   const [error, setError] = useState("");
 
   async function save() {
-    if (next.length < 6) return setError("Mật khẩu mới cần ít nhất 6 ký tự.");
+    const weak = passwordError(next, me?.username);
+    if (weak) return setError(weak);
     if (next !== again) return setError("Nhập lại mật khẩu mới chưa khớp.");
     setBusy(true);
     setError("");
     try {
-      const { user } = await api.changePassword(current, next);
+      const { token, user } = await api.changePassword(current, next);
+      // Máy chủ thu hồi mọi token cũ khi đổi mật khẩu → lưu token mới để phiên này vẫn dùng tiếp
+      if (token) await saveToken(token);
       setUser(user);
       if (!forced) navigation.goBack();
     } catch (err) {
@@ -35,11 +42,27 @@ export default function ChangePasswordScreen({ navigation, forced = false }) {
         </Muted>
       )}
       <ErrorBox message={error} />
-      <Field label="Mật khẩu hiện tại" value={current} onChangeText={setCurrent} secureTextEntry />
-      <Field label="Mật khẩu mới (ít nhất 6 ký tự)" value={next} onChangeText={setNext} secureTextEntry />
-      <Field label="Nhập lại mật khẩu mới" value={again} onChangeText={setAgain} secureTextEntry />
+      <Field label="Mật khẩu hiện tại" value={current} onChangeText={setCurrent} secureTextEntry autoCapitalize="none" />
+      <Field label="Mật khẩu mới" value={next} onChangeText={setNext} secureTextEntry autoCapitalize="none" />
+      <View style={styles.rules}>
+        {PASSWORD_RULES.map((r) => {
+          const ok = r.test(next);
+          return (
+            <Text key={r.key} style={[styles.rule, ok && styles.ruleOk]}>
+              {ok ? "✓" : "•"} {r.label}
+            </Text>
+          );
+        })}
+      </View>
+      <Field label="Nhập lại mật khẩu mới" value={again} onChangeText={setAgain} secureTextEntry autoCapitalize="none" />
       <Button title="Đổi mật khẩu" onPress={save} loading={busy} />
       {forced && <Button title="Đăng xuất" variant="light" onPress={logout} style={{ marginTop: 12 }} />}
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  rules: { marginTop: -space.xs, marginBottom: space.md },
+  rule: { fontSize: 13, color: colors.muted, lineHeight: 20 },
+  ruleOk: { color: colors.success, fontWeight: "600" },
+});

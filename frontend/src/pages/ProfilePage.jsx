@@ -1,5 +1,7 @@
 // pages/ProfilePage.jsx — người dùng tự sửa thông tin cá nhân và đổi mật khẩu
 import { useState } from "react";
+import PasswordChecklist from "../components/common/PasswordChecklist";
+import { passwordError } from "../utils/passwordPolicy";
 import { useAuth } from "../context/AuthContext";
 import { ROLE_ICON, ROLE_LABEL } from "../utils/permissions";
 import { dateInputValue, formatDate } from "../utils/accountName";
@@ -56,7 +58,8 @@ export default function ProfilePage() {
   async function savePassword(e) {
     e.preventDefault();
     if (!pw.current || !pw.next) return showToast("Vui lòng nhập đủ mật khẩu hiện tại và mật khẩu mới.", true);
-    if (pw.next.length < 6) return showToast("Mật khẩu mới cần ít nhất 6 ký tự.", true);
+    const weak = passwordError(pw.next, user?.username);
+    if (weak) return showToast(weak, true);
     if (pw.next !== pw.confirm) return showToast("Nhập lại mật khẩu mới chưa khớp.", true);
     setBusy("password");
     try {
@@ -187,6 +190,7 @@ export default function ProfilePage() {
                   {STRENGTH_LABEL[strength]}
                 </span>
               )}
+              <PasswordChecklist password={pw.next} />
             </label>
             <label className={"field" + (pw.confirm && pw.confirm !== pw.next ? " warn" : "")}>
               <span>Nhập lại mật khẩu mới</span>

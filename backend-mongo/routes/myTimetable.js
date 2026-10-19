@@ -5,10 +5,12 @@ const loadUser = require("../middleware/loadUser");
 const requirePermission = require("../middleware/requirePermission");
 const requireSchoolVip = require("../middleware/requireSchoolVip");
 const { PERMISSIONS: P, ROLES } = require("../config/roles");
+const { DAY_MS, toDate, rangeOf } = require("../utils/timetableWeek");
 
-/* Thời khóa biểu của tôi (app di động): lấy TKB nhà trường đang áp dụng,
- *  - giáo viên / GVCN: lịch dạy của mình (khớp họ tên tài khoản với tên giáo viên trong TKB, hoặc tự chọn)
- *  - học sinh / cờ đỏ: TKB lớp mình (khớp tên lớp)
+/* Thời khóa biểu của tôi (app di động): lấy TKB nhà trường đang áp dụng cho tuần đang xem
+ * (?from=YYYY-MM-DD&to=YYYY-MM-DD; TKB có tuần áp dụng trùng khoảng này, không có thì dùng TKB mặc định không ghi tuần),
+ *  - giáo viên / GVCN: tự hiện lịch dạy của mình (khớp họ tên tài khoản với tên giáo viên trong TKB; chỉ khi không khớp mới cần tự chọn)
+ *  - học sinh / cờ đỏ: tự hiện TKB lớp mình (khớp tên lớp)
  *  - tài khoản trường, BGH, Đoàn TN: chọn xem theo lớp (?classId) hoặc theo giáo viên (?teacherId)
  * Mỗi tiết kèm giờ học (cài ở web: Thông tin chung → Giờ học). */
 
@@ -54,6 +56,44 @@ const norm = (s) =>
     .toLocaleLowerCase("vi")
     .replace(/\s+/g, " ")
     .trim();
+/** Bỏ dấu (đ → d) để khớp cả khi gõ thiếu dấu */
+const plain = (s) =>
+  norm(s)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d");
+
+/** Tìm phần tử khớp tên: khớp đúng (có dấu) trước, rồi khớp không dấu */
+function matchByName(list, getNames, wanted) {
+  for (const f of [norm, plain]) {
+    const w = f(wanted);
+    if (!w) return null;
+    const hits = list.filter((x) => getNames(x).some((n) => n && f(n) === w));
+    if (hits.length) return hits[0]; // trùng tên: lấy người đầu tiên
+  }
+  return null;
+}
+
+const TITLE_RE = /^(thầy|cô|gv|giáo viên|lớp)\s+/i;
+
+/** Tuần chứa hôm nay (thứ 2 → chủ nhật), theo giờ Việt Nam */
+function currentWeek() {
+  const now = new Date(Date.now() + 7 * 60 * 60 * 1000);
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const from = new Date(today.getTime() - ((today.getUTCDay() + 6) % 7) * DAY_MS);
+  return { from, to: new Date(from.getTime() + 6 * DAY_MS) };
+}
+
+/** TKB đang áp dụng cho khoảng [from, to].
+ * Trường đã dùng TKB theo tuần (có ngày bắt đầu / kết thúc): chỉ lấy TKB có khoảng ngày trùng tuần này,
+ * ngoài các khoảng đó thì không có lịch. TKB không ghi ngày chỉ dùng khi trường chưa có TKB theo tuần nào (bản cũ). */
+async function findTimetable(schoolId, from, to) {
+  const list = await Timetable.find({ school: schoolId, published: true, deletedAt: null }).sort({ publishedAt: -1 });
+  const ranged = list.map((doc) => ({ doc, ...rangeOf(doc) })).filter((t) => t.weekStart);
+  if (!ranged.length) return { doc: list[0] || null, range: null, any: list.length > 0 };
+  const hit = ranged.filter((t) => t.weekStart <= to && t.weekEnd >= from).sort((a, b) => b.weekStart - a.weekStart)[0];
+  return { doc: hit ? hit.doc : null, range: hit ? { weekStart: hit.weekStart, weekEnd: hit.weekEnd } : null, any: true };
+}
 
 /** Ô đã xếp thực tế: tiết cố định trong khung CT + các ô xếp (tay / tự động) còn hợp lệ — giống TimetableApp.jsx */
 function effectiveSchedule(data) {
@@ -82,9 +122,14 @@ function effectiveSchedule(data) {
 router.get("/", async (req, res) => {
   try {
     const user = req.currentUser;
-    const doc = await Timetable.findOne({ school: user.school._id, published: true, deletedAt: null });
+    const week = currentWeek();
+    const asked = toDate(req.query.from) || week.from;
+    const from = new Date(asked.getTime() - ((asked.getUTCDay() + 6) % 7) * DAY_MS); // luôn tính từ thứ 2
+    const to = new Date(from.getTime() + 6 * DAY_MS);
+    const { doc, range, any } = await findTimetable(user.school._id, from, to);
     if (!doc) {
-      return res.json({ published: false, timetable: null, kind: null, target: null, canBrowse: false, options: [], classOptions: [], times: {}, days: [], sessions: [], periods: [], cells: [] });
+      // published: nhà trường có áp dụng TKB nào không; có mà vẫn rỗng nghĩa là tuần này chưa có TKB
+      return res.json({ published: any, timetable: null, kind: null, target: null, canBrowse: false, options: [], classOptions: [], times: {}, days: [], sessions: [], periods: [], cells: [] });
     }
 
     const data = doc.data || {};
@@ -113,14 +158,20 @@ router.get("/", async (req, res) => {
     let target = null;
     if (canBrowse && req.query.classId) kind = "class";
 
+    let matched = false; // tự nhận ra lớp / giáo viên theo tài khoản đăng nhập
     if (kind === "class") {
       const wanted = canBrowse ? classById.get(String(req.query.classId)) : null;
-      const myClass = user.classId ? norm(user.classId.name).replace(/\s/g, "") : "";
-      const found = wanted || classes.find((c) => norm(c.name).replace(/\s/g, "") === myClass);
+      const className = (n) => String(n || "").replace(TITLE_RE, "").replace(/\s/g, "");
+      const mine = !canBrowse && user.classId ? matchByName(classes, (c) => [className(c.name)], className(user.classId.name)) : null;
+      const found = wanted || mine;
+      matched = !!mine;
       if (found) target = { id: found.id, name: found.name };
     } else {
+      // Giáo viên: khớp họ tên trước (VD tài khoản "Bế Văn Linh" → giáo viên "Bế Văn Linh"), chỉ khi không khớp mới dùng tên đã tự chọn
+      const mine = isTeacher ? matchByName(teachers, (t) => [t.fullName, t.short], String(user.name || "").replace(TITLE_RE, "")) : null;
       const chosen = req.query.teacherId && teacherById.get(String(req.query.teacherId));
-      const found = chosen || (isTeacher && teachers.find((t) => norm(t.fullName) && norm(t.fullName) === norm(user.name)));
+      const found = mine || chosen;
+      matched = !!mine;
       if (found) target = { id: found.id, name: found.fullName || found.short };
     }
     const times = periodTimes(config, sessions, periods.length);
@@ -132,6 +183,9 @@ router.get("/", async (req, res) => {
         const [day, session, period, classId] = key.split("|");
         const a = lessons.get(lessonId);
         if (kind === "class" ? classId !== target.id : a.teacherId !== target.id) continue;
+        // Chỉ những ngày nằm trong khoảng ngày áp dụng của TKB mới có lịch
+        const date = new Date(from.getTime() + DAY_LABELS.indexOf(day) * DAY_MS);
+        if (range && (date < range.weekStart || date > range.weekEnd)) continue;
         const subject = subjects.get(a.subjectId);
         const teacher = teacherById.get(a.teacherId);
         const time = (times[session] || [])[Number(period) - 1] || {};
@@ -152,9 +206,10 @@ router.get("/", async (req, res) => {
 
     res.json({
       published: true,
-      timetable: { id: doc._id, name: doc.name, updatedAt: doc.updatedAt },
+      timetable: { id: doc._id, name: doc.name, updatedAt: doc.updatedAt, weekStart: range?.weekStart || null, weekEnd: range?.weekEnd || null },
       kind,
       target,
+      matched,
       canBrowse,
       options,
       classOptions: canBrowse ? classOptions : [],

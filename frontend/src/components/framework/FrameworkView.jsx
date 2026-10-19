@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import SlotPicker from "./SlotPicker";
+import SearchSelect from "../common/SearchSelect";
 import { getDays, getSessions, getTiets, slotKey, slotLabel, newAssignment } from "../../utils/helpers";
 
 export default function FrameworkView({
@@ -125,6 +126,11 @@ export default function FrameworkView({
   }
 
   const pickerItem = picker ? rows.find((a) => a.id === picker) : null;
+  const subjectOptions = useMemo(() => subjects.map((s) => ({ value: s.id, label: s.name })), [subjects]);
+  const teacherOptions = useMemo(
+    () => teachers.map((t) => ({ value: t.id, label: t.fullName || t.short || "?" })),
+    [teachers],
+  );
 
   return (
     <div className="panel fw-panel">
@@ -336,34 +342,20 @@ export default function FrameworkView({
               <tr key={a.id}>
                 <td className="stt center">{i + 1}</td>
                 <td className="center">
-                  <select
+                  <SearchSelect
                     value={a.subjectId}
-                    onChange={(e) =>
-                      update(a.id, { subjectId: e.target.value })
-                    }
-                  >
-                    <option value="">Mời chọn môn</option>
-                    {subjects.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
+                    options={subjectOptions}
+                    placeholder="Mời chọn môn"
+                    onChange={(v) => update(a.id, { subjectId: v })}
+                  />
                 </td>
                 <td>
-                  <select
+                  <SearchSelect
                     value={a.teacherId}
-                    onChange={(e) =>
-                      update(a.id, { teacherId: e.target.value })
-                    }
-                  >
-                    <option value="">Mời chọn giáo viên</option>
-                    {teachers.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.fullName}
-                      </option>
-                    ))}
-                  </select>
+                    options={teacherOptions}
+                    placeholder="Mời chọn giáo viên"
+                    onChange={(v) => update(a.id, { teacherId: v })}
+                  />
                 </td>
                 <td>
                   <input
@@ -410,34 +402,24 @@ export default function FrameworkView({
           <tr className="add-row">
             <td className="stt center">{rows.length + 1}</td>
             <td>
-              <select
+              <SearchSelect
                 value={draftSubject}
-                onChange={(e) => {
-                  setDraftSubject(e.target.value);
-                  const subject = subjects.find((x) => x.id === e.target.value);
+                options={subjectOptions}
+                placeholder="Mời chọn môn"
+                onChange={(v) => {
+                  setDraftSubject(v);
+                  const subject = subjects.find((x) => x.id === v);
                   if (subject) setDraftLienTiep(Math.max(1, Number(subject.tietLienTiep) || 1));
                 }}
-              >
-                <option value="">Mời chọn môn</option>
-                {subjects.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+              />
             </td>
             <td>
-              <select
+              <SearchSelect
                 value={draftTeacher}
-                onChange={(e) => setDraftTeacher(e.target.value)}
-              >
-                <option value="">Mời chọn giáo viên</option>
-                {teachers.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.fullName}
-                  </option>
-                ))}
-              </select>
+                options={teacherOptions}
+                placeholder="Mời chọn giáo viên"
+                onChange={setDraftTeacher}
+              />
             </td>
             <td>
               <input

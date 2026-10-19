@@ -23,6 +23,8 @@ const userSchema = new Schema(
     status: { type: String, enum: ["active", "locked"], default: "active" },
     // Tạo bằng mật khẩu mặc định / được đặt lại → nhắc người dùng tự đổi mật khẩu
     mustChangePassword: { type: Boolean, default: false },
+    // Lần đổi / đặt lại mật khẩu gần nhất — token đăng nhập cấp trước thời điểm này bị vô hiệu
+    passwordChangedAt: { type: Date, default: null },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
   },
   { timestamps: true },
@@ -33,7 +35,8 @@ userSchema.index({ school: 1, classId: 1 });
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
-  this.password = await bcrypt.hash(this.password, 10);
+  this.password = await bcrypt.hash(this.password, 12);
+  if (!this.isNew) this.passwordChangedAt = new Date();
   next();
 });
 

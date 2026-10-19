@@ -2,6 +2,7 @@ const express = require("express");
 const Timetable = require("../models/Timetable");
 const auth = require("../middleware/auth");
 const requireTimetableAccess = require("../middleware/requireTimetableAccess");
+const { weekOf, rangeOf, overlaps, WEEK_FIELDS } = require("../utils/timetableWeek");
 
 const router = express.Router();
 
@@ -22,6 +23,7 @@ function newDocFields(req) {
 }
 
 function fail(res, err, fallback) {
+  if (err && err.status) return res.status(err.status).json({ error: err.message });
   if (err && (err.name === "CastError" || err.name === "BSONError")) {
     return res.status(400).json({ error: "Mã thời khóa biểu không hợp lệ." });
   }
@@ -33,9 +35,10 @@ router.get("/", async (req, res) => {
   try {
     const trash = req.query.trash === "1";
     const list = await Timetable.find({ ...scope(req), ...(trash ? TRASHED : ACTIVE) })
-      .select("name createdAt updatedAt deletedAt published publishedAt")
-      .sort(trash ? { deletedAt: -1 } : { createdAt: -1 });
-    res.json(list);
+      .select(`name createdAt updatedAt deletedAt published publishedAt ${WEEK_FIELDS}`)
+      .sort(trash ? { deletedAt: -1 } : { createdAt: -1 })
+      .lean();
+    res.json(list.map(({ data, ...t }) => ({ ...t, ...rangeOf({ ...t, data }) })));
   } catch (err) {
     fail(res, err, "Lỗi máy chủ khi lấy danh sách.");
   }
@@ -57,7 +60,7 @@ router.post("/", async (req, res) => {
     if (!name || !data) {
       return res.status(400).json({ error: "Thiếu tên hoặc dữ liệu thời khóa biểu." });
     }
-    const doc = await Timetable.create({ ...newDocFields(req), name, data });
+    const doc = await Timetable.create({ ...newDocFields(req), name, data, ...weekOf(data) });
     res.json({ _id: doc._id, name: doc.name, createdAt: doc.createdAt });
   } catch (err) {
     fail(res, err, "Lỗi máy chủ khi tạo thời khóa biểu.");
@@ -69,12 +72,13 @@ router.put("/:id", async (req, res) => {
     const { name, data } = req.body;
     const doc = await Timetable.findOneAndUpdate(
       { _id: req.params.id, ...scope(req), ...ACTIVE },
-      { ...(name ? { name } : {}), ...(data ? { data } : {}) },
+      { ...(name ? { name } : {}), ...(data ? { data, ...weekOf(data) } : {}) },
       { new: true },
-    ).select("name updatedAt");
+    ).select("name updatedAt weekStart weekEnd published");
     if (!doc) return res.status(404).json({ error: "Không tìm thấy thời khóa biểu." });
     res.json(doc);
   } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
     if (err.code === 11000) {
       return res.status(409).json({ error: "Bạn đã có 1 thời khóa biểu trùng tên này rồi." });
     }
@@ -83,17 +87,29 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-/* Áp dụng TKB này cho cả trường (bỏ áp dụng các TKB khác); { published: false } để thôi áp dụng */
+/* Áp dụng TKB này cho cả trường; { published: false } để thôi áp dụng.
+ * Nhiều TKB được áp dụng cùng lúc nếu khác tuần — chỉ bỏ áp dụng các TKB trùng tuần với TKB này. */
 router.post("/:id/publish", async (req, res) => {
   try {
     const publish = req.body.published !== false;
     const doc = await Timetable.findOne({ _id: req.params.id, ...scope(req), ...ACTIVE });
     if (!doc) return res.status(404).json({ error: "Không tìm thấy thời khóa biểu." });
-    if (publish) await Timetable.updateMany({ ...scope(req), published: true }, { published: false, publishedAt: null });
+    let replaced = [];
+    if (publish) {
+      const others = await Timetable.find({ ...scope(req), ...ACTIVE, published: true, _id: { $ne: doc._id } }).select(
+        `name ${WEEK_FIELDS}`,
+      );
+      const mine = rangeOf(doc);
+      replaced = others.filter((o) => overlaps(rangeOf(o), mine));
+      if (replaced.length) {
+        await Timetable.updateMany({ _id: { $in: replaced.map((o) => o._id) } }, { published: false, publishedAt: null });
+      }
+    }
+    Object.assign(doc, rangeOf(doc)); // đồng bộ lại khoảng ngày cho bản lưu từ trước
     doc.published = publish;
     doc.publishedAt = publish ? new Date() : null;
     await doc.save();
-    res.json({ ok: true, published: doc.published });
+    res.json({ ok: true, published: doc.published, replaced: replaced.map((o) => o.name) });
   } catch (err) {
     fail(res, err, "Lỗi máy chủ khi áp dụng thời khóa biểu.");
   }
@@ -108,7 +124,7 @@ router.post("/:id/duplicate", async (req, res) => {
     const data = JSON.parse(JSON.stringify(src.data || {}));
     if (data.config) data.config.tenTKB = name;
 
-    const copy = await Timetable.create({ ...newDocFields(req), name, data });
+    const copy = await Timetable.create({ ...newDocFields(req), name, data, ...weekOf(data) });
     res.json({ _id: copy._id, name: copy.name, createdAt: copy.createdAt });
   } catch (err) {
     fail(res, err, "Lỗi máy chủ khi nhân bản.");

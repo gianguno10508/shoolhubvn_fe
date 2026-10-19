@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
 
+const GAMES = ["", "obstacle", "millionaire", "zombie"];
+
 /* Bài tập trắc nghiệm giao từ file PDF (cùng định dạng với trộn đề:
  * "Câu 1. ...", phương án "A. ... D.", đáp án đúng gạch chân "_A."). */
 
@@ -46,6 +48,8 @@ const assignmentSchema = new Schema(
     shuffleQuestions: { type: Boolean, default: false },
     shuffleOptions: { type: Boolean, default: false },
     showAnswers: { type: Boolean, default: false }, // cho xem đáp án sau khi nộp
+    // Hình thức làm bài: "" = cổ điển; còn lại là trò chơi học sinh chơi trên app (mỗi câu chốt ngay, biết đúng/sai liền)
+    game: { type: String, enum: GAMES, default: "" },
 
     status: { type: String, enum: ["published", "closed"], default: "published" },
     deletedAt: { type: Date, default: null },
@@ -77,6 +81,7 @@ assignmentSchema.methods.toSummaryJSON = function () {
     shuffleQuestions: this.shuffleQuestions,
     shuffleOptions: this.shuffleOptions,
     showAnswers: this.showAnswers,
+    game: this.game || "",
     status: this.status,
     isOpen: this.isOpen(),
     createdBy: this.createdBy,

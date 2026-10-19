@@ -1,4 +1,5 @@
 const express = require("express");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const School = require("../models/School");
@@ -6,11 +7,30 @@ const auth = require("../middleware/auth");
 const loadUser = require("../middleware/loadUser");
 const { ROLES } = require("../config/roles");
 const { parseBirthDate } = require("../utils/accountName");
+const { passwordError } = require("../utils/passwordPolicy");
+const { createLimiter, clientIp } = require("../middleware/rateLimit");
 
 const router = express.Router();
 
+// Sai mật khẩu 5 lần trong 15 phút (cùng IP + tài khoản) → khóa thử 15 phút; 1 IP tối đa 30 lần sai / 15 phút
+const loginByAccount = createLimiter({ max: 5, windowMs: 15 * 60 * 1000 });
+const loginByIp = createLimiter({ max: 30, windowMs: 15 * 60 * 1000 });
+// Đăng ký: mỗi IP tối đa 5 tài khoản / giờ; đổi mật khẩu: sai mật khẩu cũ tối đa 5 lần / 15 phút
+const registerByIp = createLimiter({ max: 5, windowMs: 60 * 60 * 1000 });
+const changeByUser = createLimiter({ max: 5, windowMs: 15 * 60 * 1000 });
+
+const waitMessage = (s) => `Thử quá nhiều lần, vui lòng thử lại sau ${Math.ceil(s / 60)} phút.`;
+
+// So sánh với 1 hash giả khi không có tài khoản: thời gian phản hồi như nhau, không dò được username nào tồn tại
+let dummyHash = null;
+const dummyCompare = async (password) => {
+  dummyHash = dummyHash || (await bcrypt.hash("dummy-password", 12));
+  await bcrypt.compare(password, dummyHash);
+  return false;
+};
+
 function signToken(userId) {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "30d" });
+  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "30d", algorithm: "HS256" });
 }
 
 async function publicUser(userId) {
@@ -27,6 +47,14 @@ router.post("/register", async (req, res) => {
     if (!username || !password) {
       return res.status(400).json({ error: "Thiếu username hoặc password." });
     }
+    const ip = clientIp(req);
+    const wait = registerByIp.check(ip);
+    if (wait) return res.status(429).json({ error: waitMessage(wait) });
+    if (!/^[a-zA-Z0-9._-]{3,40}$/.test(String(username))) {
+      return res.status(400).json({ error: "Tên đăng nhập 3–40 ký tự, chỉ gồm chữ không dấu, số và . _ -" });
+    }
+    const weak = passwordError(password, username);
+    if (weak) return res.status(400).json({ error: weak });
     const existed = await User.findOne({ username: username.toLowerCase() });
     if (existed) return res.status(409).json({ error: "Username này đã tồn tại." });
 
@@ -50,6 +78,7 @@ router.post("/register", async (req, res) => {
       school.owner = user._id;
       await school.save();
     }
+    registerByIp.fail(ip); // đếm số tài khoản đã tạo từ IP này
 
     res.json({ token: signToken(user._id), user: await publicUser(user._id) });
   } catch (err) {
@@ -62,11 +91,20 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
-    const user = await User.findOne({ username: (username || "").toLowerCase() }).select("+password");
-    if (!user) return res.status(401).json({ error: "Sai username hoặc password." });
+    const name = String(username || "").toLowerCase().slice(0, 100);
+    const ip = clientIp(req);
+    const key = `${ip}|${name}`;
+    const wait = Math.max(loginByAccount.check(key), loginByIp.check(ip));
+    if (wait) return res.status(429).json({ error: waitMessage(wait) });
 
-    const ok = await user.comparePassword(password || "");
-    if (!ok) return res.status(401).json({ error: "Sai username hoặc password." });
+    const user = await User.findOne({ username: name }).select("+password");
+    const ok = user ? await user.comparePassword(String(password || "")) : await dummyCompare(String(password || ""));
+    if (!ok) {
+      loginByAccount.fail(key);
+      loginByIp.fail(ip);
+      return res.status(401).json({ error: "Sai username hoặc password." });
+    }
+    loginByAccount.reset(key);
     if (user.status === "locked") return res.status(403).json({ error: "Tài khoản đã bị khóa." });
 
     res.json({ token: signToken(user._id), user: await publicUser(user._id) });
@@ -110,21 +148,30 @@ router.patch("/me", auth, loadUser, async (req, res) => {
 router.post("/change-password", auth, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    if (!newPassword || String(newPassword).length < 6) {
-      return res.status(400).json({ error: "Mật khẩu mới cần ít nhất 6 ký tự." });
-    }
     const user = await User.findById(req.userId).select("+password");
     if (!user) return res.status(401).json({ error: "Không tìm thấy tài khoản." });
-    if (!(await user.comparePassword(currentPassword || ""))) {
+    if (user.passwordChangedAt && req.tokenIssuedAt < user.passwordChangedAt.getTime() - 1000) {
+      return res.status(401).json({ error: "Mật khẩu đã được thay đổi, vui lòng đăng nhập lại.", code: "PASSWORD_CHANGED" });
+    }
+    const weak = passwordError(newPassword, user.username);
+    if (weak) return res.status(400).json({ error: weak });
+
+    const key = String(user._id);
+    const wait = changeByUser.check(key);
+    if (wait) return res.status(429).json({ error: waitMessage(wait) });
+    if (!(await user.comparePassword(String(currentPassword || "")))) {
+      changeByUser.fail(key);
       return res.status(400).json({ error: "Mật khẩu hiện tại không đúng." });
     }
+    changeByUser.reset(key);
     if (currentPassword === newPassword) {
       return res.status(400).json({ error: "Mật khẩu mới phải khác mật khẩu hiện tại." });
     }
     user.password = newPassword;
     user.mustChangePassword = false;
     await user.save();
-    res.json({ ok: true, user: await publicUser(user._id) });
+    // Các phiên đăng nhập cũ (máy khác) bị đăng xuất; phiên hiện tại nhận token mới
+    res.json({ ok: true, token: signToken(user._id), user: await publicUser(user._id) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Lỗi máy chủ khi đổi mật khẩu." });

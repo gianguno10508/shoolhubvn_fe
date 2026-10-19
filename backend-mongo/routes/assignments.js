@@ -172,6 +172,7 @@ const CONFIG_FIELDS = [
 function pickConfig(body) {
   const out = {};
   for (const f of CONFIG_FIELDS) if (body[f] !== undefined && body[f] !== "") out[f] = body[f];
+  if (body.game !== undefined) out.game = body.game || ""; // "" = cổ điển, phải giữ được khi sửa
   return out;
 }
 
@@ -284,6 +285,12 @@ router.post("/:id/start", submit, async (req, res) => {
       assignment: a.toSummaryJSON(),
       submission: sub.toResultJSON(),
       answers: sub.answers,
+      checked: a.game
+        ? [
+            ...sub.answers.map((x) => ({ questionNumber: x.questionNumber, correct: isCorrect(a, x) })),
+            ...sub.timedOut.map((n) => ({ questionNumber: n, correct: false })),
+          ]
+        : undefined,
       questions: buildPaper(a, sub),
       serverTime: new Date(),
     });
@@ -291,6 +298,9 @@ router.post("/:id/start", submit, async (req, res) => {
     fail(res, err, "Lỗi máy chủ khi bắt đầu làm bài.");
   }
 });
+
+const isCorrect = (assignment, x) =>
+  (assignment.questions.find((q) => q.number === x.questionNumber) || {}).correctAnswer === x.answer;
 
 async function loadOwnSubmission(req) {
   const sub = await Submission.findOne({ _id: req.params.sid, student: req.currentUser._id });
@@ -311,11 +321,49 @@ function cleanAnswers(raw, assignment) {
   return [...map].map(([questionNumber, answer]) => ({ questionNumber, answer }));
 }
 
+// Bài trò chơi: chốt từng câu, trả về đúng/sai ngay. Câu đã chốt (kể cả hết giờ) thì không đổi được nữa.
+// body: { questionNumber, answer } hoặc { questionNumber, timeout: true }
+router.post("/submissions/:sid/check", submit, async (req, res) => {
+  try {
+    const { sub, a } = await loadOwnSubmission(req);
+    if (!a.game) throw httpError(400, "Bài này không phải trò chơi.");
+    if (sub.status !== "in_progress") throw httpError(409, "Lượt chơi đã kết thúc.");
+    const number = Number(req.body.questionNumber);
+    const q = a.questions.find((x) => x.number === number);
+    if (!q) throw httpError(400, "Câu hỏi không hợp lệ.");
+
+    if (sub.timedOut.includes(number)) {
+      return res.json({ answer: null, correct: false, correctAnswer: a.showAnswers ? q.correctAnswer : null });
+    }
+    let saved = sub.answers.find((x) => x.questionNumber === number);
+    if (!saved && req.body.timeout) {
+      sub.timedOut.push(number);
+      await sub.save();
+      return res.json({ answer: null, correct: false, correctAnswer: a.showAnswers ? q.correctAnswer : null });
+    }
+    if (!saved) {
+      if (!LETTERS.includes(req.body.answer)) throw httpError(400, "Đáp án không hợp lệ.");
+      saved = { questionNumber: number, answer: req.body.answer };
+      sub.answers.push(saved);
+      await sub.save();
+    }
+    res.json({
+      answer: saved.answer,
+      correct: saved.answer === q.correctAnswer,
+      // Chỉ lộ đáp án đúng khi giáo viên cho xem đáp án (tránh lộ đề cho lượt sau)
+      correctAnswer: a.showAnswers ? q.correctAnswer : null,
+    });
+  } catch (err) {
+    fail(res, err, "Lỗi máy chủ khi chấm câu trả lời.");
+  }
+});
+
 // Lưu nháp đáp án (tự lưu khi học sinh chọn)
 router.put("/submissions/:sid/answers", submit, async (req, res) => {
   try {
     const { sub, a } = await loadOwnSubmission(req);
     if (sub.status !== "in_progress") throw httpError(409, "Bài đã được nộp.");
+    if (a.game) throw httpError(409, "Bài trò chơi được chấm từng câu khi chơi, không lưu nháp.");
     sub.answers = cleanAnswers(req.body.answers, a);
     await sub.save();
     res.json({ ok: true, savedAt: new Date() });
@@ -328,7 +376,8 @@ router.post("/submissions/:sid/submit", submit, async (req, res) => {
   try {
     const { sub, a } = await loadOwnSubmission(req);
     if (sub.status === "in_progress") {
-      if (req.body.answers) sub.answers = cleanAnswers(req.body.answers, a);
+      // Bài trò chơi: chỉ tính các câu đã chốt qua /check
+      if (req.body.answers && !a.game) sub.answers = cleanAnswers(req.body.answers, a);
       grade(sub, a);
       await sub.save();
     }
@@ -438,7 +487,11 @@ router.get("/:id", manage, async (req, res) => {
 router.patch("/:id", manage, requireSchoolVip, async (req, res) => {
   try {
     const a = await loadManagedAssignment(req, { edit: true });
-    Object.assign(a, pickConfig(req.body));
+    const config = pickConfig(req.body);
+    if (config.game !== undefined && config.game !== (a.game || "") && (await Submission.exists({ assignment: a._id }))) {
+      throw httpError(409, "Đã có học sinh làm bài, không thể đổi hình thức làm bài.");
+    }
+    Object.assign(a, config);
     if (req.body.status && ["published", "closed"].includes(req.body.status)) a.status = req.body.status;
     if (req.body.classIds) a.classIds = await cleanClassIds(req.body.classIds, req.school._id);
     if (req.body.questions) {

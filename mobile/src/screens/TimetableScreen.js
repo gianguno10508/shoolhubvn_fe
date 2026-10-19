@@ -1,7 +1,7 @@
 // screens/TimetableScreen.js — "Lịch cá nhân": TKB theo tuần dạng thẻ màu theo ngày (giống mẫu tkb.png)
-// Lấy từ TKB nhà trường đang áp dụng, mỗi tiết kèm giờ học (cài trên web).
-//  - Giáo viên: lịch dạy của mình (chưa khớp tên → tự chọn tên, lưu trên máy)
-//  - Học sinh, cờ đỏ: TKB lớp mình
+// Lấy TKB nhà trường áp dụng cho tuần đang xem (theo ngày bắt đầu / kết thúc tuần cài trên web), mỗi tiết kèm giờ học.
+//  - Giáo viên: tự hiện lịch dạy của mình theo họ tên tài khoản (chỉ khi không khớp tên mới phải tự chọn, lưu trên máy)
+//  - Học sinh, cờ đỏ: tự hiện TKB lớp mình
 //  - Tài khoản trường, BGH, Đoàn TN: chọn xem theo lớp hoặc theo giáo viên (lưu lựa chọn trên máy)
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -20,6 +20,12 @@ const DAY_SHORT = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 const DAY_COLORS = ["#F6A85B", "#9B59B6", "#1ABC9C", "#3498DB", "#E84393", "#27AE60", "#E74C3C"];
 
 const pad = (n) => String(n).padStart(2, "0");
+const iso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+/** Ngày tuần áp dụng từ máy chủ (0h UTC) → "dd/mm" */
+const dayMonth = (v) => {
+  const d = new Date(v);
+  return `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}`;
+};
 
 /** Thứ 2 của tuần chứa `date`, lệch `offset` tuần */
 function mondayOf(date, offset = 0) {
@@ -88,7 +94,10 @@ export default function TimetableScreen() {
     if (isRefresh) setRefreshing(true);
     setError("");
     try {
-      setData(await api.myTimetable(choice));
+      const from = mondayOf(new Date(), weekOffset);
+      const to = new Date(from);
+      to.setDate(from.getDate() + 6);
+      setData(await api.myTimetable({ ...choice, from: iso(from), to: iso(to) }));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -96,9 +105,10 @@ export default function TimetableScreen() {
     }
   }
 
+  // Đổi tuần thì tải TKB của tuần đó (mỗi tuần có thể là 1 TKB khác)
   useEffect(() => {
     load();
-  }, [choice]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [choice, weekOffset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Thanh tiêu đề màu xanh + nút tải lại (giống mẫu)
   useLayoutEffect(() => {
@@ -113,7 +123,7 @@ export default function TimetableScreen() {
         </Pressable>
       ),
     });
-  }, [navigation, choice]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [navigation, choice, weekOffset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function choose(next) {
     await SecureStore.setItemAsync(storeKey, JSON.stringify(next)).catch(() => {});
@@ -142,6 +152,27 @@ export default function TimetableScreen() {
     if (y !== undefined) scrollRef.current?.scrollTo({ y: Math.max(0, y - 8), animated: true });
   }
 
+  const end = new Date(monday);
+  end.setDate(monday.getDate() + 6);
+
+  /** ‹ dd/mm – dd/mm › : chuyển tuần (bấm giữa để về tuần này) */
+  const weekNav = (
+    <View style={styles.weekNav}>
+      <Pressable onPress={() => setWeekOffset((w) => w - 1)} hitSlop={10}>
+        <Text style={styles.navArrow}>‹</Text>
+      </Pressable>
+      <Pressable onPress={() => setWeekOffset(0)}>
+        <Text style={styles.weekLabel}>
+          {pad(monday.getDate())}/{pad(monday.getMonth() + 1)} – {pad(end.getDate())}/{pad(end.getMonth() + 1)}
+          {weekOffset !== 0 ? "  ·  Hôm nay" : ""}
+        </Text>
+      </Pressable>
+      <Pressable onPress={() => setWeekOffset((w) => w + 1)} hitSlop={10}>
+        <Text style={styles.navArrow}>›</Text>
+      </Pressable>
+    </View>
+  );
+
   if (choice === undefined || (!data && !error)) return <Screen>{<Loading />}</Screen>;
   if (error && !data) {
     return (
@@ -155,6 +186,17 @@ export default function TimetableScreen() {
       <Screen onRefresh={() => load(true)} refreshing={refreshing}>
         <Empty icon="🗓️" title="Nhà trường chưa áp dụng thời khóa biểu nào" hint="Kéo xuống để tải lại khi nhà trường đã công bố." />
       </Screen>
+    );
+  }
+  // Có TKB nhưng không có bản nào cho tuần đang xem
+  if (!data.timetable) {
+    return (
+      <View style={styles.root}>
+        <View style={styles.weekBar}>{weekNav}</View>
+        <Screen onRefresh={() => load(true)} refreshing={refreshing}>
+          <Empty icon="🗓️" title="Tuần này chưa có thời khóa biểu" hint="Chuyển sang tuần khác hoặc kéo xuống để tải lại." />
+        </Screen>
+      </View>
     );
   }
 
@@ -218,9 +260,8 @@ export default function TimetableScreen() {
     );
   }
 
-  const canChange = data.canBrowse || (data.kind === "teacher" && data.options.length > 1);
-  const end = new Date(monday);
-  end.setDate(monday.getDate() + 6);
+  // Giáo viên đã tự khớp theo họ tên thì không cần đổi
+  const canChange = data.canBrowse || (data.kind === "teacher" && !data.matched && data.options.length > 1);
 
   return (
     <View style={styles.root}>
@@ -257,20 +298,7 @@ export default function TimetableScreen() {
             );
           })}
         </View>
-        <View style={styles.weekNav}>
-          <Pressable onPress={() => setWeekOffset((w) => w - 1)} hitSlop={10}>
-            <Text style={styles.navArrow}>‹</Text>
-          </Pressable>
-          <Pressable onPress={() => setWeekOffset(0)}>
-            <Text style={styles.weekLabel}>
-              {pad(monday.getDate())}/{pad(monday.getMonth() + 1)} – {pad(end.getDate())}/{pad(end.getMonth() + 1)}
-              {weekOffset !== 0 ? "  ·  Hôm nay" : ""}
-            </Text>
-          </Pressable>
-          <Pressable onPress={() => setWeekOffset((w) => w + 1)} hitSlop={10}>
-            <Text style={styles.navArrow}>›</Text>
-          </Pressable>
-        </View>
+        {weekNav}
       </View>
 
       <ScrollView
@@ -320,7 +348,9 @@ export default function TimetableScreen() {
           );
         })}
         <Muted style={{ textAlign: "center", marginTop: space.sm }}>
-          {data.timetable?.name} · {data.cells.length} tiết/tuần
+          {data.timetable?.name}
+          {data.timetable?.weekStart ? ` (tuần ${dayMonth(data.timetable.weekStart)} – ${dayMonth(data.timetable.weekEnd)})` : ""} ·{" "}
+          {data.cells.length} tiết/tuần
         </Muted>
       </ScrollView>
     </View>

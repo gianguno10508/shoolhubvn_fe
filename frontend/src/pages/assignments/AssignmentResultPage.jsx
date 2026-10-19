@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { deleteAssignment, getAssignment, getAssignmentResults, updateAssignment } from "../../api/assignments";
 import { assignmentState, formatDateTime, formatDuration, formatScore, toLocalInput } from "./assignmentUtils";
+import { GAMES, gameOf } from "./game/GameHub";
 
 const STATUS_LABEL = {
   submitted: "Đã nộp",
@@ -105,6 +106,7 @@ export default function AssignmentResultPage() {
       dueAt: toLocalInput(a.dueAt),
       maxAttempts: a.maxAttempts,
       showAnswers: a.showAnswers,
+      game: a.game || "",
     });
   }
 
@@ -178,6 +180,7 @@ export default function AssignmentResultPage() {
         <div>
           <div className="as-item-top">
             <span className={"as-badge " + state.key}>{state.label}</span>
+            {a.game && <span className="as-game-tag">{gameOf(a.game).icon} {gameOf(a.game).name}</span>}
             {detail?.classes?.map((c) => (
               <span key={c.id} className="as-class-tag">
                 {c.name}
@@ -371,6 +374,22 @@ export default function AssignmentResultPage() {
               <label className="field">
                 <span>Hạn nộp</span>
                 <input type="datetime-local" value={editing.dueAt} onChange={(e) => setEditing({ ...editing, dueAt: e.target.value })} />
+              </label>
+              <label className="field">
+                <span>Hình thức làm bài</span>
+                <select
+                  value={editing.game}
+                  disabled={detail?.hasSubmissions}
+                  title={detail?.hasSubmissions ? "Đã có học sinh làm bài, không đổi được hình thức" : undefined}
+                  onChange={(e) => setEditing({ ...editing, game: e.target.value })}
+                >
+                  <option value="">📝 Cổ điển</option>
+                  {GAMES.map((g) => (
+                    <option key={g.key} value={g.key}>
+                      {g.icon} Trò chơi: {g.name}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label className="field">
                 <span>Số lượt tối đa</span>

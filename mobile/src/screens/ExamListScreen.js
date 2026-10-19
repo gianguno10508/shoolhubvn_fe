@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { api } from "../api/client";
+import { gameOf } from "../games/useGameSession";
 import { Badge, Button, Card, Empty, ErrorBox, Loading, Muted, Row, Screen } from "../components/ui";
 import { colors, space } from "../theme";
 import { formatDateTime } from "../utils/format";
@@ -52,13 +53,25 @@ export default function ExamListScreen({ navigation }) {
             <Badge label="Đã đóng" color={colors.text2} bg="#F1F5F9" />
           )}
         </Row>
+        {a.game ? (
+          <Text style={styles.game}>
+            {gameOf(a.game).icon} Trò chơi: {gameOf(a.game).name}
+          </Text>
+        ) : null}
         {a.description ? <Muted numberOfLines={2}>{a.description}</Muted> : null}
         <Muted style={{ marginTop: 4 }}>
           {a.questionCount} câu · {a.durationMinutes} phút · Lượt {a.attemptsUsed}/{a.maxAttempts}
         </Muted>
         <Muted>Hạn nộp: {formatDateTime(a.dueAt)}</Muted>
         <Row style={{ marginTop: space.md, gap: space.sm }}>
-          {a.canStart && (
+          {a.canStart && a.game && (
+            <Button
+              small
+              title={a.inProgressId ? "🎮 Chơi tiếp" : done ? "🎮 Chơi lại" : "🎮 Vào chơi"}
+              onPress={() => navigation.navigate("PlayGame", { id: a.id, title: a.title, game: a.game })}
+            />
+          )}
+          {a.canStart && !a.game && (
             <Button
               small
               title={a.inProgressId ? "▶ Làm tiếp" : done ? "Làm lại" : "▶ Vào thi"}
@@ -88,5 +101,6 @@ export default function ExamListScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   section: { fontSize: 14, fontWeight: "700", color: colors.text2, marginBottom: space.sm, marginTop: space.xs },
+  game: { fontSize: 13, fontWeight: "700", color: colors.warning, marginBottom: 4 },
   title: { flex: 1, fontSize: 16, fontWeight: "700", color: colors.text, marginRight: space.sm, marginBottom: 4 },
 });

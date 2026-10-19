@@ -48,6 +48,11 @@ export function submitAssignment(submissionId, answers) {
   return apiFetch(`/assignments/submissions/${submissionId}/submit`, { method: "POST", body: { answers } });
 }
 
+/** Bài trò chơi: chốt 1 câu → { correct, correctAnswer? }. body: { questionNumber, answer } | { questionNumber, timeout: true } */
+export function checkAnswer(submissionId, body) {
+  return apiFetch(`/assignments/submissions/${submissionId}/check`, { method: "POST", body });
+}
+
 export function getMySubmission(submissionId) {
   return apiFetch(`/assignments/submissions/${submissionId}`);
 }

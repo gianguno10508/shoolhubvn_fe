@@ -10,6 +10,9 @@ const timetableSchema = new mongoose.Schema(
     // TKB đang áp dụng của trường (mỗi trường tối đa 1) — giáo viên, học sinh xem trên app di động
     published: { type: Boolean, default: false },
     publishedAt: { type: Date, default: null },
+    // Tuần áp dụng (lấy từ data.config.tuanBatDau / tuanKetThuc, lưu 0h UTC). Để trống = TKB mặc định cho mọi tuần chưa có TKB riêng
+    weekStart: { type: Date, default: null },
+    weekEnd: { type: Date, default: null },
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true },

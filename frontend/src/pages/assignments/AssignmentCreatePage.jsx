@@ -1,11 +1,12 @@
 // pages/assignments/AssignmentCreatePage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { createAssignment } from "../../api/assignments";
 import { listClasses } from "../../api/school";
 import { useAuth } from "../../context/AuthContext";
 import { LETTERS, readQuestionsFromPdf, validateQuestions } from "../../utils/pdfQuestions";
 import { toLocalInput } from "./assignmentUtils";
+import { GAMES } from "./game/GameHub";
 
 function defaultDueAt() {
   const d = new Date();
@@ -17,6 +18,7 @@ function defaultDueAt() {
 /* Giao bài tập mới: tải đề PDF (cùng định dạng trộn đề) → kiểm tra đáp án → cấu hình → giao */
 export default function AssignmentCreatePage() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const { user } = useAuth();
   const fileInputRef = useRef(null);
 
@@ -38,6 +40,8 @@ export default function AssignmentCreatePage() {
     shuffleQuestions: true,
     shuffleOptions: true,
     showAnswers: false,
+    // "" = cổ điển; mở từ tab Trò chơi thì chọn sẵn trò đang xem
+    game: GAMES.some((g) => g.key === params.get("game")) ? params.get("game") : "",
   });
 
   const [error, setError] = useState("");
@@ -258,6 +262,59 @@ export default function AssignmentCreatePage() {
           </div>
         </div>
 
+        <div className="field as-mode-field">
+          <span>Hình thức làm bài</span>
+          <div className="as-mode-type" role="radiogroup" aria-label="Hình thức làm bài">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={!config.game}
+              className={!config.game ? "active" : ""}
+              onClick={() => set("game", "")}
+            >
+              📝 Cổ điển
+              <small>Làm bài trắc nghiệm, nộp rồi chấm</small>
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={!!config.game}
+              className={config.game ? "active" : ""}
+              onClick={() => !config.game && set("game", GAMES[0].key)}
+            >
+              🎮 Trò chơi
+              <small>Học sinh vừa chơi vừa làm bài</small>
+            </button>
+          </div>
+          {config.game && (
+            <>
+              <div className="gh-picker as-mode-picker" role="radiogroup" aria-label="Chọn trò chơi">
+                {GAMES.map((g) => (
+                  <button
+                    key={g.key}
+                    type="button"
+                    role="radio"
+                    aria-checked={config.game === g.key}
+                    className={"gh-card gh-" + g.key + (config.game === g.key ? " active" : "")}
+                    onClick={() => set("game", g.key)}
+                  >
+                    <span className="gh-card-icon">{g.icon}</span>
+                    <span className="gh-card-text">
+                      <strong>{g.name}</strong>
+                      <small>{g.short}</small>
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <p className="hint">
+                Học sinh vào web hoặc app SchoolHub là chơi được ngay, thống kê điểm như bài cổ điển. Mỗi câu chốt ngay khi
+                chọn và biết đúng/sai liền; thua giữa chừng thì các câu chưa trả lời tính sai. Điểm = số câu đúng / tổng số
+                câu × thang điểm.
+              </p>
+            </>
+          )}
+        </div>
+
         <div className="as-form-grid">
           <label className="field as-span-full">
             <span>Tên bài *</span>
@@ -335,6 +392,7 @@ export default function AssignmentCreatePage() {
 
       <div className="as-submit-bar">
         <span>
+          {config.game ? `${GAMES.find((g) => g.key === config.game).icon} Trò chơi · ` : ""}
           {questions.length ? `${questions.length} câu` : "Chưa có đề"} · {config.classIds.length} lớp ·{" "}
           {config.durationMinutes} phút · thang {config.totalPoints} điểm
         </span>

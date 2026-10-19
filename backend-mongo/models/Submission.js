@@ -32,6 +32,7 @@ const submissionSchema = new Schema(
     optionOrder: { type: Map, of: [String], default: {} }, // questionNumber -> ["C","A","D","B"]
 
     answers: { type: [answerSchema], default: [] },
+    timedOut: { type: [Number], default: [] }, // bài trò chơi: các câu hết giờ chưa chọn (tính sai, không chơi lại)
 
     startedAt: { type: Date, default: Date.now },
     expiresAt: { type: Date, required: true }, // min(startedAt + thời gian làm, hạn chót)

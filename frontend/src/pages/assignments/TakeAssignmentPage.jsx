@@ -3,8 +3,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { saveAnswers, startAssignment, submitAssignment } from "../../api/assignments";
 import { formatClock } from "./assignmentUtils";
+import GamePlay from "./play/GamePlay";
 
-/* Học sinh làm bài: đồng hồ đếm ngược, tự lưu đáp án, tự nộp khi hết giờ */
+/* Học sinh làm bài: đồng hồ đếm ngược, tự lưu đáp án, tự nộp khi hết giờ.
+ * Bài giáo viên giao dạng trò chơi thì chơi ở GamePlay (tự chấm, tự nộp riêng). */
 export default function TakeAssignmentPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -59,14 +61,16 @@ export default function TakeAssignmentPage() {
   );
 
   const remaining = paper ? new Date(paper.submission.expiresAt).getTime() - (now + skewRef.current) : 0;
+  const isGame = !!paper?.assignment.game;
 
   // Hết giờ -> tự nộp
   useEffect(() => {
-    if (paper && remaining <= 0 && !submittedRef.current) doSubmit(true);
-  }, [paper, remaining, doSubmit]);
+    if (paper && !isGame && remaining <= 0 && !submittedRef.current) doSubmit(true);
+  }, [paper, isGame, remaining, doSubmit]);
 
-  // Cảnh báo khi rời trang lúc đang làm
+  // Cảnh báo khi rời trang lúc đang làm (trò chơi tự cảnh báo trong GamePlay)
   useEffect(() => {
+    if (isGame) return undefined;
     const warn = (e) => {
       if (!submittedRef.current) {
         e.preventDefault();
@@ -75,7 +79,7 @@ export default function TakeAssignmentPage() {
     };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, []);
+  }, [isGame]);
 
   function choose(number, key) {
     if (submitting) return;
@@ -113,6 +117,7 @@ export default function TakeAssignmentPage() {
   }
 
   if (!paper) return <div className="page as-page"><p className="as-empty">Đang mở đề...</p></div>;
+  if (isGame) return <GamePlay paper={paper} />;
 
   const { assignment, questions } = paper;
   const urgent = remaining < 60 * 1000;

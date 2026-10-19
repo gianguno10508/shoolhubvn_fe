@@ -167,3 +167,23 @@ a.tkb-row-title:hover {
   font-weight: 700;
   vertical-align: middle;
 }
+
+/* Tuần áp dụng của TKB */
+.tkb-row-week {
+  color: var(--primary);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.tkb-week-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+@media (max-width: 520px) {
+  .tkb-week-fields {
+    grid-template-columns: 1fr;
+  }
+}

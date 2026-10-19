@@ -16,6 +16,21 @@ function formatDate(value) {
   return new Date(value).toLocaleString("vi-VN");
 }
 
+/** Ngày tuần áp dụng (lưu 0h UTC) → "dd/mm/yyyy" */
+function formatDay(value) {
+  return new Date(value).toLocaleDateString("vi-VN", { timeZone: "UTC" });
+}
+
+/** Thứ 2 tuần này và chủ nhật cùng tuần, dạng YYYY-MM-DD (giờ máy) */
+function thisWeek() {
+  const d = new Date();
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  const iso = (x) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
+  const end = new Date(d);
+  end.setDate(d.getDate() + 6);
+  return { start: iso(d), end: iso(end) };
+}
+
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
@@ -38,6 +53,7 @@ export default function TimetableListPage() {
 
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newWeek, setNewWeek] = useState(thisWeek);
   const [creating, setCreating] = useState(false);
 
   const isTrash = tab === "trash";
@@ -103,7 +119,10 @@ export default function TimetableListPage() {
       run(t._id, () => publishTimetable(t._id, false), "Đã thôi áp dụng thời khóa biểu.");
       return;
     }
-    if (!window.confirm(`Áp dụng "${t.name}" cho cả trường? Giáo viên, học sinh sẽ xem TKB này trên app di động.`)) return;
+    const when = t.weekStart
+      ? `cho tuần ${formatDay(t.weekStart)} – ${formatDay(t.weekEnd)}`
+      : "(chưa đặt tuần áp dụng — chỉ hiện khi trường chưa có TKB theo tuần nào)";
+    if (!window.confirm(`Áp dụng "${t.name}" ${when}? Giáo viên, học sinh sẽ xem TKB này trên app di động.`)) return;
     run(t._id, () => publishTimetable(t._id, true), "Đã áp dụng — giáo viên, học sinh đã xem được trên app.");
   }
 
@@ -111,9 +130,19 @@ export default function TimetableListPage() {
     e.preventDefault();
     const name = newName.trim();
     if (!name) return;
+    if (!newWeek.start || !newWeek.end) {
+      showToast("Vui lòng chọn ngày bắt đầu và ngày kết thúc tuần.", true);
+      return;
+    }
+    if (newWeek.end < newWeek.start) {
+      showToast("Ngày kết thúc tuần phải sau ngày bắt đầu.", true);
+      return;
+    }
     setCreating(true);
     try {
-      await createTimetable(name, emptyTimetableData(name));
+      const data = emptyTimetableData(name);
+      data.config = { ...data.config, tuanBatDau: newWeek.start, tuanKetThuc: newWeek.end };
+      await createTimetable(name, data);
       setShowCreate(false);
       setNewName("");
       if (isTrash) setTab("active");
@@ -190,6 +219,13 @@ export default function TimetableListPage() {
                       📅 {t.name}
                       {t.published && <span className="tkb-published">Đang áp dụng</span>}
                     </Link>
+                  )}
+                  {!isTrash && (
+                    <small className="tkb-row-week">
+                      {t.weekStart
+                        ? `🗓️ Tuần ${formatDay(t.weekStart)} – ${formatDay(t.weekEnd)}`
+                        : "⚠️ Chưa đặt tuần áp dụng"}
+                    </small>
                   )}
                   <small className="tkb-row-date">
                     {isTrash
@@ -273,6 +309,22 @@ export default function TimetableListPage() {
                 placeholder="Ví dụ: TUẦN 01 NH 2025-2026"
               />
             </label>
+            <div className="tkb-week-fields">
+              <label className="field">
+                <span>Ngày bắt đầu tuần</span>
+                <input type="date" value={newWeek.start} onChange={(e) => setNewWeek({ ...newWeek, start: e.target.value })} />
+              </label>
+              <label className="field">
+                <span>Ngày kết thúc tuần</span>
+                <input
+                  type="date"
+                  value={newWeek.end}
+                  min={newWeek.start || undefined}
+                  onChange={(e) => setNewWeek({ ...newWeek, end: e.target.value })}
+                />
+              </label>
+            </div>
+            <p className="hint">App chỉ hiển thị lịch trong khoảng ngày này, ngoài khoảng thì không có lịch.</p>
             <div className="btn-row modal-actions">
               <button
                 type="button"
@@ -282,7 +334,7 @@ export default function TimetableListPage() {
               >
                 Hủy
               </button>
-              <button className="btn btn-primary" type="submit" disabled={creating || !newName.trim()}>
+              <button className="btn btn-primary" type="submit" disabled={creating || !newName.trim() || !newWeek.start || !newWeek.end}>
                 {creating ? "Đang tạo..." : "Tạo mới"}
               </button>
             </div>

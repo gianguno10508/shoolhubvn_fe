@@ -113,4 +113,6 @@ export const api = {
   submitAssignment: (sid, answers) =>
     apiFetch(`/assignments/submissions/${sid}/submit`, { method: "POST", body: { answers } }),
   submission: (sid) => apiFetch(`/assignments/submissions/${sid}`),
+  /** Bài trò chơi: chốt 1 câu → { correct, correctAnswer? }. body: { questionNumber, answer } | { questionNumber, timeout: true } */
+  checkAnswer: (sid, body) => apiFetch(`/assignments/submissions/${sid}/check`, { method: "POST", body }),
 };

@@ -60,7 +60,9 @@ export function AuthProvider({ children }) {
 
   async function changePassword(currentPassword, newPassword) {
     const res = await authApi.changePassword({ currentPassword, newPassword });
-    if (res?.user) setUser(res.user);
+    // Máy chủ thu hồi mọi token cũ khi đổi mật khẩu → lưu token mới để phiên này vẫn dùng tiếp
+    if (res?.token) acceptSession(res);
+    else if (res?.user) setUser(res.user);
   }
 
   return (

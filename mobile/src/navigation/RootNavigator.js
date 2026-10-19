@@ -20,6 +20,7 @@ import ExamListScreen from "../screens/ExamListScreen";
 import ExamResultScreen from "../screens/ExamResultScreen";
 import LoginScreen from "../screens/LoginScreen";
 import NotificationsScreen from "../screens/NotificationsScreen";
+import PlayGameScreen from "../screens/PlayGameScreen";
 import TakeExamScreen from "../screens/TakeExamScreen";
 import TimetableScreen from "../screens/TimetableScreen";
 
@@ -139,6 +140,11 @@ export default function RootNavigator() {
             name="TakeExam"
             component={TakeExamScreen}
             options={({ route }) => ({ title: route.params?.title || "Làm bài", gestureEnabled: false })}
+          />
+          <Stack.Screen
+            name="PlayGame"
+            component={PlayGameScreen}
+            options={({ route }) => ({ title: route.params?.title || "Trò chơi", gestureEnabled: false })}
           />
           <Stack.Screen name="ExamResult" component={ExamResultScreen} options={{ title: "Kết quả bài làm" }} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: "Đổi thông tin" }} />

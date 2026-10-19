@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import Field from "../common/Field";
+import PasswordChecklist from "../common/PasswordChecklist";
+import { passwordError } from "../../utils/passwordPolicy";
 
 export default function LoginRegister() {
   const { login, register } = useAuth();
@@ -38,6 +40,18 @@ export default function LoginRegister() {
     if (!form.username.trim() || !form.password) {
       setError("Vui lòng nhập tên đăng nhập và mật khẩu.");
       return;
+    }
+
+    if (mode === "register") {
+      if (!/^[a-zA-Z0-9._-]{3,40}$/.test(form.username.trim())) {
+        setError("Tên đăng nhập 3–40 ký tự, chỉ gồm chữ không dấu, số và . _ -");
+        return;
+      }
+      const weak = passwordError(form.password, form.username.trim());
+      if (weak) {
+        setError(weak);
+        return;
+      }
     }
 
     if (mode === "register" && !form.name.trim()) {
@@ -183,6 +197,7 @@ export default function LoginRegister() {
                   {showPassword ? "🙈" : "👁️"}
                 </button>
               </div>
+              {!isLogin && <PasswordChecklist password={form.password} />}
             </div>
 
             {/* Register fields */}

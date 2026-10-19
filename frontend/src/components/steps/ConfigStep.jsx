@@ -43,6 +43,21 @@ export default function ConfigStep({
             placeholder="Nhập năm học"
           />
         </Field>
+        <Field label="Tuần áp dụng — ngày bắt đầu">
+          <input
+            type="date"
+            value={config.tuanBatDau || ""}
+            onChange={(e) => set("tuanBatDau", e.target.value)}
+          />
+        </Field>
+        <Field label="Tuần áp dụng — ngày kết thúc">
+          <input
+            type="date"
+            value={config.tuanKetThuc || ""}
+            min={config.tuanBatDau || undefined}
+            onChange={(e) => set("tuanKetThuc", e.target.value)}
+          />
+        </Field>
         <Field label="Số ngày trong tuần (không nên sửa)" warn>
           <select
             value={config.soNgay}
@@ -77,6 +92,11 @@ export default function ConfigStep({
           </select>
         </Field>
       </div>
+
+      <p className="hint">
+        App chỉ hiển thị lịch của TKB này trong khoảng ngày trên (VD 19/10/2026 – 24/10/2026); ngoài khoảng đó không có
+        lịch.
+      </p>
 
       <div className="row-right">
         <button className="btn btn-primary" onClick={onSaved}>

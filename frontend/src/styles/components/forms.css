@@ -128,3 +128,123 @@ input.bad {
 .toggle.on span {
   transform: translateX(18px);
 }
+
+/* ---------- Ô chọn có tìm kiếm (SearchSelect) ---------- */
+.ss {
+  position: relative;
+  min-width: 160px;
+}
+
+.ss-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--control-h);
+  padding: 8px 10px 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-base);
+  text-align: left;
+}
+
+.ss-btn:hover {
+  border-color: var(--border-strong);
+}
+
+.ss.open .ss-btn {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-ring);
+}
+
+.ss-btn.empty span:first-child {
+  color: var(--muted);
+}
+
+.ss-btn span:first-child {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ss-caret {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ss-pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 60;
+  width: max(100%, 240px);
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.ss-search {
+  margin-bottom: 6px;
+}
+
+.ss-list {
+  max-height: 260px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  text-align: left;
+}
+
+.ss-list li {
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ss-list li.active {
+  background: var(--primary-soft);
+}
+
+.ss-list li.selected {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.ss-list li.ss-empty,
+.ss-list li.ss-none {
+  color: var(--muted);
+}
+
+.ss-list li.ss-none {
+  cursor: default;
+}
+
+/* ---------- Yêu cầu mật khẩu (PasswordChecklist) ---------- */
+.pw-rules {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 12px;
+  margin: 8px 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  list-style: none;
+}
+
+.pw-rules li.ok {
+  color: var(--green, #16a34a);
+  font-weight: 600;
+}
+
+@media (max-width: 420px) {
+  .pw-rules {
+    grid-template-columns: 1fr;
+  }
+}

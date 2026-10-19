@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { listMyAssignments } from "../../api/assignments";
 import { useAuth } from "../../context/AuthContext";
 import { assignmentState, formatDateTime, formatScore, timeLeft } from "./assignmentUtils";
+import { gameOf } from "./game/GameHub";
 
 function group(list) {
   const todo = [];
@@ -23,6 +24,7 @@ function AssignmentCard({ a }) {
     <div className="as-item as-student-item">
       <div className="as-item-top">
         <span className={"as-badge " + state.key}>{state.label}</span>
+        {a.game && <span className="as-game-tag">{gameOf(a.game).icon} {gameOf(a.game).name}</span>}
         {state.key === "open" && <span className="as-item-left">{timeLeft(a.dueAt)}</span>}
       </div>
       <h3>{a.title}</h3>
@@ -57,7 +59,17 @@ function AssignmentCard({ a }) {
           )}
           {a.canStart && (
             <Link className="btn btn-sm btn-primary" to={`/bai-tap/${a.id}`}>
-              {a.inProgressId ? "Làm tiếp" : a.attemptsUsed ? "Làm lại" : "Bắt đầu làm bài"}
+              {a.game
+                ? a.inProgressId
+                  ? "🎮 Chơi tiếp"
+                  : a.attemptsUsed
+                    ? "🎮 Chơi lại"
+                    : "🎮 Vào chơi"
+                : a.inProgressId
+                  ? "Làm tiếp"
+                  : a.attemptsUsed
+                    ? "Làm lại"
+                    : "Bắt đầu làm bài"}
             </Link>
           )}
         </div>
