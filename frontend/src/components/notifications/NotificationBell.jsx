@@ -7,7 +7,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "../../api/notifications";
-import { timeAgo } from "../../utils/time";
+import { formatEventTime, timeAgo } from "../../utils/time";
 
 /* Chuông thông báo cạnh tài khoản: số chưa đọc + danh sách mới nhất */
 export default function NotificationBell({ unread }) {
@@ -89,6 +89,7 @@ export default function NotificationBell({ unread }) {
                     {n.priority === "important" && <em>Quan trọng</em>}
                     {n.title}
                   </strong>
+                  {n.eventAt && <span className="bell-when">🕒 {formatEventTime(n.eventAt)}</span>}
                   {n.body && <span className="bell-excerpt">{n.body}</span>}
                   <small>
                     {n.senderName} · {n.senderRoleLabel} · {timeAgo(n.createdAt)}

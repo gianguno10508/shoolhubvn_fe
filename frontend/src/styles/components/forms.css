@@ -248,3 +248,73 @@ input.bad {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Ô ngày / giờ dd/mm/yyyy (components/DateInput.jsx) ---------- */
+.date-input {
+  position: relative;
+  display: flex;
+  flex: 1 1 140px;
+  align-items: center;
+  min-width: 0;
+}
+
+.date-input > input[type="text"] {
+  padding-right: 38px;
+  font-variant-numeric: tabular-nums;
+}
+
+.date-input.time > input[type="text"] {
+  padding-right: 12px;
+}
+
+.date-input.invalid > input[type="text"] {
+  border-color: var(--red-bright);
+  background-color: var(--red-soft);
+}
+
+.date-input-btn {
+  position: absolute;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.date-input-btn:hover:not(:disabled) {
+  background: var(--gray-50);
+}
+
+/* Ô ngày gốc chỉ dùng để bật lịch chọn ngày — ẩn ngay dưới nút 📅 */
+.date-input-native {
+  position: absolute;
+  right: 4px;
+  bottom: 0;
+  width: 30px !important;
+  min-height: 0 !important;
+  height: 1px;
+  padding: 0 !important;
+  border: 0 !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.date-time-input {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.date-time-input > .date-input {
+  flex: 2 1 150px;
+}
+
+.date-time-input > .date-input.time {
+  flex: 1 1 90px;
+}

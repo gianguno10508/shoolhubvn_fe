@@ -12,6 +12,7 @@ const dashboardRoutes = require("./routes/dashboard");
 const notificationRoutes = require("./routes/notifications");
 const lessonPlanRoutes = require("./routes/lessonPlans");
 const myTimetableRoutes = require("./routes/myTimetable");
+const { startDailyReminders } = require("./utils/dailyReminders");
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
   console.warn("⚠️  JWT_SECRET trong .env quá ngắn (nên ≥ 32 ký tự ngẫu nhiên) — token đăng nhập dễ bị giả mạo.");
@@ -53,4 +54,6 @@ app.get("/", (req, res) => res.send("TKB backend (MongoDB) đang chạy ✅"));
 connectDB().then(() => {
   const port = process.env.PORT || 3001;
   app.listen(port, () => console.log(`🚀 Server chạy tại http://localhost:${port}`));
+  // Thông báo đẩy 20h hằng ngày (lịch học ngày mai, bài tập sắp hết hạn). Tắt: DISABLE_DAILY_REMINDERS=1
+  if (!process.env.DISABLE_DAILY_REMINDERS) startDailyReminders();
 });

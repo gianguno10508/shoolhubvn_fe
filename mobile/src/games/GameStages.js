@@ -201,7 +201,9 @@ export function prizeAt(level, total) {
 const money = (n) => n.toLocaleString("vi-VN").replace(/,/g, ".") + " đ";
 const CHIP_W = 112;
 
-export function MillionaireStage({ level, total, feedback, helps, onPostpone, onAddTime, canHelp }) {
+/** helps: quyền đã dùng { postpone, time, fifty, audience, phone }; aid: kết quả trợ giúp của câu đang hỏi { votes?, phone? };
+ *  options: phương án câu đang hỏi (để hiện theo chữ cái học sinh đang thấy) */
+export function MillionaireStage({ level, total, feedback, helps, onPostpone, onAddTime, onLifeline, canHelp, busy, aid, options = [] }) {
   const pulse = useRef(new Animated.Value(1)).current;
   const scroller = useRef(null);
 
@@ -233,9 +235,40 @@ export function MillionaireStage({ level, total, feedback, helps, onPostpone, on
         })}
       </ScrollView>
       <View style={stage.helps}>
-        <HelpButton icon="🔄" label="Hoãn câu này" used={helps.postpone} disabled={!canHelp} onPress={onPostpone} />
+        <HelpButton icon="✂️" label="50:50" used={helps.fifty} disabled={!canHelp || busy} onPress={() => onLifeline("fifty")} />
+        <HelpButton icon="📞" label="Gọi người thân" used={helps.phone} disabled={!canHelp || busy} onPress={() => onLifeline("phone")} />
+        <HelpButton icon="👥" label="Hỏi khán giả" used={helps.audience} disabled={!canHelp || busy} onPress={() => onLifeline("audience")} />
+        <HelpButton icon="🔄" label="Hoãn câu" used={helps.postpone} disabled={!canHelp} onPress={onPostpone} />
         <HelpButton icon="⏱" label="+15 giây" used={helps.time} disabled={!canHelp} onPress={onAddTime} />
       </View>
+      {aid?.votes && (
+        <View style={stage.aidBox}>
+          <Text style={stage.aidTitle}>👥 Khán giả trong trường quay bình chọn</Text>
+          <View style={stage.bars}>
+            {options.map((o) => {
+              const v = aid.votes[o.key] ?? 0;
+              return (
+                <View key={o.key} style={stage.barCol}>
+                  <Text style={stage.barPct}>{v}%</Text>
+                  <View style={stage.barTrack}>
+                    <View style={[stage.barFill, { height: `${v}%` }]} />
+                  </View>
+                  <Text style={stage.barLetter}>{o.letter}</Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      )}
+      {aid?.phone && (
+        <View style={[stage.aidBox, stage.phoneBox]}>
+          <Text style={stage.phoneIcon}>📞</Text>
+          <Text style={stage.aidText}>
+            “Mình nghĩ là đáp án <Text style={stage.aidStrong}>{(options.find((o) => o.key === aid.phone.key) || {}).letter}</Text> đấy,
+            chắc khoảng <Text style={stage.aidStrong}>{aid.phone.confidence}%</Text>.”
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -287,7 +320,19 @@ const stage = StyleSheet.create({
   chipCurrent: { backgroundColor: "#FDE68A", borderColor: "#fff" },
   chipNum: { color: "#A5B4FC", fontSize: 11, fontWeight: "800" },
   chipMoney: { color: "#F8FAFC", fontSize: 12, fontWeight: "700" },
-  helps: { flexDirection: "row", gap: space.sm },
-  help: { flex: 1, paddingVertical: 10, borderRadius: radius.md, borderWidth: 1, borderColor: "#F59E0B", alignItems: "center" },
-  helpText: { color: "#FBBF24", fontWeight: "800" },
+  helps: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  help: { flexGrow: 1, flexBasis: "30%", paddingVertical: 10, paddingHorizontal: 4, borderRadius: radius.md, borderWidth: 1, borderColor: "#F59E0B", alignItems: "center" },
+  helpText: { color: "#FBBF24", fontWeight: "800", fontSize: 13 },
+  aidBox: { marginTop: space.sm, padding: space.md, borderRadius: radius.lg, backgroundColor: "#131F4F", borderWidth: 1, borderColor: "#3346A0" },
+  aidTitle: { color: "#A5B4FC", fontSize: 13, fontWeight: "700", marginBottom: space.sm },
+  aidText: { flex: 1, color: "#F8FAFC", fontSize: 15, lineHeight: 22 },
+  aidStrong: { fontWeight: "900", color: "#FBBF24" },
+  phoneBox: { flexDirection: "row", alignItems: "center" },
+  phoneIcon: { fontSize: 28, marginRight: space.sm },
+  bars: { flexDirection: "row", justifyContent: "space-around" },
+  barCol: { alignItems: "center", width: 48 },
+  barPct: { color: "#F8FAFC", fontSize: 12, fontWeight: "800", marginBottom: 2 },
+  barTrack: { width: 22, height: 90, borderRadius: 4, backgroundColor: "#1A2A66", justifyContent: "flex-end", overflow: "hidden" },
+  barFill: { width: "100%", backgroundColor: "#F59E0B" },
+  barLetter: { color: "#FBBF24", fontWeight: "900", marginTop: 4 },
 });

@@ -1,4 +1,6 @@
 // utils/permissions.js
+import { formatDate } from "./time";
+
 /* Chức danh + quyền: khớp với backend-mongo/config/roles.js.
  * Backend trả sẵn user.permissions và user.creatableRoles, ở đây chỉ đọc lại. */
 
@@ -55,7 +57,7 @@ export function canAccessSchoolUsers(user) {
 
 export function formatVipUntil(vipUntil) {
   if (!vipUntil) return "Chưa có VIP";
-  return new Date(vipUntil).toLocaleDateString("vi-VN");
+  return formatDate(vipUntil);
 }
 
 /** Người giao bài tập: mọi chức danh trừ học sinh và cờ đỏ */

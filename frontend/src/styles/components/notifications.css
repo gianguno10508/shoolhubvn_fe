@@ -486,10 +486,11 @@ button.nt-item-head {
   align-items: center;
 }
 
-.nt-when-row input[type="date"],
-.nt-when-row input[type="time"] {
-  flex: 1 1 140px;
-  min-width: 0;
+.bell-when {
+  display: block;
+  color: var(--primary-strong);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .nt-when-preview {

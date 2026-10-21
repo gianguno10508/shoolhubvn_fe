@@ -20,6 +20,7 @@ import {
 } from "../../utils/permissions";
 import { DEFAULT_PASSWORD, dateInputValue, formatDate, parseAccountList, previewUsername } from "../../utils/accountName";
 import { exportAccountsExcel } from "../../utils/accountExport";
+import { DateInput } from "../../components/DateInput";
 
 const EMPTY_USER = { username: "", password: "", name: "", birthDate: "", role: "", classId: "", studentCode: "" };
 const EMPTY_CLASS = { name: "", grade: "" };
@@ -428,8 +429,7 @@ export default function SchoolUsersPage() {
                       </label>
                       <label className="field">
                         <span>Ngày sinh</span>
-                        <input
-                          type="date"
+                        <DateInput
                           value={userForm.birthDate}
                           onChange={(e) => setU("birthDate", e.target.value)}
                           disabled={busy}
@@ -769,8 +769,7 @@ export default function SchoolUsersPage() {
               </label>
               <label className="field">
                 <span>Ngày sinh</span>
-                <input
-                  type="date"
+                <DateInput
                   value={editing.birthDate}
                   onChange={(e) => setEditing({ ...editing, birthDate: e.target.value })}
                 />

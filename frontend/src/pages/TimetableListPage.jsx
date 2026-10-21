@@ -10,15 +10,17 @@ import {
   publishTimetable,
 } from "../api/timetables";
 import { emptyTimetableData } from "../hooks/useTimetable";
+import { DateInput } from "../components/DateInput";
+import { formatDate as formatDateVi, formatDateTimeVi } from "../utils/time";
 
 function formatDate(value) {
   if (!value) return "";
-  return new Date(value).toLocaleString("vi-VN");
+  return formatDateTimeVi(value);
 }
 
 /** Ngày tuần áp dụng (lưu 0h UTC) → "dd/mm/yyyy" */
 function formatDay(value) {
-  return new Date(value).toLocaleDateString("vi-VN", { timeZone: "UTC" });
+  return formatDateVi(value, { utc: true });
 }
 
 /** Thứ 2 tuần này và chủ nhật cùng tuần, dạng YYYY-MM-DD (giờ máy) */
@@ -312,12 +314,11 @@ export default function TimetableListPage() {
             <div className="tkb-week-fields">
               <label className="field">
                 <span>Ngày bắt đầu tuần</span>
-                <input type="date" value={newWeek.start} onChange={(e) => setNewWeek({ ...newWeek, start: e.target.value })} />
+                <DateInput value={newWeek.start} onChange={(e) => setNewWeek({ ...newWeek, start: e.target.value })} />
               </label>
               <label className="field">
                 <span>Ngày kết thúc tuần</span>
-                <input
-                  type="date"
+                <DateInput
                   value={newWeek.end}
                   min={newWeek.start || undefined}
                   onChange={(e) => setNewWeek({ ...newWeek, end: e.target.value })}

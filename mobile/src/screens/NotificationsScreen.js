@@ -5,7 +5,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { api } from "../api/client";
 import { Badge, Body, Button, Card, Empty, ErrorBox, Loading, Muted, Row, Screen, Segmented } from "../components/ui";
 import { colors, space } from "../theme";
-import { formatDateTime, formatEventTime, timeAgo } from "../utils/format";
+import { formatDateTime, formatEventTime, formatReceived } from "../utils/format";
 
 function EventTime({ value }) {
   if (!value) return null;
@@ -100,7 +100,7 @@ export default function NotificationsScreen({ navigation }) {
                     {!n.read && <View style={styles.dot} />}
                     {n.priority === "important" && <Badge label="Quan trọng" color={colors.danger} bg={colors.dangerSoft} style={{ marginRight: 6 }} />}
                   </Row>
-                  <Muted>{timeAgo(n.createdAt)}</Muted>
+                  <Muted>🕘 {formatReceived(n.createdAt)}</Muted>
                 </Row>
                 <Text style={[styles.title, !n.read && { fontWeight: "800" }]}>{n.title}</Text>
                 <EventTime value={n.eventAt} />

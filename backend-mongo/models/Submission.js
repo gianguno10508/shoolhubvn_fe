@@ -33,6 +33,20 @@ const submissionSchema = new Schema(
 
     answers: { type: [answerSchema], default: [] },
     timedOut: { type: [Number], default: [] }, // bài trò chơi: các câu hết giờ chưa chọn (tính sai, không chơi lại)
+    // Ai là triệu phú: quyền trợ giúp đã dùng (mỗi quyền 1 lần / lượt). result: { hidden } | { votes } | { key, confidence }
+    lifelines: {
+      type: [
+        new Schema(
+          {
+            type: { type: String, enum: ["fifty", "audience", "phone"], required: true },
+            questionNumber: { type: Number, required: true },
+            result: { type: Schema.Types.Mixed, default: {} },
+          },
+          { _id: false },
+        ),
+      ],
+      default: [],
+    },
 
     startedAt: { type: Date, default: Date.now },
     expiresAt: { type: Date, required: true }, // min(startedAt + thời gian làm, hạn chót)

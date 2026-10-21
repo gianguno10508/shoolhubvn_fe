@@ -5,6 +5,7 @@ import { passwordError } from "../utils/passwordPolicy";
 import { useAuth } from "../context/AuthContext";
 import { ROLE_ICON, ROLE_LABEL } from "../utils/permissions";
 import { dateInputValue, formatDate } from "../utils/accountName";
+import { DateInput } from "../components/DateInput";
 
 const EMPTY_PW = { current: "", next: "", confirm: "" };
 
@@ -136,7 +137,7 @@ export default function ProfilePage() {
             </label>
             <label className="field">
               <span>Ngày sinh</span>
-              <input type="date" value={form.birthDate} onChange={set("birthDate")} disabled={!!busy} />
+              <DateInput value={form.birthDate} onChange={set("birthDate")} disabled={!!busy} />
             </label>
             <label className="field">
               <span>Số điện thoại</span>

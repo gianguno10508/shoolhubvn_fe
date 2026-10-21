@@ -7,6 +7,7 @@ const auth = require("../middleware/auth");
 const loadUser = require("../middleware/loadUser");
 const requireSchoolVip = require("../middleware/requireSchoolVip");
 const { PERMISSIONS: P, ROLES, ALL_ROLES } = require("../config/roles");
+const { pushToUsers, viDateTime } = require("../utils/push");
 
 const router = express.Router();
 
@@ -228,6 +229,14 @@ router.post("/", async (req, res) => {
       recipientCount,
     });
     res.json(toJSON(n, true));
+
+    // Đẩy ngay về điện thoại của người nhận, kèm ngày giờ đã đặt (không chờ, lỗi không ảnh hưởng việc gửi)
+    const lines = [eventAt ? `🕒 ${viDateTime(eventAt)}` : "", n.body].filter(Boolean);
+    pushToUsers(recipientFilter(req.school._id, audience, user._id), {
+      title: `${n.priority === "important" ? "❗ " : "📢 "}${n.title}`,
+      body: lines.join("\n").slice(0, 500) || `Thông báo từ ${n.senderName}`,
+      data: { type: "notification", id: String(n._id) },
+    });
   } catch (err) {
     fail(res, err, "Lỗi máy chủ khi gửi thông báo.");
   }

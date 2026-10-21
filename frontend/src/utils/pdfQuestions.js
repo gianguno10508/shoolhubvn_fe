@@ -86,20 +86,27 @@ export async function extractPdfText(file) {
    QUESTION PARSER
 ========================================================= */
 
+/* Thẻ đánh dấu nhóm câu (chỉ dùng khi trộn đề):
+ *   <d#1> ... </d#1>: đảo thứ tự các câu trong nhóm và đảo phương án
+ *   <d#2> ... </d#2>: giữ nguyên vị trí câu, chỉ đảo phương án */
+const MARKER_REGEX = /<\s*(\/?)\s*d\s*#\s*([12])\s*>/gi;
+
 export function parseQuestions(lines) {
   const questions = [];
 
   let currentQuestion = null;
   let currentOption = null;
+  let mark = null; // { kind: 1 | 2, group } — nhóm đang mở
+  let groupCount = 0;
 
   const questionRegex = /^Câu\s*(\d+)[\.\):\-]?\s*(.*)$/i;
 
   const optionRegex = /^_?\s*([ABCD])[\.\):\-]\s*(.*)$/i;
 
-  for (const rawLine of lines) {
-    const line = rawLine.replace(/\u00a0/g, " ").trim();
+  function handleLine(rawText) {
+    const line = rawText.replace(/\u00a0/g, " ").trim();
 
-    if (!line) continue;
+    if (!line) return;
 
     const questionMatch = line.match(questionRegex);
 
@@ -114,11 +121,14 @@ export function parseQuestions(lines) {
         text: questionMatch[2].trim(),
         options: [],
         correctAnswer: null,
+        correctAnswers: [],
+        lowerLetters: false,
+        mark,
       };
 
       currentOption = null;
 
-      continue;
+      return;
     }
 
     const optionMatch = line.match(optionRegex);
@@ -138,15 +148,20 @@ export function parseQuestions(lines) {
         isCorrect,
       };
 
+      if (!currentQuestion.options.length) {
+        currentQuestion.lowerLetters = optionMatch[1] !== letter;
+      }
+
       currentQuestion.options.push(option);
 
       if (isCorrect) {
         currentQuestion.correctAnswer = letter;
+        currentQuestion.correctAnswers.push(letter);
       }
 
       currentOption = option;
 
-      continue;
+      return;
     }
 
     if (currentQuestion) {
@@ -158,15 +173,40 @@ export function parseQuestions(lines) {
     }
   }
 
+  for (const rawLine of lines) {
+    // Tách thẻ <d#1>, </d#2>... ra khỏi dòng, phần chữ còn lại xử lý như bình thường
+    let last = 0;
+
+    for (const match of rawLine.matchAll(MARKER_REGEX)) {
+      handleLine(rawLine.slice(last, match.index));
+
+      if (match[1]) {
+        mark = null;
+      } else {
+        groupCount += 1;
+        mark = { kind: Number(match[2]), group: groupCount };
+      }
+
+      last = match.index + match[0].length;
+    }
+
+    handleLine(rawLine.slice(last));
+  }
+
   if (currentQuestion) {
     questions.push(currentQuestion);
   }
 
-  return questions.map((question, index) => ({
-    ...question,
-    id: index + 1,
-    options: question.options.slice(0, 4),
-  }));
+  return questions.map((question, index) => {
+    const options = question.options.slice(0, 4);
+
+    return {
+      ...question,
+      id: index + 1,
+      options,
+      correctAnswers: options.filter((option) => option.isCorrect).map((option) => option.letter),
+    };
+  });
 }
 
 /* =========================================================

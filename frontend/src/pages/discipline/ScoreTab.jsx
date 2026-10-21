@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { deleteDisciplineRecord, listDisciplineRecords, saveDisciplineRecord } from "../../api/discipline";
 import { listClasses } from "../../api/school";
 import { formatPoints, splitNames, today, viDate, weekdayName } from "./disciplineUtils";
+import { DateInput } from "../../components/DateInput";
+import { formatDateTimeVi } from "../../utils/time";
 
 /* Chấm thi đua: 1 phiếu cho 1 lớp trong 1 ngày (Cờ đỏ, Đoàn thanh niên) */
 export default function ScoreTab({ user, config, showToast }) {
@@ -136,7 +138,7 @@ export default function ScoreTab({ user, config, showToast }) {
       <aside className="dc-score-side">
         <label className="field">
           <span>Ngày chấm</span>
-          <input type="date" value={date} max={today()} onChange={(e) => e.target.value && setDate(e.target.value)} />
+          <DateInput value={date} max={today()} onChange={(e) => e.target.value && setDate(e.target.value)} />
         </label>
         <p className="dc-side-note">
           {weekdayName(date)} · đã chấm {doneCount}/{classes.length} lớp
@@ -188,7 +190,7 @@ export default function ScoreTab({ user, config, showToast }) {
                 </h3>
                 {current && (
                   <small>
-                    Đã chấm bởi {current.recordedByName}, cập nhật {new Date(current.updatedAt).toLocaleString("vi-VN")}
+                    Đã chấm bởi {current.recordedByName}, cập nhật {formatDateTimeVi(current.updatedAt)}
                   </small>
                 )}
               </div>

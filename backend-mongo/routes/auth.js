@@ -9,6 +9,7 @@ const { ROLES } = require("../config/roles");
 const { parseBirthDate } = require("../utils/accountName");
 const { passwordError } = require("../utils/passwordPolicy");
 const { createLimiter, clientIp } = require("../middleware/rateLimit");
+const { isPushToken } = require("../utils/push");
 
 const router = express.Router();
 
@@ -142,6 +143,31 @@ router.patch("/me", auth, loadUser, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Lỗi máy chủ khi cập nhật thông tin." });
+  }
+});
+
+/* App điện thoại: đăng ký / gỡ Expo push token để nhận thông báo đẩy.
+ * 1 điện thoại chỉ gắn với tài khoản đăng nhập gần nhất (đổi tài khoản thì token chuyển sang tài khoản mới). */
+router.post("/push-token", auth, loadUser, async (req, res) => {
+  try {
+    const token = String(req.body.token || "");
+    if (!isPushToken(token)) return res.status(400).json({ error: "Push token không hợp lệ." });
+    await User.updateMany({ pushTokens: token, _id: { $ne: req.userId } }, { $pull: { pushTokens: token } });
+    await User.updateOne({ _id: req.userId }, { $addToSet: { pushTokens: token } });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Lỗi máy chủ khi đăng ký thông báo." });
+  }
+});
+
+router.post("/push-token/remove", auth, async (req, res) => {
+  try {
+    await User.updateOne({ _id: req.userId }, { $pull: { pushTokens: String(req.body.token || "") } });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Lỗi máy chủ." });
   }
 });
 

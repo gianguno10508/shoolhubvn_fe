@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { LETTERS, readQuestionsFromPdf, validateQuestions } from "../../utils/pdfQuestions";
 import { toLocalInput } from "./assignmentUtils";
 import { GAMES } from "./game/GameHub";
+import { DateTimeInput } from "../../components/DateInput";
 
 function defaultDueAt() {
   const d = new Date();
@@ -339,11 +340,11 @@ export default function AssignmentCreatePage() {
           </label>
           <label className="field">
             <span>Mở bài từ</span>
-            <input type="datetime-local" value={config.openAt} onChange={(e) => set("openAt", e.target.value)} />
+            <DateTimeInput value={config.openAt} onChange={(e) => set("openAt", e.target.value)} />
           </label>
           <label className="field">
             <span>Hạn nộp (deadline) *</span>
-            <input type="datetime-local" value={config.dueAt} onChange={(e) => set("dueAt", e.target.value)} />
+            <DateTimeInput value={config.dueAt} onChange={(e) => set("dueAt", e.target.value)} />
           </label>
           <label className="field">
             <span>Số lượt làm tối đa</span>

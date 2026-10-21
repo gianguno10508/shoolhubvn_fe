@@ -5,6 +5,7 @@ import * as XLSX from "xlsx";
 import { deleteAssignment, getAssignment, getAssignmentResults, updateAssignment } from "../../api/assignments";
 import { assignmentState, formatDateTime, formatDuration, formatScore, toLocalInput } from "./assignmentUtils";
 import { GAMES, gameOf } from "./game/GameHub";
+import { DateTimeInput } from "../../components/DateInput";
 
 const STATUS_LABEL = {
   submitted: "Đã nộp",
@@ -373,7 +374,7 @@ export default function AssignmentResultPage() {
               </label>
               <label className="field">
                 <span>Hạn nộp</span>
-                <input type="datetime-local" value={editing.dueAt} onChange={(e) => setEditing({ ...editing, dueAt: e.target.value })} />
+                <DateTimeInput value={editing.dueAt} onChange={(e) => setEditing({ ...editing, dueAt: e.target.value })} />
               </label>
               <label className="field">
                 <span>Hình thức làm bài</span>

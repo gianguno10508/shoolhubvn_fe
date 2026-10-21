@@ -8,6 +8,7 @@ const loadUser = require("../middleware/loadUser");
 const requirePermission = require("../middleware/requirePermission");
 const requireSchoolVip = require("../middleware/requireSchoolVip");
 const { PERMISSIONS: P, ROLES } = require("../config/roles");
+const { pushToUsers } = require("../utils/push");
 
 const router = express.Router();
 
@@ -299,6 +300,20 @@ router.put("/records/:classId/:date", canScore, requireSchoolVip, async (req, re
       { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true },
     );
     res.json(record.toPublicJSON());
+
+    // Báo về điện thoại GVCN của lớp được chấm: "Thi đua nề nếp ngày 21/10/2026 lớp 10A1"
+    const scorer = req.currentUser;
+    const net = record.totalBonus - record.totalPenalty;
+    pushToUsers(
+      { school: req.school._id, role: ROLES.HOMEROOM_TEACHER, classId: cls._id, status: "active", _id: { $ne: scorer._id } },
+      {
+        title: `Thi đua nề nếp ngày ${date.split("-").reverse().join("/")} lớp ${cls.name}`,
+        body:
+          `${scorer.name || scorer.username}${scorer.classId?.name ? ` (lớp ${scorer.classId.name})` : ""} đã chấm: ` +
+          `trừ ${record.totalPenalty}, cộng ${record.totalBonus} → ${net > 0 ? "+" : ""}${net} điểm.`,
+        data: { type: "discipline", classId: String(cls._id), date },
+      },
+    );
   } catch (err) {
     fail(res, err, "Lỗi máy chủ khi lưu phiếu chấm.");
   }

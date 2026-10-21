@@ -26,12 +26,15 @@ const userSchema = new Schema(
     // Lần đổi / đặt lại mật khẩu gần nhất — token đăng nhập cấp trước thời điểm này bị vô hiệu
     passwordChangedAt: { type: Date, default: null },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    // Expo push token của các điện thoại đang đăng nhập tài khoản này (app SchoolHub) — xem utils/push.js
+    pushTokens: { type: [String], default: [] },
   },
   { timestamps: true },
 );
 
 userSchema.index({ school: 1, role: 1 });
 userSchema.index({ school: 1, classId: 1 });
+userSchema.index({ pushTokens: 1 });
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();

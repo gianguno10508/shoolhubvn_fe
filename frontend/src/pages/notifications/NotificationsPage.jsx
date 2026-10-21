@@ -12,6 +12,7 @@ import {
   sendNotification,
 } from "../../api/notifications";
 import { formatDateTimeVi, formatEventTime, timeAgo } from "../../utils/time";
+import { DateInput, TimeInput } from "../../components/DateInput";
 
 /** Nhãn ngày giờ của thông báo; mờ đi khi thời điểm đã qua */
 function EventTime({ value }) {
@@ -371,8 +372,8 @@ function ComposeModal({ audiences, onClose, onSent }) {
         <div className="field">
           <span>Thời gian (ngày, giờ phút) — không bắt buộc</span>
           <div className="nt-when-row">
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Ngày" />
-            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="Giờ phút" />
+            <DateInput value={date} onChange={(e) => setDate(e.target.value)} aria-label="Ngày" />
+            <TimeInput value={time} onChange={(e) => setTime(e.target.value)} aria-label="Giờ phút" />
             {!date && (
               <button type="button" className="btn btn-sm btn-light" onClick={() => setDate(todayInput())}>
                 Hôm nay

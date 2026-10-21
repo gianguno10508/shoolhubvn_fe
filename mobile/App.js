@@ -1,10 +1,14 @@
 // App.js — SchoolHub mobile: dùng chung API backend với bản web
-import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
+import { useEffect } from "react";
+import { NavigationContainer, DefaultTheme, createNavigationContainerRef } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "./src/context/AuthContext";
 import RootNavigator from "./src/navigation/RootNavigator";
 import { colors } from "./src/theme";
+import { listenPushTaps } from "./src/utils/push";
+
+const navigationRef = createNavigationContainerRef();
 
 const theme = {
   ...DefaultTheme,
@@ -12,10 +16,12 @@ const theme = {
 };
 
 export default function App() {
+  useEffect(() => listenPushTaps(navigationRef), []);
+
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <NavigationContainer theme={theme}>
+        <NavigationContainer ref={navigationRef} theme={theme}>
           <RootNavigator />
         </NavigationContainer>
       </AuthProvider>

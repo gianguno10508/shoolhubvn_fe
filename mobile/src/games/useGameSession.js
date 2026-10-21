@@ -17,7 +17,8 @@ export const GAMES = {
     name: "Ai là triệu phú",
     lives: 1,
     seconds: 30,
-    rules: "Mỗi câu đúng leo thêm 1 bậc tiền thưởng. Sai hoặc hết giờ là dừng cuộc chơi. Có 2 quyền trợ giúp: hoãn câu và thêm 15 giây.",
+    rules:
+      "Mỗi câu đúng leo thêm 1 bậc tiền thưởng. Sai hoặc hết giờ là dừng cuộc chơi. Có 5 quyền trợ giúp, mỗi quyền dùng 1 lần: 50:50, gọi điện thoại cho người thân, hỏi ý kiến khán giả trong trường quay, hoãn câu và thêm 15 giây.",
   },
   zombie: {
     icon: "🧟",

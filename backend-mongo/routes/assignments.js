@@ -292,6 +292,7 @@ router.post("/:id/start", submit, async (req, res) => {
           ]
         : undefined,
       questions: buildPaper(a, sub),
+      lifelines: a.game === "millionaire" ? sub.lifelines.map((l) => ({ type: l.type, questionNumber: l.questionNumber, ...l.result })) : undefined,
       serverTime: new Date(),
     });
   } catch (err) {
@@ -355,6 +356,79 @@ router.post("/submissions/:sid/check", submit, async (req, res) => {
     });
   } catch (err) {
     fail(res, err, "Lỗi máy chủ khi chấm câu trả lời.");
+  }
+});
+
+/* ---------- Quyền trợ giúp "Ai là triệu phú" (máy chủ tính vì chỉ máy chủ biết đáp án) ---------- */
+const LIFELINES = ["fifty", "audience", "phone"];
+
+/** Khán giả bình chọn: 85% khả năng đáp án đúng được nhiều phiếu nhất */
+function audienceVotes(keys, correctKey) {
+  const wrong = keys.filter((k) => k !== correctKey);
+  const top = Math.random() < 0.85 || !wrong.length ? correctKey : shuffle(wrong)[0];
+  const topShare = Math.round((keys.length <= 2 ? 58 : 40) + Math.random() * 30);
+  const others = keys.filter((k) => k !== top);
+  const weights = others.map(() => 0.2 + Math.random());
+  const sum = weights.reduce((x, y) => x + y, 0);
+  const votes = { [top]: topShare };
+  let left = 100 - topShare;
+  others.forEach((k, i) => {
+    const v = i === others.length - 1 ? left : Math.min(left, Math.round(((100 - topShare) * weights[i]) / sum));
+    votes[k] = v;
+    left -= v;
+  });
+  return votes;
+}
+
+/** Gọi điện cho người thân: 80% khả năng gợi ý đúng */
+function phoneAdvice(keys, correctKey) {
+  const wrong = keys.filter((k) => k !== correctKey);
+  const right = Math.random() < 0.8 || !wrong.length;
+  return {
+    key: right ? correctKey : shuffle(wrong)[0],
+    confidence: right ? 65 + Math.floor(Math.random() * 30) : 40 + Math.floor(Math.random() * 25),
+  };
+}
+
+// body: { questionNumber, type: "fifty" | "audience" | "phone" }. Mỗi quyền dùng 1 lần / lượt; gọi lại cho cùng câu thì trả kết quả cũ.
+router.post("/submissions/:sid/lifeline", submit, async (req, res) => {
+  try {
+    const { sub, a } = await loadOwnSubmission(req);
+    if (a.game !== "millionaire") throw httpError(400, "Bài này không có quyền trợ giúp.");
+    if (sub.status !== "in_progress") throw httpError(409, "Lượt chơi đã kết thúc.");
+    const type = req.body.type;
+    if (!LIFELINES.includes(type)) throw httpError(400, "Quyền trợ giúp không hợp lệ.");
+    const number = Number(req.body.questionNumber);
+    const q = a.questions.find((x) => x.number === number);
+    if (!q) throw httpError(400, "Câu hỏi không hợp lệ.");
+
+    const used = sub.lifelines.find((l) => l.type === type);
+    if (used) {
+      if (used.questionNumber === number) return res.json({ type, questionNumber: number, ...used.result });
+      throw httpError(409, "Bạn đã dùng quyền trợ giúp này rồi.");
+    }
+    if (sub.answers.some((x) => x.questionNumber === number) || sub.timedOut.includes(number)) {
+      throw httpError(409, "Câu này đã chốt đáp án.");
+    }
+
+    // Phương án đã bị 50:50 loại ở câu này thì khán giả / người thân không chọn nữa
+    const fifty = sub.lifelines.find((l) => l.type === "fifty" && l.questionNumber === number);
+    const gone = fifty ? fifty.result.hidden || [] : [];
+    const keys = q.options.map((o) => o.letter).filter((k) => !gone.includes(k));
+    let result;
+    if (type === "fifty") {
+      const wrong = keys.filter((k) => k !== q.correctAnswer);
+      result = { hidden: shuffle(wrong).slice(0, Math.max(0, keys.length - 2)) };
+    } else if (type === "audience") {
+      result = { votes: audienceVotes(keys, q.correctAnswer) };
+    } else {
+      result = phoneAdvice(keys, q.correctAnswer);
+    }
+    sub.lifelines.push({ type, questionNumber: number, result });
+    await sub.save();
+    res.json({ type, questionNumber: number, ...result });
+  } catch (err) {
+    fail(res, err, "Lỗi máy chủ khi dùng quyền trợ giúp.");
   }
 });
 

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { saveDisciplineConfig } from "../../api/discipline";
 import { INPUT_TYPES, WEEKDAY_SHORT } from "./disciplineUtils";
+import { DateInput } from "../../components/DateInput";
 
 let tempId = 0;
 const newItem = () => ({ key: `new-${++tempId}`, name: "", kind: "penalty", points: 1, inputType: "checkbox", active: true });
@@ -87,8 +88,7 @@ export default function ConfigTab({ config, onSaved, showToast }) {
           </label>
           <label className="field">
             <span>Ngày thuộc tuần 1 năm học</span>
-            <input
-              type="date"
+            <DateInput
               value={draft.weekOneStart}
               onChange={(e) => update((d) => (d.weekOneStart = e.target.value))}
               title="Dùng để đánh số tuần (Tuần 1, 2...). Bỏ trống: tự tính từ ngày 05/09."

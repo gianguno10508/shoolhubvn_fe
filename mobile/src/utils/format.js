@@ -34,6 +34,17 @@ export function formatEventTime(value) {
   return `${pad(d.getHours())}:${pad(d.getMinutes())} · ${WEEKDAYS[d.getDay()]}, ${formatDate(d)}`;
 }
 
+/** Giờ nhận thông báo: "14:30 · Hôm nay", "09:15 · Hôm qua", "08:00 · 18/10/2026" */
+export function formatReceived(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  const day = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const label = day === today ? "Hôm nay" : day === today - 86400000 ? "Hôm qua" : formatDate(d);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())} · ${label}`;
+}
+
 /** "Vừa xong", "5 phút trước", "Hôm qua", hoặc ngày */
 export function timeAgo(value) {
   const diff = (Date.now() - new Date(value).getTime()) / 1000;

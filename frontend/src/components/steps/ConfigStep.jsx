@@ -3,6 +3,7 @@ import PanelTitle from "../common/PanelTitle";
 import { getDays, getSessions, getTiets } from "../../utils/helpers";
 import { resolvePeriodTimes } from "../../utils/periodTimes";
 import PeriodTimesEditor from "./PeriodTimesEditor";
+import { DateInput } from "../DateInput";
 
 export default function ConfigStep({
   config,
@@ -44,15 +45,13 @@ export default function ConfigStep({
           />
         </Field>
         <Field label="Tuần áp dụng — ngày bắt đầu">
-          <input
-            type="date"
+          <DateInput
             value={config.tuanBatDau || ""}
             onChange={(e) => set("tuanBatDau", e.target.value)}
           />
         </Field>
         <Field label="Tuần áp dụng — ngày kết thúc">
-          <input
-            type="date"
+          <DateInput
             value={config.tuanKetThuc || ""}
             min={config.tuanBatDau || undefined}
             onChange={(e) => set("tuanKetThuc", e.target.value)}

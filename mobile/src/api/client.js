@@ -98,6 +98,10 @@ export const api = {
   myScoring: () => apiFetch("/discipline/my-scoring"),
   classes: () => apiFetch("/school/classes"),
 
+  /* ---------- Thông báo đẩy (điện thoại) ---------- */
+  registerPushToken: (token) => apiFetch("/auth/push-token", { method: "POST", body: { token } }),
+  removePushToken: (token) => apiFetch("/auth/push-token/remove", { method: "POST", body: { token } }),
+
   /* ---------- Thời khóa biểu ---------- */
   /** params: { teacherId?, classId? } — classId chỉ dùng cho tài khoản trường, BGH, Đoàn TN */
   myTimetable: (params) => apiFetch(`/my-timetable${qs(params)}`),
@@ -115,4 +119,7 @@ export const api = {
   submission: (sid) => apiFetch(`/assignments/submissions/${sid}`),
   /** Bài trò chơi: chốt 1 câu → { correct, correctAnswer? }. body: { questionNumber, answer } | { questionNumber, timeout: true } */
   checkAnswer: (sid, body) => apiFetch(`/assignments/submissions/${sid}/check`, { method: "POST", body }),
+  /** Ai là triệu phú: type = fifty → { hidden: [key] } | audience → { votes: { key: % } } | phone → { key, confidence } */
+  lifeline: (sid, questionNumber, type) =>
+    apiFetch(`/assignments/submissions/${sid}/lifeline`, { method: "POST", body: { questionNumber, type } }),
 };

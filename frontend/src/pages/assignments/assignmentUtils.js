@@ -1,14 +1,10 @@
 // pages/assignments/assignmentUtils.js — định dạng dùng chung cho mục Bài tập
+import { formatDateTimeVi } from "../../utils/time";
+
 
 export function formatDateTime(value) {
   if (!value) return "—";
-  return new Date(value).toLocaleString("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  return formatDateTimeVi(value);
 }
 
 /** Giá trị cho <input type="datetime-local"> theo giờ máy */

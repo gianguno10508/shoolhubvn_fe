@@ -15,6 +15,8 @@ import {
   TableCell,
   WidthType,
   BorderStyle,
+  Tab,
+  TabStopType,
 } from "docx";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -30,19 +32,51 @@ import {
    GENERATE EXAM
 ========================================================= */
 
+/* Thứ tự câu trong mã đề:
+ *   - câu trong <d#2>: giữ nguyên vị trí, luôn đảo phương án
+ *   - câu trong <d#1>: đảo thứ tự với các câu cùng đoạn, luôn đảo phương án
+ *   - câu không đánh dấu: theo 2 công tắc "Đảo thứ tự câu hỏi" / "Đảo phương án" */
 function generateExam(sourceQuestions, shuffleQuestions, shuffleOptions) {
-  let questions = [...sourceQuestions];
+  const ordered = new Array(sourceQuestions.length);
 
-  if (shuffleQuestions) {
-    questions = shuffleArray(questions);
-  }
+  const groups = new Map();
 
-  return questions.map((question, questionIndex) => {
+  const freeSlots = [];
+
+  sourceQuestions.forEach((question, index) => {
+    if (question.mark?.kind === 2) {
+      ordered[index] = question;
+    } else if (question.mark?.kind === 1) {
+      const slots = groups.get(question.mark.group) || [];
+
+      slots.push(index);
+
+      groups.set(question.mark.group, slots);
+    } else {
+      freeSlots.push(index);
+    }
+  });
+
+  const fill = (slots, shuffle) => {
+    const picked = slots.map((index) => sourceQuestions[index]);
+
+    const arranged = shuffle ? shuffleArray(picked) : picked;
+
+    slots.forEach((slot, i) => {
+      ordered[slot] = arranged[i];
+    });
+  };
+
+  groups.forEach((slots) => fill(slots, true));
+
+  fill(freeSlots, shuffleQuestions);
+
+  return ordered.map((question, questionIndex) => {
     let options = question.options.map((option) => ({
       ...option,
     }));
 
-    if (shuffleOptions) {
+    if (question.mark || shuffleOptions) {
       options = shuffleArray(options);
     }
 
@@ -51,9 +85,9 @@ function generateExam(sourceQuestions, shuffleQuestions, shuffleOptions) {
       letter: LETTERS[index],
     }));
 
-    const correctOptionIndex = newOptions.findIndex(
-      (option) => option.originalLetter === question.correctAnswer,
-    );
+    const correctAnswers = newOptions
+      .filter((option) => option.isCorrect)
+      .map((option) => option.letter);
 
     return {
       ...question,
@@ -62,10 +96,51 @@ function generateExam(sourceQuestions, shuffleQuestions, shuffleOptions) {
 
       options: newOptions,
 
-      correctAnswer:
-        correctOptionIndex >= 0 ? LETTERS[correctOptionIndex] : null,
+      correctAnswer: correctAnswers.length === 1 ? correctAnswers[0] : null,
+
+      correctAnswers,
     };
   });
+}
+
+/* =========================================================
+   LAYOUT HELPERS
+========================================================= */
+
+/** "A." hoặc "a)" (câu đúng/sai viết phương án bằng chữ thường) */
+function optionLabel(question, letter) {
+  return question.lowerLetters ? `${letter.toLowerCase()})` : `${letter}.`;
+}
+
+/** Số phương án trên 1 hàng theo độ dài: ngắn → cả 4 trên 1 hàng, vừa → 2 hàng, dài → mỗi phương án 1 hàng */
+function optionColumns(question) {
+  const longest = Math.max(
+    0,
+    ...question.options.map((option) => (option.text || "").length),
+  );
+
+  if (longest <= 20) return 4;
+
+  if (longest <= 45) return 2;
+
+  return 1;
+}
+
+/** Câu có từ 2 đáp án đúng trở lên: chấm Đúng/Sai từng ý */
+const isTrueFalse = (question) => question.correctAnswers?.length >= 2;
+
+/** Đáp án ghi ra bảng: "B" hoặc "a Đ b Đ c S d Đ" */
+function answerText(question) {
+  if (!question) return "";
+
+  if (!isTrueFalse(question)) return question.correctAnswer || "";
+
+  return question.options
+    .map(
+      (option) =>
+        `${option.letter.toLowerCase()} ${option.isCorrect ? "Đ" : "S"}`,
+    )
+    .join(" ");
 }
 
 /* =========================================================
@@ -175,6 +250,9 @@ async function downloadExamPdf(exam) {
 /* =========================================================
    WORD EXPORT
 ========================================================= */
+
+// Bề rộng vùng chữ (twip): khổ A4 11906 trừ lề trái 900 và lề phải 720
+const WORD_TEXT_WIDTH = 11906 - 900 - 720;
 
 async function createWordBlob(exam) {
   const children = [];
@@ -297,32 +375,48 @@ async function createWordBlob(exam) {
       }),
     );
 
-    question.options.forEach((option) => {
+    // Phương án sát lề trái, thẳng với "Câu"; nhiều phương án trên 1 hàng thì canh cột bằng tab
+    const columns = optionColumns(question);
+
+    const tabStops = Array.from({ length: columns - 1 }, (_, i) => ({
+      type: TabStopType.LEFT,
+      position: Math.round(((i + 1) * WORD_TEXT_WIDTH) / columns),
+    }));
+
+    for (let i = 0; i < question.options.length; i += columns) {
+      const runs = [];
+
+      question.options.slice(i, i + columns).forEach((option, k) => {
+        if (k > 0) {
+          runs.push(new TextRun({ children: [new Tab()], size: 22 }));
+        }
+
+        runs.push(
+          new TextRun({
+            text: `${optionLabel(question, option.letter)} `,
+            bold: true,
+            size: 22,
+          }),
+
+          new TextRun({
+            text: option.text,
+            size: 22,
+          }),
+        );
+      });
+
       children.push(
         new Paragraph({
-          indent: {
-            left: 400,
-          },
+          tabStops,
 
           spacing: {
             after: 70,
           },
 
-          children: [
-            new TextRun({
-              text: `${option.letter}. `,
-              bold: true,
-              size: 22,
-            }),
-
-            new TextRun({
-              text: option.text,
-              size: 22,
-            }),
-          ],
+          children: runs,
         }),
       );
-    });
+    }
   });
 
   const doc = new Document({
@@ -357,10 +451,10 @@ async function downloadExamWord(exam) {
    EXCEL ANSWER
 ========================================================= */
 
-function downloadAnswerExcel(exams) {
-  if (!exams.length) return;
-
+function buildAnswerWorkbook(exams) {
   const maxQuestions = Math.max(...exams.map((exam) => exam.questions.length));
+
+  const hasTrueFalse = exams.some((exam) => exam.questions.some(isTrueFalse));
 
   const data = [];
 
@@ -373,15 +467,7 @@ function downloadAnswerExcel(exams) {
   data.push(["Câu", ...exams.map((exam) => `Mã ${exam.code}`)]);
 
   for (let i = 0; i < maxQuestions; i++) {
-    const row = [i + 1];
-
-    exams.forEach((exam) => {
-      const question = exam.questions[i];
-
-      row.push(question?.correctAnswer || "");
-    });
-
-    data.push(row);
+    data.push([i + 1, ...exams.map((exam) => answerText(exam.questions[i]))]);
   }
 
   const worksheet = XLSX.utils.aoa_to_sheet(data);
@@ -392,7 +478,7 @@ function downloadAnswerExcel(exams) {
     },
 
     ...exams.map(() => ({
-      wch: 16,
+      wch: hasTrueFalse ? 22 : 16,
     })),
   ];
 
@@ -414,7 +500,16 @@ function downloadAnswerExcel(exams) {
 
   XLSX.utils.book_append_sheet(workbook, worksheet, "Đáp án");
 
-  XLSX.writeFile(workbook, `Dap-an-${exams.length}-ma-de.xlsx`);
+  return workbook;
+}
+
+function downloadAnswerExcel(exams) {
+  if (!exams.length) return;
+
+  XLSX.writeFile(
+    buildAnswerWorkbook(exams),
+    `Dap-an-${exams.length}-ma-de.xlsx`,
+  );
 }
 
 /* =========================================================
@@ -443,57 +538,7 @@ async function downloadAllFiles(exams, setExporting, setExportProgress) {
       zip.file(`Word/Ma-de-${exam.code}.docx`, wordBlob);
     }
 
-    const excelData = [];
-
-    excelData.push(["BẢNG ĐÁP ÁN CÁC MÃ ĐỀ"]);
-
-    excelData.push([]);
-
-    excelData.push(["Câu", ...exams.map((exam) => `Mã ${exam.code}`)]);
-
-    const maxQuestions = Math.max(
-      ...exams.map((exam) => exam.questions.length),
-    );
-
-    for (let i = 0; i < maxQuestions; i++) {
-      const row = [i + 1];
-
-      exams.forEach((exam) => {
-        row.push(exam.questions[i]?.correctAnswer || "");
-      });
-
-      excelData.push(row);
-    }
-
-    const worksheet = XLSX.utils.aoa_to_sheet(excelData);
-
-    worksheet["!cols"] = [
-      {
-        wch: 12,
-      },
-
-      ...exams.map(() => ({
-        wch: 16,
-      })),
-    ];
-
-    worksheet["!merges"] = [
-      {
-        s: {
-          r: 0,
-          c: 0,
-        },
-
-        e: {
-          r: 0,
-          c: exams.length,
-        },
-      },
-    ];
-
-    const workbook = XLSX.utils.book_new();
-
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Đáp án");
+    const workbook = buildAnswerWorkbook(exams);
 
     const excelArray = XLSX.write(workbook, {
       bookType: "xlsx",
@@ -563,6 +608,15 @@ export default function ShuffleExamPage() {
   const correctCount = parsedQuestions.filter(
     (question) => question.correctAnswer,
   ).length;
+
+  const markedCount = (kind) =>
+    questions.filter((question) => question.mark?.kind === kind).length;
+
+  const shuffleMarkedCount = markedCount(1);
+
+  const fixedMarkedCount = markedCount(2);
+
+  const trueFalseCount = questions.filter(isTrueFalse).length;
 
   const activeExam = exams[activeExamIndex];
 
@@ -660,6 +714,8 @@ export default function ShuffleExamPage() {
           ...question,
 
           correctAnswer: letter,
+
+          correctAnswers: [letter],
 
           options: question.options.map((option) => ({
             ...option,
@@ -1013,6 +1069,35 @@ export default function ShuffleExamPage() {
                 </label>
               </div>
 
+              <div className="marker-note">
+                <strong>Đánh dấu trong file PDF</strong>
+
+                <span>
+                  <code>&lt;d#1&gt;</code> … <code>&lt;/d#1&gt;</code>: đảo thứ
+                  tự các câu trong đoạn và đảo phương án
+                  {shuffleMarkedCount ? ` — ${shuffleMarkedCount} câu` : ""}
+                </span>
+
+                <span>
+                  <code>&lt;d#2&gt;</code> … <code>&lt;/d#2&gt;</code>: giữ
+                  nguyên vị trí câu, chỉ đảo phương án
+                  {fixedMarkedCount ? ` — ${fixedMarkedCount} câu` : ""}
+                </span>
+
+                <span>
+                  Câu có từ 2 đáp án đúng (gạch dưới <code>_</code>) được chấm
+                  Đúng/Sai từng ý, Excel ghi dạng "a Đ b Đ c S d Đ"
+                  {trueFalseCount ? ` — ${trueFalseCount} câu` : ""}
+                </span>
+
+                {shuffleMarkedCount + fixedMarkedCount > 0 && (
+                  <small>
+                    Hai công tắc phía trên chỉ áp dụng cho các câu không nằm
+                    trong thẻ đánh dấu.
+                  </small>
+                )}
+              </div>
+
               <div className="form-grid">
                 <label className="form-field">
                   <span>Số lượng mã đề</span>
@@ -1251,13 +1336,33 @@ export default function ShuffleExamPage() {
                         </div>
 
                         <div className="question-body">
-                          <div className="question-text">{question.text}</div>
+                          <div className="question-text">
+                            {question.mark?.kind === 2 && (
+                              <span className="mark-badge fixed">
+                                📌 Cố định
+                              </span>
+                            )}
 
-                          <div className="question-options">
+                            {question.mark?.kind === 1 && (
+                              <span className="mark-badge">🔀 Đoạn trộn</span>
+                            )}
+
+                            {isTrueFalse(question) && (
+                              <span className="mark-badge tf">Đúng/Sai</span>
+                            )}
+
+                            {question.text}
+                          </div>
+
+                          <div
+                            className={`question-options cols-${optionColumns(question)}`}
+                          >
                             {question.options.map((option) => (
                               <div className="preview-option" key={option.id}>
                                 <span className="option-letter">
-                                  {option.letter}
+                                  {question.lowerLetters
+                                    ? option.letter.toLowerCase()
+                                    : option.letter}
                                 </span>
 
                                 <span>{option.text}</span>
@@ -1282,10 +1387,13 @@ export default function ShuffleExamPage() {
 
                     <div className="answer-grid">
                       {activeExam.questions.map((question) => (
-                        <div className="answer-cell" key={question.id}>
+                        <div
+                          className={`answer-cell${isTrueFalse(question) ? " tf" : ""}`}
+                          key={question.id}
+                        >
                           <span>{question.displayNumber}</span>
 
-                          <strong>{question.correctAnswer}</strong>
+                          <strong>{answerText(question)}</strong>
                         </div>
                       ))}
                     </div>
@@ -1354,10 +1462,12 @@ export default function ShuffleExamPage() {
                       {question.text}
                     </div>
 
-                    <div className="pdf-options">
+                    <div
+                      className={`pdf-options cols-${optionColumns(question)}`}
+                    >
                       {question.options.map((option) => (
                         <div className="pdf-option" key={option.id}>
-                          <strong>{option.letter}.</strong>
+                          <strong>{optionLabel(question, option.letter)}</strong>
 
                           <span>{option.text}</span>
                         </div>

@@ -1,6 +1,7 @@
 // screens/PlayGameScreen.js — học sinh chơi bài tập dạng trò chơi (giáo viên chọn trò khi giao bài trên web)
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { api } from "../api/client";
 import { ErrorBox, Loading, Screen } from "../components/ui";
 import { GameOverCard, Hearts, IntroCard, QuestionCard, QuestionTimer, themeOf } from "../games/GameKit";
 import { MillionaireStage, ObstacleStage, ZombieStage, prizeAt } from "../games/GameStages";
@@ -14,7 +15,43 @@ export default function PlayGameScreen({ navigation, route }) {
   const { game, paper, phase, error, question, total, answeredCount, correct, wrong, lives, feedback, qLeft, timeLeft, result } =
     session;
   const theme = themeOf(gameKey);
-  const [helps, setHelps] = useState({ postpone: false, time: false });
+  const [helps, setHelps] = useState({ postpone: false, time: false, fifty: false, audience: false, phone: false });
+  // Kết quả 50:50 / khán giả / người thân theo từng câu: { [questionNumber]: { hidden?, votes?, phone? } }
+  const [aids, setAids] = useState({});
+  const [helpBusy, setHelpBusy] = useState(false);
+  const [helpError, setHelpError] = useState("");
+  const restored = useRef(false);
+
+  // Chơi tiếp lượt dở: khôi phục các quyền trợ giúp đã dùng (máy chủ lưu)
+  useEffect(() => {
+    if (!paper || restored.current) return;
+    restored.current = true;
+    (paper.lifelines || []).forEach(applyLifeline);
+  }, [paper]);
+
+  function applyLifeline(r) {
+    const next =
+      r.type === "fifty"
+        ? { hidden: r.hidden || [] }
+        : r.type === "audience"
+          ? { votes: r.votes || {} }
+          : { phone: { key: r.key, confidence: r.confidence } };
+    setHelps((h) => ({ ...h, [r.type]: true }));
+    setAids((all) => ({ ...all, [r.questionNumber]: { ...all[r.questionNumber], ...next } }));
+  }
+
+  async function takeLifeline(type) {
+    if (!question || phase !== "question" || helps[type] || helpBusy) return;
+    setHelpBusy(true);
+    setHelpError("");
+    try {
+      applyLifeline(await api.lifeline(paper.submission.id, question.number, type));
+    } catch (err) {
+      setHelpError(err.message || "Không dùng được quyền trợ giúp, hãy thử lại.");
+    } finally {
+      setHelpBusy(false);
+    }
+  }
 
   // Thoát giữa chừng: các câu đã chốt vẫn giữ, lần sau vào chơi tiếp
   useEffect(
@@ -43,6 +80,10 @@ export default function PlayGameScreen({ navigation, route }) {
           feedback={feedback}
           helps={helps}
           canHelp={phase === "question"}
+          busy={helpBusy}
+          aid={question ? aids[question.number] : null}
+          options={question?.options}
+          onLifeline={takeLifeline}
           onPostpone={() => session.postpone() && setHelps((h) => ({ ...h, postpone: true }))}
           onAddTime={() => {
             session.addTime(15);
@@ -75,7 +116,7 @@ export default function PlayGameScreen({ navigation, route }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.body}>
-        <ErrorBox message={phase === "over" ? "" : error} />
+        <ErrorBox message={phase === "over" ? "" : error || helpError} />
         {stageView()}
 
         {phase === "intro" && <IntroCard session={session} title={title} theme={theme} />}
@@ -91,6 +132,7 @@ export default function PlayGameScreen({ navigation, route }) {
               feedback={feedback}
               onAnswer={session.answer}
               theme={theme}
+              hidden={aids[question.number]?.hidden}
             />
           </>
         )}

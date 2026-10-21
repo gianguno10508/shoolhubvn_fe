@@ -40,8 +40,9 @@ export function QuestionTimer({ left, total, theme }) {
   );
 }
 
-/** Câu hỏi + 4 phương án. Lúc hiện kết quả: tô xanh/đỏ phương án đã chọn (và đáp án đúng nếu giáo viên cho xem) */
-export function QuestionCard({ question, index, total, phase, feedback, onAnswer, theme }) {
+/** Câu hỏi + 4 phương án. Lúc hiện kết quả: tô xanh/đỏ phương án đã chọn (và đáp án đúng nếu giáo viên cho xem).
+ *  hidden: các phương án bị loại bởi quyền 50:50 (giữ chỗ nhưng để trống, không bấm được) */
+export function QuestionCard({ question, index, total, phase, feedback, onAnswer, theme, hidden = [] }) {
   const shake = useRef(new Animated.Value(0)).current;
   const [picked, setPicked] = useState(null); // phương án vừa bấm, chờ máy chủ chấm
   useEffect(() => setPicked(null), [question.number]);
@@ -65,23 +66,24 @@ export function QuestionCard({ question, index, total, phase, feedback, onAnswer
         const isRight = showing && (showing.correctAnswer === o.key || (chosen && showing.correct));
         const isWrong = showing && chosen && !showing.correct;
         const bg = isRight ? RIGHT : isWrong ? WRONG : chosen ? theme.accent : theme.option;
+        const gone = hidden.includes(o.key) && !isRight;
         return (
           <Pressable
             key={o.key}
-            disabled={phase !== "question"}
+            disabled={phase !== "question" || gone}
             onPress={() => {
               setPicked(o.key);
               onAnswer(o.key);
             }}
             style={({ pressed }) => [
               styles.option,
-              { backgroundColor: bg, borderColor: isRight || isWrong || chosen ? bg : theme.border, opacity: pressed ? 0.8 : 1 },
+              { backgroundColor: bg, borderColor: isRight || isWrong || chosen ? bg : theme.border, opacity: gone ? 0.35 : pressed ? 0.8 : 1 },
             ]}
           >
             <View style={[styles.letter, { backgroundColor: isRight || isWrong || chosen ? "rgba(255,255,255,0.25)" : theme.accent }]}>
               <Text style={styles.letterText}>{o.letter}</Text>
             </View>
-            <Text style={[styles.optionText, { color: isRight || isWrong || chosen ? "#fff" : theme.text }]}>{o.text}</Text>
+            <Text style={[styles.optionText, { color: isRight || isWrong || chosen ? "#fff" : theme.text }]}>{gone ? "" : o.text}</Text>
           </Pressable>
         );
       })}
