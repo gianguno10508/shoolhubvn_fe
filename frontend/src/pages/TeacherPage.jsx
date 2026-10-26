@@ -92,6 +92,17 @@ function buildModules(user, d, unread) {
       color: "purple",
       stats: "Trộn đề ngay trên trình duyệt",
     },
+    canManageAssignments(user) && {
+      id: "goi-ten",
+      icon: "🎲",
+      title: "Gọi tên ngẫu nhiên",
+      subtitle: "Trò chơi gọi học sinh",
+      description:
+        "Nhập danh sách lớp rồi gọi tên bằng vòng quay may mắn, đua xe, lồng cầu xổ số, lật thẻ, bắn bóng bay... và cộng điểm ngay.",
+      path: "/giao-vien/goi-ten",
+      color: "teal",
+      stats: "11 trò chơi · trình chiếu toàn màn hình",
+    },
   ].filter(Boolean);
 }
 
@@ -115,6 +126,7 @@ export default function TeacherPage() {
     canAccessSchoolUsers(user) && { icon: "👤", title: "Tạo tài khoản học sinh", path: "/truong/tai-khoan" },
     hasSchoolLessonPlans(user) && { icon: "📖", title: "Soạn giáo án AI", path: "/giao-vien/giao-an" },
     hasPermission(user, "exam.manage") && { icon: "📄", title: "Trộn đề kiểm tra", path: "/giao-vien/tron-de" },
+    canManageAssignments(user) && { icon: "🎲", title: "Gọi tên ngẫu nhiên", path: "/giao-vien/goi-ten" },
   ].filter(Boolean);
   const displayName = user?.name || user?.username || "Thầy/Cô";
   const myClass = data?.discipline?.myClass;

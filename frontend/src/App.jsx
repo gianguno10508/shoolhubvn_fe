@@ -13,6 +13,7 @@ import ContactPage from "./pages/ContactPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import SchoolUsersPage from "./pages/school/SchoolUsersPage";
 import ShuffleExamPage from "./pages/teacher/ShuffleExamPage";
+import NamePickerPage from "./pages/teacher/namePicker/NamePickerPage";
 import RequirePermission from "./components/guards/RequirePermission";
 import RequireVip from "./components/guards/RequireVip";
 import AssignmentListPage from "./pages/assignments/AssignmentListPage";
@@ -75,6 +76,11 @@ export default function App() {
           <Route path="giao-vien" element={<TeacherPage />} />
           <Route element={<RequirePermission permission="exam.manage" fallback="/" />}>
             <Route path="giao-vien/tron-de" element={<ShuffleExamPage />} />
+          </Route>
+
+          {/* Gọi tên ngẫu nhiên: chạy hoàn toàn trên trình duyệt, dành cho người giảng dạy */}
+          <Route element={<RequirePermission permission="assignment.manage" fallback="/" />}>
+            <Route path="giao-vien/goi-ten" element={<NamePickerPage />} />
           </Route>
 
           {/* Bài tập & Tự chấm — người giao bài: mọi chức danh trừ học sinh / cờ đỏ */}

@@ -1,0 +1,1757 @@
+/* =========================================================
+   GỌI TÊN NGẪU NHIÊN — form danh sách + sân khấu trò chơi
+========================================================= */
+
+.np-page {
+  max-width: 1440px;
+}
+
+.np-icon {
+  background: linear-gradient(135deg, #fce7f3, #ddd6fe);
+  box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.18);
+}
+
+.np-muted {
+  margin: 6px 0;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+}
+
+.np-error {
+  margin: 6px 0;
+  color: var(--red);
+  font-size: var(--fs-sm);
+}
+
+.np-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.np-link:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Form danh sách ---------- */
+
+.np-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 760px;
+}
+
+.np-editor-head h3 {
+  font-size: var(--fs-xl);
+  font-weight: 800;
+}
+
+.np-editor-head p {
+  margin-top: 4px;
+  color: var(--text-3);
+  font-size: var(--fs-base);
+}
+
+.np-count {
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: var(--fs-xs);
+}
+
+.np-textarea {
+  min-height: 260px;
+  font-family: var(--font);
+  line-height: 1.7;
+  resize: vertical;
+}
+
+.np-editor-tools,
+.np-editor-actions,
+.np-school-import {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.np-school-import {
+  padding: 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--gray-50);
+}
+
+.np-school-import select {
+  flex: 1;
+  min-width: 200px;
+}
+
+.np-editor-actions {
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+}
+
+/* ---------- Thanh công cụ ---------- */
+
+.np-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.np-list-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+}
+
+.np-list-select select {
+  min-width: 220px;
+  font-weight: 700;
+}
+
+.np-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+.np-switch input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+/* ---------- Chọn trò chơi ---------- */
+
+.np-games {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.np-game-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
+}
+
+.np-game-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary-soft-2);
+  box-shadow: var(--shadow-sm);
+}
+
+.np-game-card.active {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, var(--primary-soft), #fdf2f8);
+  box-shadow: var(--shadow-primary);
+}
+
+.np-game-icon {
+  margin-bottom: 4px;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.np-game-card strong {
+  font-size: var(--fs-base);
+}
+
+.np-game-card small {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}
+
+/* ---------- Bố cục sân khấu + cột phải ---------- */
+
+.np-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 18px;
+  align-items: start;
+}
+
+.np-stage {
+  position: relative;
+  min-height: 560px;
+  padding: 18px 20px 24px;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(circle at 15% 0%, rgba(236, 72, 153, 0.35), transparent 40%),
+    radial-gradient(circle at 90% 100%, rgba(59, 130, 246, 0.35), transparent 45%),
+    linear-gradient(160deg, #1e1b4b 0%, #312e81 55%, #4c1d95 100%);
+  box-shadow: var(--shadow-lg);
+  color: #fff;
+}
+
+.np-stage.is-full {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 24px 40px;
+  border-radius: 0;
+  overflow: auto;
+  font-size: 18px;
+}
+
+.np-stage.is-full .np-game {
+  flex: 1;
+  justify-content: center;
+}
+
+.np-stage-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.np-stage-head h3 {
+  flex: 1;
+  font-size: var(--fs-xl);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.np-progress {
+  position: relative;
+  min-width: 150px;
+  padding: 6px 12px 10px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.12);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.np-progress i {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #facc15, #f472b6);
+  transition: width 0.4s var(--ease);
+}
+
+.np-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.np-side-card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.np-side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.np-side-head h3 {
+  font-size: var(--fs-md);
+  font-weight: 800;
+}
+
+.np-history,
+.np-ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 340px;
+  margin-bottom: 8px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.np-history li,
+.np-ranking li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+}
+
+.np-history li:first-child {
+  background: var(--amber-soft);
+  font-weight: 700;
+}
+
+.np-history li.absent {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.np-history-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.np-history time {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.np-ranking li:nth-child(odd) {
+  background: var(--gray-50);
+}
+
+.np-ranking b {
+  color: var(--amber-strong);
+}
+
+.np-rank {
+  width: 24px;
+  text-align: center;
+  font-weight: 800;
+}
+
+.np-all-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.np-all-done div {
+  font-size: 72px;
+  animation: np-bounce 1.2s ease-in-out infinite;
+}
+
+.np-all-done h3 {
+  font-size: var(--fs-3xl);
+  font-weight: 900;
+}
+
+.np-all-done p {
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+/* ---------- Thành phần chung của trò chơi ---------- */
+
+.np-game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.np-help {
+  opacity: 0.85;
+  font-size: var(--fs-md);
+  text-align: center;
+}
+
+.np-go {
+  padding: 14px 34px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, #facc15 0%, #f97316 50%, #ec4899 100%);
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.45), inset 0 -3px 0 rgba(0, 0, 0, 0.15);
+  color: #fff;
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: transform var(--t-fast), filter var(--t-fast);
+}
+
+.np-go:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.03);
+  filter: brightness(1.08);
+}
+
+.np-go:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.np-go:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.np-go.ghost {
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+.np-go-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.np-chip {
+  padding: 7px 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.np-chip.active {
+  border-color: #facc15;
+  background: rgba(250, 204, 21, 0.2);
+}
+
+.np-chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* =========================================================
+   VÒNG QUAY MAY MẮN
+========================================================= */
+
+.np-wheel-wrap {
+  position: relative;
+  width: min(520px, 100%);
+  aspect-ratio: 1;
+}
+
+.np-stage.is-full .np-wheel-wrap {
+  width: min(78vh, 100%);
+}
+
+.np-wheel-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.4));
+}
+
+.np-wheel-rim {
+  fill: #1e293b;
+  stroke: #facc15;
+  stroke-width: 4;
+}
+
+.np-wheel-text {
+  fill: #fff;
+  font-weight: 800;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.35);
+  stroke-width: 2.5px;
+}
+
+.np-wheel-bulb {
+  fill: #fde68a;
+  animation: np-blink 0.9s steps(2) infinite;
+}
+
+.np-wheel-pointer {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  border-top: 46px solid #f43f5e;
+  border-right: 22px solid transparent;
+  border-left: 22px solid transparent;
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.4));
+  transform: translateX(-50%);
+}
+
+.np-wheel-hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 17%;
+  aspect-ratio: 1;
+  border: 5px solid #facc15;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, #e2e8f0);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  color: #be123c;
+  font-size: clamp(12px, 2.4vw, 20px);
+  font-weight: 900;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+/* =========================================================
+   MŨI TÊN ĐỊNH MỆNH
+========================================================= */
+
+.np-arrow-ring {
+  position: relative;
+  width: min(560px, 100%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0 55%, transparent 56%);
+}
+
+.np-stage.is-full .np-arrow-ring {
+  width: min(80vh, 100%);
+}
+
+.np-arrow-chip {
+  position: absolute;
+  max-width: 120px;
+  padding: 5px 10px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--c);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.np-arrow-ring.lg .np-arrow-chip {
+  font-size: 15px;
+}
+
+.np-arrow-ring.md .np-arrow-chip {
+  font-size: 12px;
+}
+
+.np-arrow-ring.sm .np-arrow-chip {
+  max-width: 84px;
+  padding: 3px 7px;
+  font-size: 10px;
+}
+
+.np-arrow-chip.on {
+  z-index: 2;
+  box-shadow: 0 0 0 3px #fff, 0 0 24px #facc15;
+  transform: translate(-50%, -50%) scale(1.25);
+}
+
+.np-arrow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12%;
+  height: 60%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.np-arrow svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.45));
+}
+
+/* =========================================================
+   ĐƯỜNG ĐUA
+========================================================= */
+
+.np-race-themes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.np-race {
+  position: relative;
+  width: 100%;
+  max-height: 62vh;
+  padding: 8px;
+  overflow-y: auto;
+  border-radius: var(--radius-lg);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.15);
+}
+
+.np-stage.is-full .np-race {
+  max-height: none;
+}
+
+.np-race.asphalt {
+  background: #334155;
+}
+
+.np-race.grass {
+  background: repeating-linear-gradient(90deg, #15803d 0 60px, #16a34a 60px 120px);
+}
+
+.np-race.water {
+  background: linear-gradient(180deg, #0369a1, #0ea5e9);
+}
+
+.np-race.sand {
+  background: repeating-linear-gradient(90deg, #d97706 0 60px, #f59e0b 60px 120px);
+}
+
+.np-race.space {
+  background:
+    radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+    radial-gradient(1px 1px at 60% 70%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 85% 20%, #fff, transparent),
+    radial-gradient(1px 1px at 40% 85%, #fff, transparent),
+    #0b1026;
+  background-size: 180px 120px;
+}
+
+.np-race-lane {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 2px dashed rgba(255, 255, 255, 0.28);
+  transition: background-color 0.3s;
+}
+
+.np-race-lane:last-child {
+  border-bottom: 0;
+}
+
+.np-race.xl .np-race-lane {
+  height: 56px;
+  font-size: 16px;
+}
+
+.np-race.lg .np-race-lane {
+  height: 42px;
+  font-size: 14px;
+}
+
+.np-race.md .np-race-lane {
+  height: 32px;
+  font-size: 12px;
+}
+
+.np-race.sm .np-race-lane {
+  height: 24px;
+  font-size: 11px;
+}
+
+.np-race-lane.win {
+  border-radius: var(--radius-sm);
+  background: rgba(250, 204, 21, 0.35);
+}
+
+.np-race-no {
+  width: 2em;
+  flex-shrink: 0;
+  opacity: 0.75;
+  font-weight: 700;
+  text-align: right;
+}
+
+.np-race-name {
+  width: 10em;
+  flex-shrink: 0;
+  overflow: hidden;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+
+.np-race-track {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  border-right: 6px solid transparent;
+  border-image: repeating-linear-gradient(180deg, #fff 0 6px, #111 6px 12px) 6;
+}
+
+.np-racer {
+  --p: 0;
+  position: absolute;
+  top: 50%;
+  left: calc(var(--p) * (100% - 1.4em));
+  font-size: 1.9em;
+  line-height: 1;
+  translate: 0 -50%;
+}
+
+.np-race.sm .np-racer {
+  font-size: 1.7em;
+}
+
+.np-racer > span {
+  display: inline-block;
+}
+
+.np-racer.moving {
+  animation: np-bob 0.32s ease-in-out infinite alternate;
+}
+
+.np-race-medal {
+  font-size: 1.6em;
+  animation: np-pop 0.5s var(--ease);
+}
+
+.np-race-count {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #facc15;
+  font-size: 140px;
+  font-weight: 900;
+  text-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  animation: np-zoom 0.7s var(--ease);
+  pointer-events: none;
+}
+
+.np-race-leader {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  width: fit-content;
+  margin: 0 auto 6px;
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.55);
+  font-size: var(--fs-sm);
+}
+
+/* =========================================================
+   MÁY QUAY SỐ
+========================================================= */
+
+.np-slot {
+  position: relative;
+  width: min(620px, 100%);
+  padding: 22px 70px 26px 26px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #dc2626, #991b1b);
+  box-shadow: 0 0 0 6px #facc15, 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+.np-slot-lights {
+  position: absolute;
+  inset: 8px 60px auto 14px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.np-slot-lights i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fde68a;
+  box-shadow: 0 0 8px #facc15;
+  animation: np-blink 0.6s steps(2) infinite;
+}
+
+.np-slot-title {
+  margin: 8px 0 12px;
+  color: #fde68a;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-shadow: 0 2px 0 #7f1d1d;
+}
+
+.np-slot-window {
+  position: relative;
+  height: 276px;
+  overflow: hidden;
+  border: 5px solid #1e293b;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #cbd5e1, #fff 30%, #fff 70%, #cbd5e1);
+}
+
+.np-slot-strip {
+  will-change: transform;
+}
+
+.np-slot-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 0 14px;
+  color: #0f172a;
+  font-size: 28px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.np-slot-no {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 18px;
+}
+
+.np-slot-mark {
+  position: absolute;
+  top: 92px;
+  right: 0;
+  left: 0;
+  height: 92px;
+  border-top: 3px solid #f43f5e;
+  border-bottom: 3px solid #f43f5e;
+  background: rgba(250, 204, 21, 0.12);
+  pointer-events: none;
+}
+
+.np-slot-lever {
+  position: absolute;
+  top: 70px;
+  right: 16px;
+  width: 30px;
+  height: 170px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.np-slot-lever::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 9px;
+  width: 12px;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #94a3b8, #e2e8f0, #94a3b8);
+  transform-origin: bottom;
+  transition: transform 0.25s;
+}
+
+.np-slot-lever span {
+  position: absolute;
+  top: -14px;
+  left: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fca5a5, #dc2626);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+  transition: transform 0.25s;
+}
+
+.np-slot-lever.pulled::before {
+  transform: scaleY(-0.4);
+}
+
+.np-slot-lever.pulled span {
+  transform: translateY(232px);
+}
+
+/* =========================================================
+   Ô TÊN (Đèn nhảy · Loại trừ)
+========================================================= */
+
+.np-tiles {
+  display: grid;
+  width: 100%;
+  gap: 8px;
+}
+
+.np-tiles.lg {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.np-tiles.md {
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+
+.np-tiles.sm {
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 6px;
+}
+
+.np-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 58px;
+  padding: 8px 10px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: center;
+  transition: transform 0.12s, background-color 0.12s, opacity 0.4s, filter 0.4s;
+}
+
+.np-tiles.lg .np-tile {
+  min-height: 76px;
+  font-size: 18px;
+}
+
+.np-tiles.sm .np-tile {
+  min-height: 46px;
+  font-size: 12px;
+}
+
+.np-tile small {
+  opacity: 0.6;
+  font-size: 0.7em;
+}
+
+.np-tiles.dim .np-tile {
+  opacity: 0.55;
+}
+
+.np-tile.lit,
+.np-tiles.dim .np-tile.lit {
+  z-index: 1;
+  border-color: #fff;
+  background: var(--c);
+  box-shadow: 0 0 26px var(--c);
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.np-tile.win,
+.np-tiles.dim .np-tile.win {
+  z-index: 2;
+  border-color: #facc15;
+  background: var(--c);
+  box-shadow: 0 0 0 4px #facc15, 0 0 40px #facc15;
+  opacity: 1;
+  animation: np-win 0.6s ease-in-out infinite alternate;
+}
+
+.np-tile.out {
+  opacity: 0.18;
+  filter: grayscale(1);
+  transform: scale(0.9);
+}
+
+.np-boom {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  animation: np-boom 0.6s var(--ease) forwards;
+}
+
+.np-elim-status {
+  padding: 6px 18px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.3);
+  font-size: var(--fs-lg);
+  font-weight: 800;
+}
+
+/* =========================================================
+   LẬT THẺ BÍ MẬT
+========================================================= */
+
+.np-cards {
+  display: grid;
+  width: 100%;
+  gap: 10px;
+  perspective: 1000px;
+}
+
+.np-cards.lg {
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+}
+
+.np-cards.md {
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+}
+
+.np-cards.sm {
+  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  gap: 7px;
+}
+
+.np-card {
+  aspect-ratio: 3 / 4;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.np-card:disabled {
+  cursor: default;
+}
+
+.np-card-inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.np-card:hover:not(:disabled) .np-card-inner {
+  transform: translateY(-4px) rotate(-2deg);
+}
+
+.np-card.flipped .np-card-inner {
+  transform: rotateY(180deg) scale(1.08);
+}
+
+.np-card-back,
+.np-card-front {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: var(--radius-md);
+  backface-visibility: hidden;
+  font-weight: 900;
+}
+
+.np-card-back {
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.12) 0 8px, transparent 8px 16px),
+    var(--c);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+  font-size: 2em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.np-cards.sm .np-card-back {
+  font-size: 1.3em;
+}
+
+.np-card-front {
+  border: 3px solid #facc15;
+  background: #fff;
+  color: #0f172a;
+  font-size: 15px;
+  line-height: 1.3;
+  transform: rotateY(180deg);
+}
+
+.np-cards.shuffling .np-card {
+  animation: np-shuffle 0.8s ease-in-out;
+  animation-delay: var(--d);
+}
+
+/* =========================================================
+   BẮN BÓNG BAY
+========================================================= */
+
+.np-sky {
+  position: relative;
+  width: 100%;
+  height: 460px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, #38bdf8 0%, #7dd3fc 60%, #bae6fd 100%);
+}
+
+.np-stage.is-full .np-sky {
+  height: 70vh;
+}
+
+.np-cloud {
+  position: absolute;
+  font-size: 64px;
+  opacity: 0.85;
+  animation: np-cloud 30s linear infinite;
+}
+
+.np-cloud.c1 {
+  top: 8%;
+}
+
+.np-cloud.c2 {
+  top: 40%;
+  font-size: 48px;
+  animation-delay: -12s;
+}
+
+.np-cloud.c3 {
+  top: 70%;
+  animation-delay: -22s;
+}
+
+.np-balloon {
+  position: absolute;
+  top: 105%;
+  width: 64px;
+  height: 84px;
+  margin-left: -32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: crosshair;
+  animation-name: np-rise, np-sway;
+  animation-timing-function: linear, ease-in-out;
+  animation-iteration-count: infinite, infinite;
+  animation-direction: normal, alternate;
+}
+
+.np-sky.frozen .np-balloon {
+  animation-play-state: paused;
+}
+
+.np-balloon-body {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50% 50% 48% 48% / 55% 55% 45% 45%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.7), transparent 30%), var(--c);
+  box-shadow: inset -6px -8px 0 rgba(0, 0, 0, 0.12);
+  color: #fff;
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.np-balloon-body::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 1px;
+  height: 46px;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.np-balloon:hover .np-balloon-body {
+  filter: brightness(1.1);
+  transform: scale(1.08);
+}
+
+.np-balloon.popped {
+  z-index: 5;
+  width: auto;
+  height: auto;
+}
+
+.np-balloon-name {
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  color: #0f172a;
+  font-size: 22px;
+  font-weight: 900;
+  white-space: nowrap;
+  animation: np-pop 0.4s var(--ease);
+}
+
+/* =========================================================
+   RÚT THĂM
+========================================================= */
+
+.np-jar-stage {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  min-height: 430px;
+  padding-bottom: 10px;
+}
+
+.np-jar {
+  position: relative;
+  width: 230px;
+}
+
+.np-jar-lid {
+  width: 150px;
+  height: 30px;
+  margin: 0 auto -4px;
+  border-radius: 10px 10px 4px 4px;
+  background: linear-gradient(180deg, #f59e0b, #b45309);
+  transition: transform 0.4s var(--ease);
+}
+
+.np-jar-body {
+  position: relative;
+  height: 260px;
+  overflow: hidden;
+  border: 6px solid rgba(255, 255, 255, 0.75);
+  border-radius: 40px 40px 60px 60px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.08) 40%, rgba(255, 255, 255, 0.25));
+}
+
+.np-paper {
+  position: absolute;
+  width: 38px;
+  height: 22px;
+  border-radius: 3px;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.25);
+}
+
+.np-jar.shake {
+  animation: np-shake 0.22s ease-in-out infinite;
+}
+
+.np-jar.draw .np-jar-lid {
+  transform: translate(120px, -40px) rotate(35deg);
+}
+
+.np-ticket {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 300px;
+  padding: 22px 30px;
+  border-radius: 6px;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 27px, rgba(59, 130, 246, 0.18) 27px 28px),
+    #fffbeb;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  color: #0f172a;
+  transform: translateX(-50%);
+  animation: np-ticket 1.2s cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+
+.np-ticket small {
+  color: var(--amber-strong);
+  font-weight: 800;
+}
+
+.np-ticket strong {
+  font-size: 30px;
+  font-weight: 900;
+}
+
+/* =========================================================
+   HỘP QUÀ MAY MẮN
+========================================================= */
+
+.np-gifts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  width: min(720px, 100%);
+}
+
+.np-gift {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 10px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+  animation: np-float 2.4s ease-in-out infinite alternate;
+  transition: opacity 0.4s, transform 0.4s;
+}
+
+.np-gift:hover:not(:disabled) {
+  border-color: var(--c);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.np-gift:disabled {
+  cursor: default;
+}
+
+.np-gift-box {
+  font-size: 82px;
+  line-height: 1;
+}
+
+.np-gift-label {
+  font-size: var(--fs-lg);
+  font-weight: 900;
+}
+
+.np-gift.opened {
+  border-color: #facc15;
+  background: rgba(250, 204, 21, 0.25);
+  animation: np-win 0.5s ease-in-out infinite alternate;
+}
+
+.np-gift.opened .np-gift-box {
+  animation: np-open 0.8s var(--ease) forwards;
+}
+
+.np-gift.faded {
+  opacity: 0.3;
+  animation: none;
+}
+
+/* =========================================================
+   LỒNG CẦU XỔ SỐ
+========================================================= */
+
+.np-lottery {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.np-drum {
+  width: min(460px, 100%);
+}
+
+.np-stage.is-full .np-drum {
+  width: min(70vh, 100%);
+}
+
+.np-drum-glass {
+  stroke: none;
+}
+
+.np-drum-ring {
+  fill: none;
+  stroke: #facc15;
+  stroke-width: 6;
+}
+
+.np-drum-base {
+  fill: #b45309;
+}
+
+.np-drum-spokes line {
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 2;
+}
+
+.np-drum.mixing .np-drum-spokes {
+  animation: np-spin 0.8s linear infinite;
+}
+
+.np-ball-no {
+  fill: #0f172a;
+  font-weight: 900;
+}
+
+.np-lottery-out {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  animation: np-zoom 0.8s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.np-big-ball {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.85), transparent 35%), var(--c);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.np-big-ball span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: #fff;
+  color: #0f172a;
+  font-size: 48px;
+  font-weight: 900;
+}
+
+.np-lottery-out strong {
+  padding: 8px 22px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.55);
+  font-size: 30px;
+  font-weight: 900;
+}
+
+/* =========================================================
+   KẾT QUẢ
+========================================================= */
+
+.np-result-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(4px);
+  animation: np-fade 0.25s ease-out;
+}
+
+.np-confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.np-confetti span {
+  position: absolute;
+  top: -20px;
+  border-radius: 2px;
+  animation: np-confetti linear forwards;
+}
+
+.np-result {
+  position: relative;
+  width: min(620px, 100%);
+  padding: 34px 28px 26px;
+  border-radius: 28px;
+  background: linear-gradient(160deg, #fff 0%, #fef3c7 100%);
+  box-shadow: 0 0 0 6px #facc15, 0 30px 80px rgba(0, 0, 0, 0.5);
+  color: #0f172a;
+  text-align: center;
+  animation: np-zoom 0.55s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+.np-result-burst {
+  position: absolute;
+  top: -44px;
+  left: 50%;
+  font-size: 72px;
+  transform: translateX(-50%);
+  animation: np-bounce 1s ease-in-out infinite;
+}
+
+.np-result-cheer {
+  color: var(--amber-strong);
+  font-size: var(--fs-lg);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.np-result-name {
+  margin: 8px 0 4px;
+  background: linear-gradient(135deg, #db2777, #7c3aed, #2563eb);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: clamp(34px, 6vw, 60px);
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.np-result-no {
+  color: var(--text-3);
+  font-weight: 700;
+}
+
+.np-result-stars {
+  margin-top: 8px;
+  font-size: 22px;
+}
+
+.np-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+/* =========================================================
+   KEYFRAMES
+========================================================= */
+
+@keyframes np-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes np-bounce {
+  50% {
+    transform: translate(var(--tx, 0), -10px);
+  }
+}
+
+.np-result-burst {
+  --tx: -50%;
+}
+
+@keyframes np-bob {
+  from {
+    translate: 0 -50%;
+  }
+  to {
+    translate: 0 -62%;
+  }
+}
+
+@keyframes np-pop {
+  from {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes np-zoom {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+}
+
+@keyframes np-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes np-win {
+  from {
+    transform: scale(1.05);
+  }
+  to {
+    transform: scale(1.14);
+  }
+}
+
+@keyframes np-boom {
+  from {
+    transform: scale(0.4);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+@keyframes np-shuffle {
+  30% {
+    transform: translate(30px, -20px) rotate(12deg);
+  }
+  65% {
+    transform: translate(-30px, 10px) rotate(-10deg);
+  }
+}
+
+@keyframes np-rise {
+  from {
+    top: 105%;
+  }
+  to {
+    top: -30%;
+  }
+}
+
+@keyframes np-sway {
+  from {
+    transform: translateX(-18px) rotate(-6deg);
+  }
+  to {
+    transform: translateX(18px) rotate(6deg);
+  }
+}
+
+@keyframes np-cloud {
+  from {
+    left: -15%;
+  }
+  to {
+    left: 105%;
+  }
+}
+
+@keyframes np-shake {
+  25% {
+    transform: rotate(-9deg) translateX(-6px);
+  }
+  75% {
+    transform: rotate(9deg) translateX(6px);
+  }
+}
+
+@keyframes np-ticket {
+  from {
+    top: 70%;
+    transform: translateX(-50%) scale(0.15) rotate(-30deg);
+  }
+  60% {
+    top: -6%;
+  }
+}
+
+@keyframes np-float {
+  to {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes np-open {
+  40% {
+    transform: scale(1.3) rotate(-10deg);
+  }
+  to {
+    transform: scale(1.15) translateY(-6px);
+  }
+}
+
+@keyframes np-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes np-confetti {
+  to {
+    top: 105%;
+    transform: rotate(720deg) translateX(40px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .np-wheel-bulb,
+  .np-slot-lights i,
+  .np-gift,
+  .np-cloud {
+    animation: none;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1100px) {
+  .np-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .np-side {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .np-stage {
+    min-height: 0;
+    padding: 14px 10px 18px;
+    border-radius: var(--radius-lg);
+  }
+
+  .np-side {
+    grid-template-columns: 1fr;
+  }
+
+  .np-games {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .np-list-select,
+  .np-list-select select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .np-go {
+    padding: 12px 24px;
+    font-size: 17px;
+  }
+
+  .np-race-name {
+    width: 6.5em;
+  }
+
+  .np-slot {
+    padding: 18px 56px 20px 14px;
+  }
+
+  .np-slot-row {
+    font-size: 19px;
+  }
+
+  .np-gifts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .np-gift-box {
+    font-size: 58px;
+  }
+
+  .np-sky {
+    height: 380px;
+  }
+
+  .np-ticket {
+    min-width: 240px;
+  }
+
+  .np-ticket strong,
+  .np-lottery-out strong {
+    font-size: 22px;
+  }
+}
