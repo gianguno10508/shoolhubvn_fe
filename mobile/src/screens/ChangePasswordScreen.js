@@ -55,8 +55,8 @@ export default function ChangePasswordScreen({ navigation, forced = false }) {
         })}
       </View>
       <Field label="Nhập lại mật khẩu mới" value={again} onChangeText={setAgain} secureTextEntry autoCapitalize="none" />
-      <Button title="Đổi mật khẩu" onPress={save} loading={busy} />
-      {forced && <Button title="Đăng xuất" variant="light" onPress={logout} style={{ marginTop: 12 }} />}
+      <Button title="Đổi mật khẩu" icon="key-outline" onPress={save} loading={busy} />
+      {forced && <Button title="Đăng xuất" icon="log-out-outline" variant="dangerSoft" onPress={logout} style={{ marginTop: 12 }} />}
     </Screen>
   );
 }

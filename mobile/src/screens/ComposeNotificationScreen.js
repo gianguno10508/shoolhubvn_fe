@@ -58,7 +58,7 @@ export default function ComposeNotificationScreen({ navigation, route }) {
       <Text style={styles.label}>Gửi tới</Text>
       {classOnly ? (
         <View style={styles.fixed}>
-          <Text style={styles.fixedText}>🏫 Học sinh lớp {audiences.ownClass.name}</Text>
+          <Text style={styles.fixedText}>Học sinh lớp {audiences.ownClass.name}</Text>
         </View>
       ) : (
         <View style={{ marginBottom: space.md }}>
@@ -94,7 +94,7 @@ export default function ComposeNotificationScreen({ navigation, route }) {
         <DateTimeField label="Ngày" mode="date" value={date} onChange={setDate} />
         <DateTimeField label="Giờ phút" mode="time" value={time} onChange={setTime} />
       </Row>
-      {eventAt && <Muted style={{ marginTop: -6, marginBottom: space.sm, color: colors.primaryDark }}>🕒 {formatEventTime(eventAt)}</Muted>}
+      {eventAt && <Muted style={{ marginTop: -6, marginBottom: space.sm, color: colors.primaryDark }}>Diễn ra lúc {formatEventTime(eventAt)}</Muted>}
       {(date || time) && (
         <Pressable
           onPress={() => {
@@ -113,7 +113,7 @@ export default function ComposeNotificationScreen({ navigation, route }) {
       </Row>
 
       <ErrorBox message={error} />
-      <Button title="Gửi thông báo" onPress={send} loading={busy} />
+      <Button title="Gửi thông báo" icon="paper-plane" onPress={send} loading={busy} />
     </Screen>
   );
 }

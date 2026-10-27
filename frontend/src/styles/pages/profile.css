@@ -5,18 +5,54 @@
 .profile-page {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
+/* ---------- Hero ---------- */
 .pf-hero {
+  position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
-  padding: 20px 22px;
-  border-radius: var(--radius-lg);
+  justify-content: space-between;
+  gap: 18px 24px;
+  padding: 26px 28px;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
   background: var(--brand-gradient);
   color: #fff;
   box-shadow: var(--shadow-primary);
+}
+
+.pf-hero::before,
+.pf-hero::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.pf-hero::before {
+  top: -90px;
+  right: -40px;
+  width: 260px;
+  height: 260px;
+}
+
+.pf-hero::after {
+  bottom: -120px;
+  left: 30%;
+  width: 220px;
+  height: 220px;
+}
+
+.pf-hero-main {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
 }
 
 .pf-avatar {
@@ -24,18 +60,25 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
-  border: 3px solid rgba(255, 255, 255, 0.5);
+  width: 76px;
+  height: 76px;
+  border: 3px solid rgba(255, 255, 255, 0.55);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.18);
-  font-size: 24px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.2);
+  font-size: 1.75rem;
   font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.pf-hero-text {
+  min-width: 0;
 }
 
 .pf-hero h2 {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   font-size: var(--fs-2xl);
+  font-weight: 800;
 }
 
 .pf-hero p {
@@ -46,57 +89,218 @@
 }
 
 .pf-chip {
-  padding: 3px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.14);
   font-size: var(--fs-xs);
   font-weight: 700;
+}
+
+.pf-chip-strong {
+  border-color: transparent;
+  background: #fff;
+  color: var(--primary-strong);
+}
+
+.pf-hero-stats {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pf-hero-stats > div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 2px 8px;
+  min-width: 190px;
+  padding: 11px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(6px);
+}
+
+.pf-hero-stats svg {
+  grid-row: span 2;
+  opacity: 0.9;
+}
+
+.pf-hero-stats span {
+  font-size: var(--fs-xs);
+  opacity: 0.8;
+}
+
+.pf-hero-stats strong {
+  font-size: var(--fs-md);
+}
+
+.pf-hero-stats .warn strong {
+  color: #fde68a;
 }
 
 .pf-warn {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 13px 16px;
   border: 1px solid var(--amber-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--amber-soft);
   color: var(--amber-strong);
 }
 
-.pf-warn > span {
-  font-size: 22px;
+.pf-warn-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background: #fff;
 }
 
 .pf-warn p {
   margin: 0;
 }
 
+/* ---------- Thẻ ---------- */
 .pf-grid {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 18px;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: 20px;
   align-items: start;
 }
 
-.pf-grid .as-card {
+.pf-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 22px 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.pf-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.pf-card-head h3 {
+  margin: 0 0 3px;
+  font-size: var(--fs-lg);
+  font-weight: 800;
+}
+
+.pf-card-head p {
   margin: 0;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+}
+
+.pf-card-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.pf-card-icon.green {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.pf-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 18px;
+}
+
+.pf-span-2 {
+  grid-column: 1 / -1;
 }
 
 .pf-one-col {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.pf-form input:disabled {
+  background: var(--surface-2);
+  color: var(--text-3);
 }
 
 .pf-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-top: 16px;
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
 }
 
 .pf-actions small {
+  flex: 1 1 200px;
   color: var(--text-3);
+  font-size: var(--fs-sm);
+}
+
+.pf-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.pf-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pf-check input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+.pf-tips {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--green-soft);
+  color: var(--green-strong);
+  font-size: var(--fs-sm);
+  list-style: none;
+}
+
+.pf-tips li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .pf-strength {
@@ -292,25 +496,65 @@
   font-size: var(--fs-sm);
 }
 
-@media (max-width: 860px) {
+@media (max-width: 1100px) {
   .pf-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (max-width: 640px) {
   .pf-hero {
-    padding: 16px;
+    padding: 18px;
   }
 
   .pf-avatar {
-    width: 52px;
-    height: 52px;
-    font-size: 20px;
+    width: 56px;
+    height: 56px;
+    font-size: 1.25rem;
+  }
+
+  .pf-hero-stats,
+  .pf-hero-stats > div {
+    width: 100%;
+  }
+
+  .pf-card {
+    padding: 18px 16px;
+  }
+
+  .pf-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pf-actions small {
+    flex-basis: 100%;
+  }
+
+  .pf-actions .btn {
+    flex: 1 0 auto;
+    justify-content: center;
+    white-space: nowrap;
   }
 }
 
 .acc-default-pw {
   color: var(--amber-strong);
   font-weight: 700;
+}
+
+/* Hiệu ứng xuất hiện (keyframes rise-in ở base/effects.css) */
+.pf-hero,
+.pf-card {
+  animation: rise-in 0.5s var(--ease) backwards;
+}
+
+.pf-grid > .pf-card:nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-hero,
+  .pf-card {
+    animation: none;
+  }
 }

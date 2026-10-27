@@ -2,10 +2,12 @@ import ExcelJS from "exceljs";
 
 /* =====================================================================
  * excelExport.js
- * Xuất thời khóa biểu ra file Excel gồm 3 sheet:
- *   - "TKB Tổng"  : bảng tổng hợp, mỗi cột là 1 lớp (giống bảng trong app)
- *   - "TKB GV"    : mỗi giáo viên 1 khối bảng riêng (Thứ 2..CN / Sáng-Chiều)
- *   - "TKB Lớp"   : mỗi lớp 1 khối bảng riêng (Thứ 2..CN / Sáng-Chiều)
+ * Xuất thời khóa biểu ra file Excel theo mẫu của trường (file "TUẦN xx NH ….xls"), gồm 3 sheet:
+ *   - "TKB_Lop"   : mỗi lớp 1 khối bảng riêng (Thứ 2..CN / Sáng-Chiều), ô = "Môn - GV"
+ *   - "TKB_GV"    : mỗi giáo viên 1 khối bảng riêng, ô = "Môn - Lớp" (GV xếp theo tên)
+ *   - "TKB_Tong"  : bảng tổng hợp Ngày | Buổi | Tiết | các lớp
+ * Màu, viền, căn lề, độ rộng cột theo mẫu: tiêu đề cam / xanh, ô dữ liệu không tô nền, căn trái - dưới,
+ * viền mảnh bên trong, viền đậm quanh khối, dưới hàng tiêu đề và giữa các ngày.
  * ===================================================================== */
 
 /* ---------------- helpers dùng chung (đồng bộ logic với App.jsx) ---------------- */
@@ -46,10 +48,12 @@ function safeSheetName(name) {
 
 /* ---------------- màu sắc / style dùng chung ---------------- */
 
-const FILL_ORANGE = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF4A15C" } };
-const FILL_HEADER_DAY = { type: "pattern", pattern: "solid", fgColor: { argb: "FF9DB8E8" } };
-const FILL_OFF = { type: "pattern", pattern: "solid", fgColor: { argb: "FFC9CCD9" } };
-const FILL_WHITE = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } };
+const FILL_ORANGE = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF9BB85" } };
+const FILL_HEADER_DAY = { type: "pattern", pattern: "solid", fgColor: { argb: "FFA0AEDE" } };
+const FILL_OFF = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9D9D9" } };
+const FILL_WHITE = null; // ô dữ liệu để trống nền như mẫu
+const FONT_NAME = "Calibri";
+const DATA_COL_WIDTH = 24;
 
 const OUTER_BORDER_STYLE = "medium";
 const INNER_BORDER_STYLE = "thin";
@@ -64,19 +68,50 @@ function boxBorder(style = INNER_BORDER_STYLE) {
   };
 }
 
+/* center = true: ô tiêu đề (giữa - giữa); false: ô dữ liệu (căn trái - dưới như mẫu) */
 function styleCell(cell, { fill, bold, center = true, border = true, color, thickBorder = false } = {}) {
   if (fill) cell.fill = fill;
   if (border) cell.border = boxBorder(thickBorder ? OUTER_BORDER_STYLE : INNER_BORDER_STYLE);
-  cell.alignment = {
-    horizontal: center ? "center" : "left",
-    vertical: "middle",
-    wrapText: false,
-  };
+  cell.alignment = center
+    ? { horizontal: "center", vertical: "middle", wrapText: false }
+    : { horizontal: "left", vertical: "bottom", wrapText: false };
   cell.font = {
+    name: FONT_NAME,
     bold: !!bold,
     size: 11,
     color: { argb: color || "FF000000" },
   };
+}
+
+/* Viền đậm dưới 1 dòng (từ cột c1 đến c2) — dưới hàng tiêu đề, phân cách các ngày */
+function thickBottom(ws, row, c1, c2) {
+  for (let c = c1; c <= c2; c += 1) {
+    const cell = ws.getCell(row, c);
+    cell.border = { ...(cell.border || {}), bottom: { style: OUTER_BORDER_STYLE, color: BORDER_COLOR } };
+  }
+}
+
+/* Độ rộng cột như mẫu (cột dữ liệu 24), nới rộng nếu có ô dài hơn (tối đa 36) */
+function setColumnWidths(ws, fixed, dataFrom) {
+  ws.columns.forEach((col, i) => {
+    const n = i + 1;
+    if (fixed[n]) {
+      col.width = fixed[n];
+      return;
+    }
+    if (n < dataFrom) return;
+    let max = DATA_COL_WIDTH;
+    col.eachCell({ includeEmpty: false }, (cell) => {
+      max = Math.max(max, String(cell.value ?? "").length + 1);
+    });
+    col.width = Math.min(max, 36);
+  });
+}
+
+/** "Nguyễn Thị Hà" / "N.T.Hà" → "Hà" — để xếp GV theo tên như mẫu */
+function givenName(name) {
+  const parts = String(name || "").split(/[\s.]+/).filter(Boolean);
+  return parts[parts.length - 1] || "";
 }
 
 /* Vẽ khung viền đậm bao quanh toàn bộ một vùng ô (dùng cho viền ngoài của cả bảng/khối) */
@@ -139,7 +174,7 @@ function writeEntityBlock(ws, startRow, {
         styleCell(cCell, {
           fill: off ? FILL_OFF : FILL_WHITE,
           bold: false,
-          center: true,
+          center: off,
         });
       });
     });
@@ -152,26 +187,12 @@ function writeEntityBlock(ws, startRow, {
     row += tiets.length;
   });
 
-  // Viền đậm bao quanh toàn bộ khối (từ hàng tiêu đề đến hàng cuối)
+  // Viền đậm dưới hàng tiêu đề + bao quanh toàn bộ khối (từ hàng tiêu đề đến hàng cuối)
+  thickBottom(ws, startRow, 1, lastCol);
   applyOuterBorder(ws, startRow, 1, row - 1, lastCol);
 
   // 2 dòng trống giữa các khối (giống layout mẫu)
   return row + 2;
-}
-
-/* Tự động co giãn độ rộng cột theo nội dung dài nhất trong cột đó
- * (thay cho việc đặt width cố định) — mô phỏng hành vi "AutoFit Column Width". */
-function autoFitColumns(ws, minWidth = 6, maxWidth = 40) {
-  ws.columns.forEach((col) => {
-    let max = minWidth;
-    col.eachCell({ includeEmpty: false }, (cell) => {
-      const value = cell.value == null ? "" : String(cell.value);
-      value.split("\n").forEach((line) => {
-        max = Math.max(max, line.length + 2);
-      });
-    });
-    col.width = Math.min(max, maxWidth);
-  });
 }
 
 /* ---------------- dựng index tra cứu nhanh từ effectiveSchedule ---------------- */
@@ -201,17 +222,17 @@ function buildSlotIndex(effectiveSchedule, lessonById) {
  * Sheet "TKB Tổng": bảng tổng hợp, mỗi cột là 1 lớp (giống bảng trong app)
  * ===================================================================== */
 function buildTongSheet(workbook, { config, classes, lessonById, effectiveSchedule }) {
-  const ws = workbook.addWorksheet(safeSheetName("TKB Tổng"));
+  const ws = workbook.addWorksheet(safeSheetName("TKB_Tong"));
   const days = getDays(config.soNgay);
   const sessions = getSessions(config.soBuoi);
   const tiets = getTiets(config.soTiet);
   const rowsPerDay = sessions.length * tiets.length;
 
   // Header
-  ["Thứ", "Buổi", "Tiết"].forEach((label, i) => {
+  ["Ngày", "Buổi", "Tiết"].forEach((label, i) => {
     const c = ws.getCell(1, i + 1);
     c.value = label;
-    styleCell(c, { fill: FILL_HEADER_DAY, bold: true });
+    styleCell(c, { fill: FILL_ORANGE, bold: true });
   });
   classes.forEach((cl, i) => {
     const c = ws.getCell(1, 4 + i);
@@ -241,7 +262,7 @@ function buildTongSheet(workbook, { config, classes, lessonById, effectiveSchedu
               : "";
           const cCell = ws.getCell(r, 4 + ci);
           cCell.value = text;
-          styleCell(cCell, { fill: off ? FILL_OFF : FILL_WHITE });
+          styleCell(cCell, { fill: off ? FILL_OFF : FILL_WHITE, center: off });
         });
       });
       ws.mergeCells(sessionFirstRow, 2, sessionFirstRow + tiets.length - 1, 2);
@@ -253,14 +274,16 @@ function buildTongSheet(workbook, { config, classes, lessonById, effectiveSchedu
     });
     ws.mergeCells(dayFirstRow, 1, dayFirstRow + rowsPerDay - 1, 1);
     const dCell = ws.getCell(dayFirstRow, 1);
-    dCell.value = di === 6 ? "CN" : String(di + 2);
+    dCell.value = day; // "Thứ 2" … như mẫu
     styleCell(dCell, { fill: FILL_ORANGE, bold: true });
+    thickBottom(ws, row - 1, 1, 3 + classes.length); // viền đậm cuối mỗi ngày
   });
 
   ws.views = [{ state: "frozen", xSplit: 3, ySplit: 1 }];
 
+  thickBottom(ws, 1, 1, 3 + classes.length);
   applyOuterBorder(ws, 1, 1, row - 1, 3 + classes.length);
-  autoFitColumns(ws);
+  setColumnWidths(ws, { 1: 9, 2: 9, 3: 6 }, 4);
 
   return ws;
 }
@@ -269,14 +292,21 @@ function buildTongSheet(workbook, { config, classes, lessonById, effectiveSchedu
  * Sheet "TKB GV": mỗi giáo viên 1 khối bảng
  * ===================================================================== */
 function buildGvSheet(workbook, { config, teachers, effectiveSchedule, lessonById, classes }) {
-  const ws = workbook.addWorksheet(safeSheetName("TKB GV"));
+  const ws = workbook.addWorksheet(safeSheetName("TKB_GV"));
   const days = getDays(config.soNgay);
   const sessions = getSessions(config.soBuoi);
   const tiets = getTiets(config.soTiet);
   const { byTeacherSlot } = buildSlotIndex(effectiveSchedule, lessonById);
 
+  // Xếp GV theo tên (chữ cuối), trùng tên thì theo cả chuỗi — như mẫu
+  const sorted = [...teachers].sort((a, b) => {
+    const na = a.short || a.fullName || "";
+    const nb = b.short || b.fullName || "";
+    return givenName(na).localeCompare(givenName(nb), "vi") || na.localeCompare(nb, "vi");
+  });
+
   let row = 1;
-  teachers.forEach((t) => {
+  sorted.forEach((t) => {
     row = writeEntityBlock(ws, row, {
       title: t.short || t.fullName,
       days,
@@ -296,7 +326,7 @@ function buildGvSheet(workbook, { config, teachers, effectiveSchedule, lessonByI
     });
   });
 
-  autoFitColumns(ws);
+  setColumnWidths(ws, { 1: 9, 2: 6 }, 3);
 
   return ws;
 }
@@ -305,7 +335,7 @@ function buildGvSheet(workbook, { config, teachers, effectiveSchedule, lessonByI
  * Sheet "TKB Lớp": mỗi lớp 1 khối bảng
  * ===================================================================== */
 function buildLopSheet(workbook, { config, classes, effectiveSchedule, lessonById }) {
-  const ws = workbook.addWorksheet(safeSheetName("TKB Lớp"));
+  const ws = workbook.addWorksheet(safeSheetName("TKB_Lop"));
   const days = getDays(config.soNgay);
   const sessions = getSessions(config.soBuoi);
   const tiets = getTiets(config.soTiet);
@@ -328,7 +358,7 @@ function buildLopSheet(workbook, { config, classes, effectiveSchedule, lessonByI
     });
   });
 
-  autoFitColumns(ws);
+  setColumnWidths(ws, { 1: 9, 2: 6 }, 3);
 
   return ws;
 }
@@ -369,7 +399,7 @@ function buildFileName(config, suffix) {
  * API xuất ra ngoài (giữ nguyên tên hàm để không phải sửa App.jsx)
  * ===================================================================== */
 
-/** Xuất 1 file duy nhất gồm 3 sheet: TKB Tổng, TKB GV, TKB Lớp */
+/** Xuất 1 file duy nhất gồm 3 sheet theo thứ tự của mẫu: TKB_Lop, TKB_GV, TKB_Tong */
 export async function exportTimetableToExcel({
   config,
   classes,
@@ -378,17 +408,17 @@ export async function exportTimetableToExcel({
   effectiveSchedule,
 }) {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "TKB";
+  workbook.creator = "SchoolHub";
   workbook.created = new Date();
 
-  buildTongSheet(workbook, { config, classes, lessonById, effectiveSchedule });
-  buildGvSheet(workbook, { config, teachers, effectiveSchedule, lessonById, classes });
   buildLopSheet(workbook, { config, classes, effectiveSchedule, lessonById });
+  buildGvSheet(workbook, { config, teachers, effectiveSchedule, lessonById, classes });
+  buildTongSheet(workbook, { config, classes, lessonById, effectiveSchedule });
 
   return downloadWorkbook(workbook, buildFileName(config));
 }
 
-/** Xuất riêng file chỉ có sheet "TKB Lớp" (mỗi lớp 1 khối bảng) */
+/** Xuất riêng file chỉ có sheet "TKB_Lop" (mỗi lớp 1 khối bảng) */
 export async function exportPerClassExcel({
   config,
   classes,
@@ -400,7 +430,7 @@ export async function exportPerClassExcel({
   return downloadWorkbook(workbook, buildFileName(config, "theo-lop"));
 }
 
-/** Xuất riêng file chỉ có sheet "TKB GV" (mỗi giáo viên 1 khối bảng) */
+/** Xuất riêng file chỉ có sheet "TKB_GV" (mỗi giáo viên 1 khối bảng) */
 export async function exportPerTeacherExcel({
   config,
   classes,

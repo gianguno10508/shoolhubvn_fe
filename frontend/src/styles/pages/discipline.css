@@ -9,7 +9,7 @@
 
 .dc-eyebrow {
   color: var(--primary);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.08em;
 }
@@ -73,7 +73,7 @@
 }
 
 .dc-mine-rank strong {
-  font-size: 34px;
+  font-size: 2.125rem;
   font-weight: 800;
   line-height: 1.1;
 }
@@ -324,7 +324,7 @@
 
 .dc-class small {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .dc-class:hover:not(:disabled) {
@@ -390,7 +390,7 @@
 .dc-sheet-total {
   display: flex;
   gap: 10px;
-  font-size: 26px;
+  font-size: 1.625rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
@@ -463,7 +463,7 @@
   width: 36px;
   border: 0;
   background: var(--gray-50);
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -571,7 +571,7 @@
 
 .dc-cfg-item-head span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -590,7 +590,7 @@
   border-radius: var(--radius-sm);
   background: none;
   color: var(--muted);
-  font-size: 20px;
+  font-size: 1.25rem;
   cursor: pointer;
 }
 
@@ -948,7 +948,96 @@
   border: 0;
   background: none;
   color: inherit;
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1;
   cursor: pointer;
+}
+
+/* ---------- Sổ đầu bài: gán lớp + tổng hợp thi đua HT | NN ---------- */
+.ll-class {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.ll-class input {
+  width: 96px;
+  min-height: 34px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: var(--fs-base);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.ll-class.missing input {
+  border-color: var(--red-bright);
+  background: var(--red-soft);
+}
+
+.ll-thidua {
+  margin: 4px 0 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--primary-soft-2);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--primary-soft), var(--surface) 140px);
+}
+
+.ll-thidua-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 12px;
+}
+
+.ll-thidua-head h4 {
+  margin: 0 0 4px;
+  color: var(--primary-strong);
+  font-size: var(--fs-lg);
+  font-weight: 800;
+}
+
+.ll-thidua-head p {
+  max-width: 720px;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+}
+
+.ll-week {
+  width: 190px;
+}
+
+.ll-thidua .bad-text {
+  margin: 0 0 8px;
+  font-size: var(--fs-sm);
+}
+
+.ll-thidua-table {
+  min-width: 420px;
+}
+
+.ll-thidua-table tr.ll-top td {
+  background: var(--amber-soft);
+}
+
+.ll-note {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .ll-file-head {
+    flex-wrap: wrap;
+  }
+
+  .ll-week {
+    width: 100%;
+  }
 }

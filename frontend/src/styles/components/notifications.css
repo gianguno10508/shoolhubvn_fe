@@ -42,7 +42,7 @@
   border-radius: var(--radius-pill);
   background: var(--red-bright);
   color: #fff;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 800;
   line-height: 14px;
   text-align: center;
@@ -92,7 +92,7 @@
 }
 
 .bell-empty span {
-  font-size: 28px;
+  font-size: 1.75rem;
 }
 
 .bell-item {
@@ -156,7 +156,7 @@
   border-radius: var(--radius-xs);
   background: var(--red-soft);
   color: var(--red);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-style: normal;
   font-weight: 700;
   text-transform: uppercase;
@@ -173,7 +173,7 @@
 
 .bell-item-body small {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .bell-foot {
@@ -217,7 +217,7 @@
   border-radius: var(--radius-pill);
   background: var(--red-bright);
   color: #fff;
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .nt-list {
@@ -381,7 +381,7 @@ button.nt-item-head {
   border-radius: 50%;
   background: none;
   color: var(--muted);
-  font-size: 22px;
+  font-size: 1.375rem;
   cursor: pointer;
 }
 
@@ -489,7 +489,7 @@ button.nt-item-head {
 .bell-when {
   display: block;
   color: var(--primary-strong);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -548,7 +548,7 @@ button.nt-file:hover:not(:disabled) {
   border-radius: 6px;
   background: var(--gray-100);
   color: var(--text-2);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   text-align: center;
 }
@@ -590,7 +590,7 @@ button.nt-file:hover:not(:disabled) {
   border-radius: 50%;
   background: none;
   color: var(--muted);
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1;
   cursor: pointer;
 }

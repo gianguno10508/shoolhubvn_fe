@@ -147,7 +147,7 @@
 }
 
 .lp-generating-icon {
-  font-size: 40px;
+  font-size: 2.5rem;
   animation: lp-write 1.2s ease-in-out infinite alternate;
 }
 
@@ -303,25 +303,25 @@
 /* Nội dung giáo án: giống văn bản in */
 .lp-doc {
   font-family: "Times New Roman", Times, serif;
-  font-size: 17px;
+  font-size: 1.0625rem;
   line-height: 1.6;
 }
 
 .lp-doc h1 {
   margin: 0 0 8px;
-  font-size: 24px;
+  font-size: 1.5rem;
   text-align: center;
 }
 
 .lp-doc h2 {
   margin: 22px 0 8px;
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 .lp-doc h3,
 .lp-doc h4 {
   margin: 16px 0 6px;
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .lp-doc p {
@@ -403,7 +403,7 @@
   min-height: 0;
   padding: 14px;
   font-family: ui-monospace, Consolas, monospace;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.55;
   resize: none;
 }
@@ -433,7 +433,7 @@
   }
 
   .lp-doc {
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
 }
 

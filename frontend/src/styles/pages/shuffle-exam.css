@@ -7,7 +7,7 @@
     ),
     var(--bg);
   color: var(--text);
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 /* =========================================================
@@ -26,7 +26,7 @@
   align-items: center;
   gap: 9px;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 0.875rem;
   margin-bottom: 22px;
 }
 
@@ -50,14 +50,14 @@
 .header-eyebrow {
   margin-bottom: 7px;
   color: var(--primary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
   letter-spacing: 0.12em;
 }
 
 .header-main h1 {
   margin: 0;
-  font-size: 34px;
+  font-size: 2.125rem;
   line-height: 1.15;
   letter-spacing: -0.03em;
 }
@@ -65,7 +65,7 @@
 .header-main p {
   margin: 11px 0 0;
   color: var(--text-3);
-  font-size: 17px;
+  font-size: 1.0625rem;
   line-height: 1.6;
 }
 
@@ -78,7 +78,7 @@
   border-radius: 999px;
   background: var(--surface);
   color: var(--text-2);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   box-shadow: var(--shadow-sm);
 }
@@ -127,12 +127,12 @@
 }
 
 .shuffle-alert strong {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .shuffle-alert span {
   color: var(--red-strong);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .shuffle-alert button {
@@ -140,7 +140,7 @@
   border: 0;
   background: transparent;
   color: var(--red-strong);
-  font-size: 25px;
+  font-size: 1.5625rem;
   cursor: pointer;
 }
 
@@ -188,7 +188,7 @@
   border-radius: 11px;
   background: var(--primary-gradient);
   color: #fff;
-  font-size: 19px;
+  font-size: 1.1875rem;
   font-weight: 800;
   box-shadow: 0 7px 18px rgba(79, 70, 229, 0.25);
 }
@@ -199,19 +199,19 @@
 }
 
 .sidebar-heading strong {
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .sidebar-heading span {
   margin-top: 2px;
   color: var(--text-3);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .sidebar-label {
   margin-bottom: 9px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: 0.1em;
 }
@@ -251,7 +251,7 @@
   justify-content: center;
   border-radius: 9px;
   background: var(--gray-50);
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .assessment-menu-item.active .menu-icon {
@@ -264,14 +264,14 @@
 
 .assessment-menu-item strong {
   display: block;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .assessment-menu-item small {
   display: block;
   margin-top: 3px;
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .coming-soon {
@@ -279,7 +279,7 @@
   border-radius: 6px;
   background: var(--gray-100);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
 }
 
@@ -311,13 +311,13 @@
 .sidebar-help strong {
   display: block;
   margin-bottom: 7px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .sidebar-help p {
   margin: 0;
   color: var(--text-3);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.65;
 }
 
@@ -356,20 +356,20 @@
   border-radius: 12px;
   background: var(--primary-light);
   color: var(--primary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
 }
 
 .card-heading h2 {
   margin: 1px 0 5px;
-  font-size: 21px;
+  font-size: 1.3125rem;
   letter-spacing: -0.015em;
 }
 
 .card-heading p {
   margin: 0;
   color: var(--text-3);
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.55;
 }
 
@@ -411,19 +411,19 @@
   border-radius: 15px;
   background: var(--primary-light);
   color: var(--primary);
-  font-size: 27px;
+  font-size: 1.6875rem;
   font-weight: 800;
 }
 
 .pdf-dropzone h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .pdf-dropzone p {
   margin: 7px 0;
   color: var(--text-3);
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .pdf-dropzone p span {
@@ -433,7 +433,7 @@
 
 .pdf-dropzone small {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 /* =========================================================
@@ -459,7 +459,7 @@
   border-radius: 11px;
   background: #e83f4d;
   color: #fff;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 
@@ -475,12 +475,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .file-info span {
   color: var(--text-3);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .file-result {
@@ -489,7 +489,7 @@
   gap: 7px;
   margin-left: auto;
   color: var(--green);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
 }
 
@@ -509,7 +509,7 @@
   border-radius: 8px;
   background: var(--surface);
   color: var(--text-3);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -547,7 +547,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 11px;
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 800;
 }
 
@@ -569,13 +569,13 @@
 .summary-card span {
   display: block;
   color: var(--text-3);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .summary-card strong {
   display: block;
   margin-top: 3px;
-  font-size: 23px;
+  font-size: 1.4375rem;
 }
 
 .summary-card strong.has-error {
@@ -624,14 +624,14 @@
 
 .switch-text strong {
   display: block;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .switch-text small {
   display: block;
   margin-top: 5px;
   color: var(--text-3);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .custom-switch {
@@ -681,7 +681,7 @@
 .form-field > span {
   display: block;
   margin-bottom: 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
 }
 
@@ -707,21 +707,21 @@
   border: 0;
   outline: 0;
   color: var(--text);
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
 }
 
 .number-input span {
   padding-right: 13px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .form-field > small {
   display: block;
   margin-top: 6px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 /* CONFIG ACTION */
@@ -740,7 +740,7 @@
   align-items: center;
   gap: 8px;
   color: var(--text-3);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .config-note-icon {
@@ -752,7 +752,7 @@
   border-radius: 50%;
   background: var(--gray-100);
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 
@@ -767,7 +767,7 @@
   border-radius: 10px;
   background: var(--primary-gradient);
   color: #fff;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 800;
   cursor: pointer;
   box-shadow: 0 7px 18px rgba(79, 70, 229, 0.22);
@@ -818,13 +818,13 @@
 
 .warning-heading h3 {
   margin: 0;
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 
 .warning-heading p {
   margin: 5px 0 0;
   color: var(--text-3);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .question-check-list {
@@ -852,13 +852,13 @@
 
 .question-check-title span {
   color: var(--text-2);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .question-error {
   margin-top: 6px;
   color: var(--red);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .answer-selector {
@@ -866,7 +866,7 @@
   align-items: center;
   gap: 7px;
   margin-top: 11px;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .answer-selector button {
@@ -909,13 +909,13 @@
 
 .result-title-row h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 
 .result-heading p {
   margin: 7px 0 0;
   color: var(--text-3);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .generated-badge {
@@ -923,7 +923,7 @@
   border-radius: 999px;
   background: var(--green-light);
   color: var(--green);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 
@@ -958,7 +958,7 @@
   border-radius: 11px;
   background: var(--primary-light);
   color: var(--primary);
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 800;
 }
 
@@ -968,13 +968,13 @@
 }
 
 .download-info strong {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .download-info span {
   margin-top: 3px;
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .download-buttons {
@@ -988,7 +988,7 @@
   min-height: 40px;
   padding: 0 13px;
   border-radius: 9px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
   cursor: pointer;
   transition: 0.2s;
@@ -1049,7 +1049,7 @@
   border-radius: 8px;
   background: transparent;
   color: var(--text-3);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
   cursor: pointer;
 }
@@ -1062,7 +1062,7 @@
 .exam-tabs button small {
   margin-top: 2px;
   color: var(--primary);
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .exam-tabs button.active {
@@ -1094,14 +1094,14 @@
 
 .exam-preview-header > div:first-child span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: 0.1em;
 }
 
 .exam-preview-header h3 {
   margin: 4px 0 0;
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .preview-meta {
@@ -1114,7 +1114,7 @@
   border-radius: 7px;
   background: var(--gray-100);
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -1143,14 +1143,14 @@
   border-radius: 9px;
   background: var(--primary-light);
   color: var(--primary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
 }
 
 .question-text {
   margin-bottom: 12px;
   color: var(--text);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.65;
 }
 
@@ -1170,7 +1170,7 @@
   border-radius: 9px;
   background: var(--gray-50);
   color: var(--text-2);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 
@@ -1184,7 +1184,7 @@
   border-radius: 7px;
   background: var(--surface);
   color: var(--primary);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 
@@ -1210,13 +1210,13 @@
 }
 
 .answer-key-heading strong {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .answer-key-heading span {
   margin-top: 3px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .answer-grid {
@@ -1237,7 +1237,7 @@
 
 .answer-cell span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .answer-cell strong {
@@ -1249,7 +1249,7 @@
   border-radius: 6px;
   background: var(--primary-light);
   color: var(--primary);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 /* =========================================================
@@ -1278,18 +1278,18 @@
   margin-bottom: 13px;
   border-radius: 15px;
   background: var(--primary-light);
-  font-size: 24px;
+  font-size: 1.5rem;
 }
 
 .empty-state h3 {
   margin: 0;
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 
 .empty-state p {
   margin: 7px 0 0;
   color: var(--text-3);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 /* =========================================================
@@ -1325,24 +1325,24 @@
 
 .pdf-school-name {
   margin-bottom: 10px;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
 }
 
 .pdf-title {
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 800;
 }
 
 .pdf-subject {
   margin-top: 8px;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
 }
 
 .pdf-time {
   margin-top: 5px;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .pdf-exam-code {
@@ -1351,13 +1351,13 @@
   right: 0;
   padding: 8px 12px;
   border: 1px solid #222;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
 }
 
 .pdf-student-info {
   margin-bottom: 22px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.6;
 }
 
@@ -1367,7 +1367,7 @@
 }
 
 .pdf-question-title {
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.55;
 }
 
@@ -1410,12 +1410,12 @@
   border-radius: 11px;
   background: var(--gray-50);
   color: var(--text-3);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
 }
 
 .marker-note strong {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .marker-note code {
@@ -1423,7 +1423,7 @@
   border-radius: 5px;
   background: var(--primary-soft);
   color: var(--primary);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .marker-note small {
@@ -1437,7 +1437,7 @@
   border-radius: 999px;
   background: var(--primary-soft);
   color: var(--primary);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   vertical-align: 1px;
 }
@@ -1466,7 +1466,7 @@
   display: flex;
   align-items: flex-start;
   gap: 5px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
 }
 
@@ -1512,11 +1512,11 @@
   }
 
   .header-main h1 {
-    font-size: 28px;
+    font-size: 1.75rem;
   }
 
   .header-main p {
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
 
   .header-badge {
@@ -1583,7 +1583,7 @@
   }
 
   .header-main h1 {
-    font-size: 25px;
+    font-size: 1.5625rem;
   }
 
   .summary-card {

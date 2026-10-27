@@ -118,7 +118,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .np-list-select select {
@@ -181,7 +181,7 @@
 
 .np-game-icon {
   margin-bottom: 4px;
-  font-size: 28px;
+  font-size: 1.75rem;
   line-height: 1;
 }
 
@@ -225,7 +225,7 @@
   padding: 24px 40px;
   border-radius: 0;
   overflow: auto;
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .np-stage.is-full .np-game {
@@ -362,7 +362,7 @@
 }
 
 .np-all-done div {
-  font-size: 72px;
+  font-size: 4.5rem;
   animation: np-bounce 1.2s ease-in-out infinite;
 }
 
@@ -398,7 +398,7 @@
   background: linear-gradient(135deg, #facc15 0%, #f97316 50%, #ec4899 100%);
   box-shadow: 0 8px 24px rgba(249, 115, 22, 0.45), inset 0 -3px 0 rgba(0, 0, 0, 0.15);
   color: #fff;
-  font-size: 19px;
+  font-size: 1.1875rem;
   font-weight: 900;
   letter-spacing: 0.01em;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
@@ -555,17 +555,17 @@
 }
 
 .np-arrow-ring.lg .np-arrow-chip {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .np-arrow-ring.md .np-arrow-chip {
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .np-arrow-ring.sm .np-arrow-chip {
   max-width: 84px;
   padding: 3px 7px;
-  font-size: 10px;
+  font-size: 0.625rem;
 }
 
 .np-arrow-chip.on {
@@ -657,22 +657,22 @@
 
 .np-race.xl .np-race-lane {
   height: 56px;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .np-race.lg .np-race-lane {
   height: 42px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .np-race.md .np-race-lane {
   height: 32px;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .np-race.sm .np-race-lane {
   height: 24px;
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .np-race-lane.win {
@@ -741,7 +741,7 @@
   align-items: center;
   justify-content: center;
   color: #facc15;
-  font-size: 140px;
+  font-size: 8.75rem;
   font-weight: 900;
   text-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
   animation: np-zoom 0.7s var(--ease);
@@ -792,7 +792,7 @@
 .np-slot-title {
   margin: 8px 0 12px;
   color: #fde68a;
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-align: center;
@@ -819,7 +819,7 @@
   gap: 14px;
   padding: 0 14px;
   color: #0f172a;
-  font-size: 28px;
+  font-size: 1.75rem;
   font-weight: 900;
   text-align: center;
 }
@@ -833,7 +833,7 @@
   height: 42px;
   border-radius: 50%;
   color: #fff;
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .np-slot-mark {
@@ -934,12 +934,12 @@
 
 .np-tiles.lg .np-tile {
   min-height: 76px;
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .np-tiles.sm .np-tile {
   min-height: 46px;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .np-tile small {
@@ -983,7 +983,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 30px;
+  font-size: 1.875rem;
   animation: np-boom 0.6s var(--ease) forwards;
 }
 
@@ -1080,7 +1080,7 @@
   border: 3px solid #facc15;
   background: #fff;
   color: #0f172a;
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.3;
   transform: rotateY(180deg);
 }
@@ -1109,7 +1109,7 @@
 
 .np-cloud {
   position: absolute;
-  font-size: 64px;
+  font-size: 4rem;
   opacity: 0.85;
   animation: np-cloud 30s linear infinite;
 }
@@ -1120,7 +1120,7 @@
 
 .np-cloud.c2 {
   top: 40%;
-  font-size: 48px;
+  font-size: 3rem;
   animation-delay: -12s;
 }
 
@@ -1160,7 +1160,7 @@
   background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.7), transparent 30%), var(--c);
   box-shadow: inset -6px -8px 0 rgba(0, 0, 0, 0.12);
   color: #fff;
-  font-size: 26px;
+  font-size: 1.625rem;
   font-weight: 900;
 }
 
@@ -1192,7 +1192,7 @@
   background: #fff;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   color: #0f172a;
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 900;
   white-space: nowrap;
   animation: np-pop 0.4s var(--ease);
@@ -1276,7 +1276,7 @@
 }
 
 .np-ticket strong {
-  font-size: 30px;
+  font-size: 1.875rem;
   font-weight: 900;
 }
 
@@ -1316,7 +1316,7 @@
 }
 
 .np-gift-box {
-  font-size: 82px;
+  font-size: 5.125rem;
   line-height: 1;
 }
 
@@ -1418,7 +1418,7 @@
   border-radius: 50%;
   background: #fff;
   color: #0f172a;
-  font-size: 48px;
+  font-size: 3rem;
   font-weight: 900;
 }
 
@@ -1426,7 +1426,7 @@
   padding: 8px 22px;
   border-radius: var(--radius-pill);
   background: rgba(0, 0, 0, 0.55);
-  font-size: 30px;
+  font-size: 1.875rem;
   font-weight: 900;
 }
 
@@ -1477,7 +1477,7 @@
   position: absolute;
   top: -44px;
   left: 50%;
-  font-size: 72px;
+  font-size: 4.5rem;
   transform: translateX(-50%);
   animation: np-bounce 1s ease-in-out infinite;
 }
@@ -1509,7 +1509,7 @@
 
 .np-result-stars {
   margin-top: 8px;
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 
 .np-result-actions {
@@ -1719,7 +1719,7 @@
 
   .np-go {
     padding: 12px 24px;
-    font-size: 17px;
+    font-size: 1.0625rem;
   }
 
   .np-race-name {
@@ -1731,7 +1731,7 @@
   }
 
   .np-slot-row {
-    font-size: 19px;
+    font-size: 1.1875rem;
   }
 
   .np-gifts {
@@ -1739,7 +1739,7 @@
   }
 
   .np-gift-box {
-    font-size: 58px;
+    font-size: 3.625rem;
   }
 
   .np-sky {
@@ -1752,6 +1752,6 @@
 
   .np-ticket strong,
   .np-lottery-out strong {
-    font-size: 22px;
+    font-size: 1.375rem;
   }
 }

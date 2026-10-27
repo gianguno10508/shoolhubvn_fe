@@ -3,6 +3,7 @@
 //  - Giáo viên: tự hiện lịch dạy của mình theo họ tên tài khoản (chỉ khi không khớp tên mới phải tự chọn, lưu trên máy)
 //  - Học sinh, cờ đỏ: tự hiện TKB lớp mình
 //  - Tài khoản trường, BGH, Đoàn TN: chọn xem theo lớp hoặc theo giáo viên (lưu lựa chọn trên máy)
+import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -119,7 +120,7 @@ export default function TimetableScreen() {
       headerTitleStyle: { color: "#fff", fontWeight: "700" },
       headerRight: () => (
         <Pressable onPress={() => load(true)} hitSlop={10} style={{ paddingHorizontal: space.lg }}>
-          <Text style={{ color: "#fff", fontSize: 20, fontWeight: "700" }}>⟳</Text>
+          <Ionicons name="refresh" size={22} color="#fff" />
         </Pressable>
       ),
     });
@@ -159,7 +160,7 @@ export default function TimetableScreen() {
   const weekNav = (
     <View style={styles.weekNav}>
       <Pressable onPress={() => setWeekOffset((w) => w - 1)} hitSlop={10}>
-        <Text style={styles.navArrow}>‹</Text>
+        <Ionicons name="chevron-back" size={22} color={HEADER} />
       </Pressable>
       <Pressable onPress={() => setWeekOffset(0)}>
         <Text style={styles.weekLabel}>
@@ -168,7 +169,7 @@ export default function TimetableScreen() {
         </Text>
       </Pressable>
       <Pressable onPress={() => setWeekOffset((w) => w + 1)} hitSlop={10}>
-        <Text style={styles.navArrow}>›</Text>
+        <Ionicons name="chevron-forward" size={22} color={HEADER} />
       </Pressable>
     </View>
   );
@@ -268,8 +269,9 @@ export default function TimetableScreen() {
       {/* Thanh tuần: T2 … CN, ngày của tuần đang xem, chấm dưới ngày có tiết */}
       <View style={styles.weekBar}>
         <View style={styles.targetRow}>
+          <Ionicons name={data.kind === "teacher" ? "person-circle-outline" : "people-outline"} size={18} color={HEADER} />
           <Text style={styles.targetText} numberOfLines={1}>
-            {data.kind === "teacher" ? `👨‍🏫 ${data.target.name}` : `🏫 Lớp ${data.target.name}`}
+            {data.kind === "teacher" ? data.target.name : `Lớp ${data.target.name}`}
           </Text>
           {canChange && (
             <Pressable onPress={() => setPicking(true)} hitSlop={8}>
@@ -376,7 +378,7 @@ const styles = StyleSheet.create({
   gridText: { fontSize: 15, fontWeight: "600", color: colors.text },
   weekBar: { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: space.xs },
   targetRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: space.lg, paddingTop: space.sm },
-  targetText: { flex: 1, fontSize: 14, fontWeight: "700", color: colors.text2 },
+  targetText: { flex: 1, marginLeft: 6, fontSize: 14, fontWeight: "800", color: colors.text },
   change: { color: HEADER, fontWeight: "700", fontSize: 14 },
   weekRow: { flexDirection: "row", paddingHorizontal: space.sm, paddingTop: space.sm },
   dayCol: { flex: 1, alignItems: "center" },

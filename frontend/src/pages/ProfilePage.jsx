@@ -6,6 +6,20 @@ import { useAuth } from "../context/AuthContext";
 import { ROLE_ICON, ROLE_LABEL } from "../utils/permissions";
 import { dateInputValue, formatDate } from "../utils/accountName";
 import { DateInput } from "../components/DateInput";
+import {
+  AtSign,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Loader2,
+  LockKeyhole,
+  Save,
+  School,
+  ShieldAlert,
+  ShieldCheck,
+  UserRound,
+  Users,
+} from "lucide-react";
 
 const EMPTY_PW = { current: "", next: "", confirm: "" };
 
@@ -83,6 +97,8 @@ export default function ProfilePage() {
     .join("")
     .toUpperCase();
 
+  const defaultPw = !!user?.mustChangePassword;
+
   return (
     <div className="page profile-page">
       {toast && (
@@ -92,24 +108,48 @@ export default function ProfilePage() {
         </div>
       )}
 
-      <div className="pf-hero">
-        <span className="pf-avatar">{initials}</span>
-        <div>
-          <h2>{user?.name || user?.username}</h2>
-          <p>
-            <span className={"role-badge role-" + user?.role}>
-              <span>{ROLE_ICON[user?.role]}</span>
-              {ROLE_LABEL[user?.role]}
-            </span>
-            {user?.className && <span className="pf-chip">Lớp {user.className}</span>}
-            {user?.school && <span className="pf-chip">{user.school.name}</span>}
-          </p>
+      <section className="pf-hero">
+        <div className="pf-hero-main">
+          <span className="pf-avatar">{initials}</span>
+          <div className="pf-hero-text">
+            <h2>{user?.name || user?.username}</h2>
+            <p>
+              <span className="pf-chip pf-chip-strong">
+                <span>{ROLE_ICON[user?.role]}</span>
+                {ROLE_LABEL[user?.role]}
+              </span>
+              {user?.className && (
+                <span className="pf-chip">
+                  <Users size={13} /> Lớp {user.className}
+                </span>
+              )}
+              {user?.school && (
+                <span className="pf-chip">
+                  <School size={13} /> {user.school.name}
+                </span>
+              )}
+            </p>
+          </div>
         </div>
-      </div>
+        <div className="pf-hero-stats">
+          <div>
+            <AtSign size={16} />
+            <span>Tên đăng nhập</span>
+            <strong>{user?.username}</strong>
+          </div>
+          <div className={defaultPw ? "warn" : "ok"}>
+            {defaultPw ? <ShieldAlert size={16} /> : <ShieldCheck size={16} />}
+            <span>Bảo mật</span>
+            <strong>{defaultPw ? "Mật khẩu mặc định" : "Đã đặt mật khẩu riêng"}</strong>
+          </div>
+        </div>
+      </section>
 
-      {user?.mustChangePassword && (
+      {defaultPw && (
         <div className="pf-warn">
-          <span>🔐</span>
+          <span className="pf-warn-icon">
+            <ShieldAlert size={20} />
+          </span>
           <p>
             Tài khoản đang dùng <b>mật khẩu mặc định</b> do nhà trường cấp. Hãy đổi sang mật khẩu của riêng bạn để bảo
             mật tài khoản.
@@ -118,22 +158,25 @@ export default function ProfilePage() {
       )}
 
       <div className="pf-grid">
-        <form className="as-card" onSubmit={saveProfile}>
-          <div className="as-card-head">
-            <span className="as-step">👤</span>
+        <form className="pf-card" onSubmit={saveProfile}>
+          <header className="pf-card-head">
+            <span className="pf-card-icon">
+              <UserRound size={20} />
+            </span>
             <div>
               <h3>Thông tin cá nhân</h3>
               <p>Tên đăng nhập, chức danh và lớp do nhà trường quản lý.</p>
             </div>
-          </div>
-          <div className="as-form-grid">
+          </header>
+
+          <div className="pf-form">
             <label className="field">
               <span>Tên đăng nhập</span>
               <input value={user?.username || ""} disabled />
             </label>
             <label className="field">
               <span>Họ và tên</span>
-              <input value={form.name} onChange={set("name")} disabled={!!busy} />
+              <input value={form.name} onChange={set("name")} disabled={!!busy} placeholder="Nguyễn Văn A" />
             </label>
             <label className="field">
               <span>Ngày sinh</span>
@@ -141,31 +184,44 @@ export default function ProfilePage() {
             </label>
             <label className="field">
               <span>Số điện thoại</span>
-              <input value={form.phone} onChange={set("phone")} inputMode="tel" disabled={!!busy} />
+              <input value={form.phone} onChange={set("phone")} inputMode="tel" disabled={!!busy} placeholder="09xx xxx xxx" />
             </label>
-            <label className="field as-span-2">
+            <label className="field pf-span-2">
               <span>Email</span>
-              <input type="email" value={form.email} onChange={set("email")} disabled={!!busy} />
+              <input
+                type="email"
+                value={form.email}
+                onChange={set("email")}
+                disabled={!!busy}
+                placeholder="ten@email.com"
+              />
             </label>
           </div>
-          {user?.studentCode && <p className="hint">Mã học sinh: {user.studentCode}</p>}
-          <div className="pf-actions">
-            {user?.birthDate && <small>Ngày sinh hiện tại: {formatDate(user.birthDate)}</small>}
+
+          <footer className="pf-actions">
+            <small>
+              {user?.studentCode && <>Mã học sinh: <b>{user.studentCode}</b> · </>}
+              {user?.birthDate ? <>Ngày sinh hiện tại: {formatDate(user.birthDate)}</> : "Thông tin chỉ nhà trường xem được."}
+            </small>
             <button className="btn btn-primary" type="submit" disabled={!!busy}>
+              {busy === "profile" ? <Loader2 size={16} className="ai-spin-icon" /> : <Save size={16} />}
               {busy === "profile" ? "Đang lưu..." : "Lưu thông tin"}
             </button>
-          </div>
+          </footer>
         </form>
 
-        <form className="as-card" onSubmit={savePassword}>
-          <div className="as-card-head">
-            <span className="as-step">🔑</span>
+        <form className="pf-card pf-security" onSubmit={savePassword}>
+          <header className="pf-card-head">
+            <span className="pf-card-icon green">
+              <LockKeyhole size={20} />
+            </span>
             <div>
-              <h3>Đổi mật khẩu</h3>
-              <p>Ít nhất 6 ký tự; nên có chữ hoa, chữ thường, số và ký tự đặc biệt.</p>
+              <h3>Bảo mật & mật khẩu</h3>
+              <p>Đổi mật khẩu định kỳ và không chia sẻ cho người khác.</p>
             </div>
-          </div>
-          <div className="as-form-grid pf-one-col">
+          </header>
+
+          <div className="pf-form pf-one-col">
             <label className="field">
               <span>Mật khẩu hiện tại</span>
               <input
@@ -203,17 +259,27 @@ export default function ProfilePage() {
                 disabled={!!busy}
               />
             </label>
-            <label className="as-check">
-              <input type="checkbox" checked={showPw} onChange={(e) => setShowPw(e.target.checked)} />
-              Hiện mật khẩu
-            </label>
           </div>
-          <div className="pf-actions">
-            <span />
+
+          <footer className="pf-actions">
+            <label className="pf-check">
+              <input type="checkbox" checked={showPw} onChange={(e) => setShowPw(e.target.checked)} />
+              {showPw ? <EyeOff size={15} /> : <Eye size={15} />} Hiện mật khẩu
+            </label>
             <button className="btn btn-primary" type="submit" disabled={!!busy}>
+              {busy === "password" ? <Loader2 size={16} className="ai-spin-icon" /> : <KeyRound size={16} />}
               {busy === "password" ? "Đang đổi..." : "Đổi mật khẩu"}
             </button>
-          </div>
+          </footer>
+
+          <ul className="pf-tips">
+            <li>
+              <ShieldCheck size={15} /> Đăng xuất khi dùng máy tính chung.
+            </li>
+            <li>
+              <ShieldCheck size={15} /> Không dùng lại mật khẩu của tài khoản khác.
+            </li>
+          </ul>
         </form>
       </div>
     </div>

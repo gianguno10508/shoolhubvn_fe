@@ -463,6 +463,7 @@ router.get("/summary", canView, async (req, res) => {
       date,
       start,
       end,
+      week: period === "week" ? weekInfo(config, date).number : null, // tuần học thứ mấy (xuất Excel thi đua)
       basePoints: base,
       columns,
       categories: config.categories.map((c) => c.name),

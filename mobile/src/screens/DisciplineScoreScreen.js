@@ -224,7 +224,7 @@ export default function DisciplineScoreScreen() {
         </Text>
         {info.targets.length === 0 ? (
           <Empty
-            icon="🚩"
+            icon="flag-outline"
             title={info.pairsConfigured ? "Đoàn trường chưa phân công lớp chấm cho lớp bạn" : "Chưa có lớp nào để chấm"}
             hint="Liên hệ Đoàn trường để được phân công."
           />
@@ -339,8 +339,8 @@ export default function DisciplineScoreScreen() {
           </Row>
         </Card>
         <Row style={styles.actions}>
-          <Button title="‹ Quay lại" variant="light" onPress={() => setStep(1)} style={{ flex: 1, marginRight: space.sm }} />
-          <Button title="Tiếp tục ›" onPress={() => setStep(3)} style={{ flex: 1 }} />
+          <Button title="Quay lại" icon="chevron-back" variant="light" onPress={() => setStep(1)} style={{ flex: 1, marginRight: space.sm }} />
+          <Button title="Tiếp tục" icon="chevron-forward" onPress={() => setStep(3)} style={{ flex: 1 }} />
         </Row>
         {record && <Button title="Xoá phiếu đã chấm" variant="light" onPress={remove} loading={busy} style={{ marginTop: space.sm }} />}
       </Screen>
@@ -412,7 +412,7 @@ export default function DisciplineScoreScreen() {
       </Card>
 
       <Row style={styles.actions}>
-        <Button title="‹ Sửa lại" variant="light" onPress={() => setStep(2)} style={{ flex: 1, marginRight: space.sm }} />
+        <Button title="Sửa lại" icon="create-outline" variant="light" onPress={() => setStep(2)} style={{ flex: 1, marginRight: space.sm }} />
         <Button title={record ? "Cập nhật lên máy chủ" : "Gửi lên"} variant="success" onPress={submit} loading={busy} style={{ flex: 1 }} />
       </Row>
       {record && <Button title="Xoá phiếu đã chấm" variant="light" onPress={remove} disabled={busy} style={{ marginTop: space.sm }} />}

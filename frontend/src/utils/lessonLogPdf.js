@@ -308,9 +308,18 @@ export function parseLessonLogPages(pages) {
   return { rows: sortLessonRows(rows), anyTable, anyScoreCol };
 }
 
+/** Tên lớp trong chữ: "Lớp: 12A1", "lop 10a10", "SĐB_11A2.pdf" → "12A1" … ("" nếu không thấy) */
+export function detectClassName(text) {
+  const t = String(text || "");
+  const m =
+    t.match(/l[ớo]p\s*:?\s*(1[0-2]|[1-9])\s*([a-zđ])\s*(\d{0,2})(?![\d\p{L}])/iu) ||
+    t.match(/(?<![\d\p{L}])(1[0-2]|[6-9])\s*([a-z])\s*(\d{1,2})(?![\d\p{L}])/iu);
+  return m ? `${m[1]}${m[2].toUpperCase()}${m[3]}` : "";
+}
+
 /**
  * Đọc file PDF sổ đầu bài.
- * @returns {Promise<{ rows: {week, session, day, period, subject, score}[], warnings: string[] }>}
+ * @returns {Promise<{ rows: {week, session, day, period, subject, score}[], warnings: string[], className: string }>}
  */
 export async function readLessonLog(file) {
   if (!file) throw new Error("Chưa chọn file.");
@@ -340,7 +349,12 @@ export async function readLessonLog(file) {
   if (missingDay) warnings.push(`${missingDay} tiết chưa xác định được thứ`);
   if (missingScore && anyScoreCol) warnings.push(`${missingScore} tiết chưa có điểm`);
 
-  return { rows, warnings };
+  const pageText = pages.map((p) => p.map((i) => i.text).join(" ")).join(" ");
+  // Ưu tiên "Lớp: 12A1" trong nội dung, không có thì lấy từ tên file
+  const className =
+    (pageText.match(/l[ớo]p\s*:?\s*(1[0-2]|[1-9])\s*[a-zđ]\s*\d{0,2}(?![\d\p{L}])/iu) && detectClassName(pageText)) ||
+    detectClassName(file.name.replace(/\.pdf$/i, ""));
+  return { rows, warnings, className };
 }
 
 export { toItem as _toItem };

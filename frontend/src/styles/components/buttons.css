@@ -159,7 +159,7 @@
   min-width: var(--control-h-sm);
   min-height: var(--control-h-sm);
   padding: 0 10px;
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1;
 }
 

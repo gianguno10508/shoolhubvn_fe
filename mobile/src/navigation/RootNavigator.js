@@ -1,12 +1,14 @@
 // navigation/RootNavigator.js — điều hướng theo chức danh (theo frontend/requirement.txt, mục React native)
 import { useEffect, useState } from "react";
-import { AppState, Text } from "react-native";
+import { AppState } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "../api/client";
 import { Empty, Loading, Screen } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
-import { colors } from "../theme";
+import { colors, shadow } from "../theme";
 import AccountScreen from "../screens/AccountScreen";
 import AssignmentDetailScreen from "../screens/AssignmentDetailScreen";
 import AssignmentResultsScreen from "../screens/AssignmentResultsScreen";
@@ -35,17 +37,26 @@ function AdminScreen() {
   );
 }
 
-/* Các tab của từng chức danh: [tên, tiêu đề, icon, màn hình] */
+/* Các tab của từng chức danh: [tên, tiêu đề, icon Ionicons (bỏ "-outline" khi đang chọn), màn hình] */
 const T = {
-  notifications: ["Notifications", "Thông báo", "🔔", NotificationsScreen],
-  summary: ["Summary", "Thi đua", "🏆", DisciplineSummaryScreen],
-  classSummary: ["Summary", "Thi đua lớp", "🏆", DisciplineSummaryScreen],
-  score: ["Score", "Chấm thi đua", "🚩", DisciplineScoreScreen],
-  results: ["Results", "Bài tập", "📝", AssignmentResultsScreen],
-  timetable: ["Timetable", "TKB", "🗓️", TimetableScreen],
-  exams: ["Exams", "Bài thi", "📚", ExamListScreen],
-  account: ["Account", "Tài khoản", "👤", AccountScreen],
-  admin: ["Admin", "Quản trị", "🛡️", AdminScreen],
+  notifications: ["Notifications", "Thông báo", "notifications", NotificationsScreen],
+  summary: ["Summary", "Thi đua", "trophy", DisciplineSummaryScreen],
+  classSummary: ["Summary", "Thi đua lớp", "trophy", DisciplineSummaryScreen],
+  score: ["Score", "Chấm thi đua", "flag", DisciplineScoreScreen],
+  results: ["Results", "Bài tập", "document-text", AssignmentResultsScreen],
+  timetable: ["Timetable", "TKB", "calendar", TimetableScreen],
+  exams: ["Exams", "Bài thi", "library", ExamListScreen],
+  account: ["Account", "Tài khoản", "person-circle", AccountScreen],
+  admin: ["Admin", "Quản trị", "shield-checkmark", AdminScreen],
+};
+
+/* Thanh tiêu đề trắng, chữ đậm, không viền — dùng chung cho tab & màn hình con */
+const HEADER = {
+  headerStyle: { backgroundColor: colors.surface },
+  headerShadowVisible: false,
+  headerTitleStyle: { fontWeight: "800", fontSize: 18, color: colors.text },
+  headerTintColor: colors.primary,
+  headerTitleAlign: "left",
 };
 
 const TABS_BY_ROLE = {
@@ -85,13 +96,24 @@ function MainTabs() {
   const tabs = TABS_BY_ROLE[user.role] || [T.notifications, T.account];
   const hasInbox = tabs.includes(T.notifications);
   const [unread, setUnread] = useUnreadCount(hasInbox && !!user.schoolId);
+  const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
       screenOptions={{
+        ...HEADER,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
-        headerTitleStyle: { fontWeight: "700" },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "700" },
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopWidth: 0,
+          height: 64 + insets.bottom,
+          paddingTop: 6,
+          paddingBottom: Math.max(insets.bottom, 8),
+          ...shadow(2),
+        },
+        tabBarBadgeStyle: { backgroundColor: colors.danger, fontSize: 10, fontWeight: "800" },
       }}
     >
       {tabs.map(([name, title, icon, component]) => (
@@ -101,7 +123,9 @@ function MainTabs() {
           component={component}
           options={{
             title,
-            tabBarIcon: ({ focused }) => <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.55 }}>{icon}</Text>,
+            tabBarIcon: ({ focused, color }) => (
+              <Ionicons name={focused ? icon : `${icon}-outline`} size={23} color={color} />
+            ),
             tabBarBadge: name === "Notifications" && unread > 0 ? unread : undefined,
           }}
           listeners={name === "Notifications" ? { tabPress: () => setTimeout(() => setUnread(0), 1500) } : undefined}
@@ -121,7 +145,9 @@ export default function RootNavigator() {
   if (loading) return <Loading label="Đang kiểm tra đăng nhập..." />;
 
   return (
-    <Stack.Navigator screenOptions={{ headerBackTitle: "Quay lại" }}>
+    <Stack.Navigator
+      screenOptions={{ ...HEADER, headerBackTitle: "Quay lại", contentStyle: { backgroundColor: colors.bg } }}
+    >
       {!user ? (
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
       ) : user.mustChangePassword ? (

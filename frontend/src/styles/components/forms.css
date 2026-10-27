@@ -89,7 +89,7 @@ input.bad {
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   background: var(--gray-50);
   color: var(--text-3);
-  font-size: 16px;
+  font-size: 1rem;
   cursor: pointer;
   transition: background-color var(--t-fast);
 }
@@ -173,7 +173,7 @@ input.bad {
 .ss-caret {
   flex-shrink: 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .ss-pop {
@@ -258,6 +258,12 @@ input.bad {
   min-width: 0;
 }
 
+/* Trong .field (cột dọc) không được giãn theo flex-basis 140px — sẽ đẩy ô nhập xuống, vỡ lưới form */
+.field > .date-input,
+.field > .date-time-input {
+  flex: none;
+}
+
 .date-input > input[type="text"] {
   padding-right: 38px;
   font-variant-numeric: tabular-nums;
@@ -283,7 +289,7 @@ input.bad {
   border: 0;
   border-radius: var(--radius-md);
   background: transparent;
-  font-size: 15px;
+  font-size: 0.9375rem;
   cursor: pointer;
 }
 

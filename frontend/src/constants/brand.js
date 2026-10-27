@@ -4,7 +4,7 @@ export const BRAND = {
   name: "SchoolHub",
   tagline: "Nền tảng quản lý trường học số",
   description: "Thời khóa biểu, bài tập, kiểm tra, giáo án AI, thi đua và thông báo — tất cả trong một.",
-  developer: "vxphuongictu",
+  developer: "NVG",
   since: 2025,
   version: "1.0.0",
 };

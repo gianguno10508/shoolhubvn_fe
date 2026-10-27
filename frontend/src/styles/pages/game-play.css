@@ -53,7 +53,7 @@
 
 .pg-back {
   color: var(--pg-text);
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 700;
   text-decoration: none;
 }
@@ -93,7 +93,7 @@
 .pg-mute {
   border: 0;
   background: none;
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 .pg-body {
@@ -120,7 +120,7 @@
 }
 
 .pg-big-icon {
-  font-size: 64px;
+  font-size: 4rem;
   line-height: 1.2;
 }
 
@@ -133,7 +133,7 @@
 .pg-count {
   margin: 8px 0 4px;
   color: var(--pg-accent);
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 800;
 }
 
@@ -147,7 +147,7 @@
   border-radius: 12px;
   background: var(--pg-accent);
   color: #fff;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 800;
   text-align: center;
   text-decoration: none;
@@ -186,7 +186,7 @@
 
 .pg-timer b {
   position: relative;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -197,13 +197,13 @@
 .pg-qnum {
   margin-bottom: 4px;
   color: var(--pg-accent);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
 }
 
 .pg-qtext {
   margin: 0 0 16px;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 600;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -279,7 +279,7 @@
 
 .pg-verdict {
   margin: 12px 0 0;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 800;
   text-align: center;
 }
@@ -322,7 +322,7 @@
 .pg-cloud {
   position: absolute;
   top: 12px;
-  font-size: 32px;
+  font-size: 2rem;
 }
 
 /* ---------- Vượt chướng ngại vật ---------- */
@@ -346,7 +346,7 @@
 .pg-track-flag {
   position: absolute;
   top: 3px;
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 
 .pg-track-runner {
@@ -381,7 +381,7 @@
   position: absolute;
   bottom: 26px;
   left: 40px;
-  font-size: 44px;
+  font-size: 2.75rem;
 }
 
 .ob-runner span {
@@ -417,7 +417,7 @@
   position: absolute;
   bottom: 28px;
   left: 100%;
-  font-size: 40px;
+  font-size: 2.5rem;
 }
 
 .ob-obstacle.pass {
@@ -453,7 +453,7 @@
   position: absolute;
   bottom: 44px;
   left: 54px;
-  font-size: 44px;
+  font-size: 2.75rem;
   opacity: 0;
   animation: ob-boom 0.8s 0.5s;
 }
@@ -488,25 +488,25 @@
 .zb-prop {
   position: absolute;
   bottom: 28px;
-  font-size: 28px;
+  font-size: 1.75rem;
 }
 
 .zb-prop.small {
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 
 .zb-player {
   position: absolute;
   bottom: 26px;
   left: 18px;
-  font-size: 44px;
+  font-size: 2.75rem;
 }
 
 .zb-gun {
   position: absolute;
   bottom: 52px;
   left: 50px;
-  font-size: 26px;
+  font-size: 1.625rem;
   transform: scaleX(-1);
 }
 
@@ -580,14 +580,14 @@
 }
 
 .zb-face {
-  font-size: 48px;
+  font-size: 3rem;
 }
 
 .zb-hit {
   position: absolute;
   top: 14px;
   left: 12px;
-  font-size: 32px;
+  font-size: 2rem;
   opacity: 0;
   animation: ob-boom 0.5s 0.26s;
 }
@@ -628,7 +628,7 @@
 .zb-caption {
   margin: 6px 0 0;
   color: var(--pg-sub);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   text-align: center;
 }
@@ -652,7 +652,7 @@
 .mp-prize strong {
   margin: 2px 0;
   color: #fbbf24;
-  font-size: 30px;
+  font-size: 1.875rem;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
@@ -685,12 +685,12 @@
   border: 1px solid var(--pg-border);
   border-radius: 10px;
   background: var(--pg-option);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .mp-step b {
   color: var(--pg-sub);
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .mp-step.passed {

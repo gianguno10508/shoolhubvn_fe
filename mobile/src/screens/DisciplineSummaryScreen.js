@@ -2,14 +2,16 @@
 // BGH, tài khoản trường, Đoàn TN: xếp hạng mọi lớp; GVCN: chỉ lớp mình (backend lọc sẵn, vẫn giữ thứ hạng)
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { api } from "../api/client";
 import { Body, Button, Card, Empty, ErrorBox, Loading, Muted, Row, Screen, Segmented } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
-import { colors, space } from "../theme";
+import { colors, radius, shadow, space } from "../theme";
 import { addDaysISO, formatDate, todayISO } from "../utils/format";
 import useAsync from "../utils/useAsync";
 
-const MEDAL = { 1: "🥇", 2: "🥈", 3: "🥉" };
+// Huy chương top 3: [màu chữ, màu nền]
+const MEDAL = { 1: ["#B45309", "#FEF3C7"], 2: ["#475569", "#E2E8F0"], 3: ["#9A3412", "#FFEDD5"] };
 
 /** Lùi / tiến 1 kỳ (tuần: 7 ngày, tháng: sang tháng kế) */
 function shiftPeriod(period, date, dir) {
@@ -49,10 +51,13 @@ export default function DisciplineSummaryScreen({ navigation }) {
       />
       <Row style={styles.nav}>
         <Pressable onPress={() => setDate(shiftPeriod(period, date, -1))} style={styles.navBtn}>
-          <Text style={styles.navText}>‹</Text>
+          <Ionicons name="chevron-back" size={22} color={colors.primary} />
         </Pressable>
         <View style={{ flex: 1, alignItems: "center" }}>
-          <Text style={styles.range}>{rangeLabel}</Text>
+          <Row style={{ gap: 6 }}>
+            <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+            <Text style={styles.range}>{rangeLabel}</Text>
+          </Row>
           {data && !isCurrent && (
             <Pressable onPress={() => setDate(todayISO())}>
               <Text style={styles.link}>Về kỳ hiện tại</Text>
@@ -60,7 +65,7 @@ export default function DisciplineSummaryScreen({ navigation }) {
           )}
         </View>
         <Pressable onPress={() => setDate(shiftPeriod(period, date, 1))} style={styles.navBtn} disabled={isCurrent}>
-          <Text style={[styles.navText, isCurrent && { color: colors.muted }]}>›</Text>
+          <Ionicons name="chevron-forward" size={22} color={isCurrent ? colors.muted : colors.primary} />
         </Pressable>
       </Row>
 
@@ -76,7 +81,13 @@ export default function DisciplineSummaryScreen({ navigation }) {
         return (
           <Card key={String(r.classId)} onPress={isHomeroom ? undefined : () => setOpen(expanded ? null : String(r.classId))}>
             <Row style={{ flexWrap: "nowrap" }}>
-              <Text style={styles.rank}>{MEDAL[r.rank] || `#${r.rank}`}</Text>
+              <View style={[styles.rank, MEDAL[r.rank] && { backgroundColor: MEDAL[r.rank][1] }]}>
+                {MEDAL[r.rank] ? (
+                  <Ionicons name="medal" size={22} color={MEDAL[r.rank][0]} />
+                ) : (
+                  <Text style={styles.rankText}>{r.rank}</Text>
+                )}
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.className}>Lớp {r.className}</Text>
                 <Muted numberOfLines={1}>{r.homeroomTeacher ? `GVCN: ${r.homeroomTeacher}` : "Chưa có GVCN"}</Muted>
@@ -91,10 +102,19 @@ export default function DisciplineSummaryScreen({ navigation }) {
                 Xếp hạng {r.rank}/{totalClasses} lớp trong trường
               </Muted>
             )}
-            <Row style={{ marginTop: 6, gap: space.md }}>
-              <Text style={styles.minus}>−{r.penalty} trừ</Text>
-              <Text style={styles.plus}>+{r.bonus} cộng</Text>
-              <Muted>{r.recordedDays} ngày đã chấm</Muted>
+            <Row style={{ marginTop: space.md, gap: space.sm }}>
+              <View style={[styles.pill, { backgroundColor: colors.dangerSoft }]}>
+                <Ionicons name="remove-circle" size={14} color={colors.danger} />
+                <Text style={styles.minus}>{r.penalty} trừ</Text>
+              </View>
+              <View style={[styles.pill, { backgroundColor: colors.successSoft }]}>
+                <Ionicons name="add-circle" size={14} color={colors.success} />
+                <Text style={styles.plus}>{r.bonus} cộng</Text>
+              </View>
+              <View style={[styles.pill, { backgroundColor: "#F1F5F9" }]}>
+                <Ionicons name="checkmark-done" size={14} color={colors.text2} />
+                <Text style={styles.days}>{r.recordedDays} ngày</Text>
+              </View>
             </Row>
 
             {expanded && (
@@ -130,7 +150,8 @@ export default function DisciplineSummaryScreen({ navigation }) {
 
       {isHomeroom && data && (
         <Button
-          title="📋 Học sinh bị ghi sổ thi đua"
+          icon="clipboard-outline"
+          title="Học sinh bị ghi sổ thi đua"
           variant="light"
           onPress={() => navigation.navigate("DisciplineStudents", { period, date })}
         />
@@ -141,17 +162,27 @@ export default function DisciplineSummaryScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  nav: { flexWrap: "nowrap", marginBottom: space.md },
-  navBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: 22, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  navText: { fontSize: 24, color: colors.primary, marginTop: -2 },
-  range: { fontSize: 15, fontWeight: "700", color: colors.text },
-  link: { color: colors.primary, fontSize: 13, marginTop: 2 },
-  rank: { fontSize: 22, width: 46, fontWeight: "700", color: colors.text2 },
-  className: { fontSize: 17, fontWeight: "700", color: colors.text },
-  score: { fontSize: 24, fontWeight: "800", color: colors.primary },
-  minus: { color: colors.danger, fontWeight: "600" },
-  plus: { color: colors.success, fontWeight: "600" },
+  nav: { flexWrap: "nowrap", marginBottom: space.md, padding: 6, borderRadius: radius.lg, backgroundColor: colors.surface, ...shadow(1) },
+  navBtn: { width: 42, height: 42, alignItems: "center", justifyContent: "center", borderRadius: 14, backgroundColor: colors.primarySoft },
+  range: { fontSize: 15, fontWeight: "800", color: colors.text },
+  link: { color: colors.primary, fontSize: 13, fontWeight: "700", marginTop: 2 },
+  rank: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    marginRight: space.md,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.primarySoft,
+  },
+  rankText: { fontSize: 17, fontWeight: "900", color: colors.primary },
+  className: { fontSize: 17, fontWeight: "800", color: colors.text },
+  score: { fontSize: 26, fontWeight: "900", color: colors.primary, letterSpacing: -0.5 },
+  pill: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 9, paddingVertical: 4, borderRadius: radius.pill },
+  minus: { color: colors.danger, fontWeight: "800", fontSize: 13 },
+  plus: { color: colors.success, fontWeight: "800", fontSize: 13 },
+  days: { color: colors.text2, fontWeight: "700", fontSize: 13 },
   detail: { marginTop: space.md, paddingTop: space.sm, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
-  detailRow: { paddingVertical: 4, flexWrap: "nowrap" },
-  sub: { fontWeight: "700", color: colors.text, marginTop: space.sm, marginBottom: 2 },
+  detailRow: { paddingVertical: 5, flexWrap: "nowrap" },
+  sub: { fontWeight: "800", color: colors.text, marginTop: space.sm, marginBottom: 2 },
 });

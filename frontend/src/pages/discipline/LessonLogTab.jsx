@@ -1,14 +1,20 @@
 // pages/discipline/LessonLogTab.jsx
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SESSIONS, normalizeScore, readLessonLog } from "../../utils/lessonLogPdf";
 import { exportLessonLogExcel, summarizeLessonLog } from "../../utils/lessonLogExport";
+import { buildThiDua, exportThiDuaExcel, isoFromDayLabel } from "../../utils/thiDuaExport";
+import { getDisciplineSummary } from "../../api/discipline";
+import { DateInput } from "../../components/DateInput";
+import { today } from "./disciplineUtils";
 
 const fmt = (v) => (v === null ? "—" : String(Math.round(v * 100) / 100));
 const toScore = (s) => (typeof s === "string" ? normalizeScore(s) : s);
 
 /* Sổ đầu bài: đọc file PDF (bảng 1 trang Thứ | Tiết | Môn | … | Điểm, hoặc sổ in 2 trang trái / phải),
- * lấy Thứ – Buổi (sáng / chiều) – Tiết – Môn – Điểm của từng tiết, cho sửa lại nếu đọc sai rồi xuất Excel.
- * Xử lý hoàn toàn trên trình duyệt, không lưu lên máy chủ. */
+ * lấy Thứ – Buổi (sáng / chiều) – Tiết – Môn – Điểm của từng tiết, cho sửa lại nếu đọc sai.
+ * Mỗi file gắn với 1 lớp; ghép với điểm nề nếp cả tuần (phiếu chấm thi đua) thành bảng thi đua
+ * mỗi lớp 2 cột: HT (điểm sổ đầu bài từng tiết) | NN (điểm nề nếp từng ngày) → TB → Hạng, xuất Excel theo mẫu.
+ * File PDF xử lý trên trình duyệt, không lưu lên máy chủ. */
 export default function LessonLogTab({ user, showToast }) {
   const inputRef = useRef(null);
   const [files, setFiles] = useState([]); // { key, name, rows, warnings }
@@ -16,6 +22,25 @@ export default function LessonLogTab({ user, showToast }) {
   const [dragActive, setDragActive] = useState(false);
   const [errors, setErrors] = useState([]);
   const [exporting, setExporting] = useState(false);
+  const [weekDate, setWeekDate] = useState(today());
+  const [weekTouched, setWeekTouched] = useState(false);
+  const [summary, setSummary] = useState(null);
+  const [summaryError, setSummaryError] = useState("");
+
+  // Điểm nề nếp cả trường của tuần chứa weekDate
+  useEffect(() => {
+    if (!weekDate) return undefined;
+    let alive = true;
+    setSummaryError("");
+    getDisciplineSummary("week", weekDate)
+      .then((s) => alive && setSummary(s))
+      .catch((err) => alive && setSummaryError(err.message || "Không tải được điểm nề nếp."));
+    return () => {
+      alive = false;
+    };
+  }, [weekDate]);
+
+  const classOptions = useMemo(() => (summary?.rows || []).map((r) => r.className), [summary]);
 
   async function addFiles(list) {
     const picked = Array.from(list || []);
@@ -26,14 +51,17 @@ export default function LessonLogTab({ user, showToast }) {
     const failed = [];
     for (const f of picked) {
       try {
-        const { rows, warnings } = await readLessonLog(f);
-        added.push({ key: `${f.name}-${f.lastModified}-${Math.random()}`, name: f.name, rows, warnings });
+        const { rows, warnings, className } = await readLessonLog(f);
+        added.push({ key: `${f.name}-${f.lastModified}-${Math.random()}`, name: f.name, rows, warnings, className });
       } catch (err) {
         failed.push(`${f.name}: ${err.message || "không đọc được"}`);
       }
     }
     setFiles((prev) => [...prev, ...added]);
     setErrors(failed);
+    // Lấy tuần theo ngày ghi trong sổ (khi người dùng chưa tự chọn tuần)
+    const firstDate = added.flatMap((f) => f.rows).map((r) => isoFromDayLabel(r.day)).find(Boolean);
+    if (firstDate && !weekTouched) setWeekDate(firstDate);
     setReading(false);
     if (inputRef.current) inputRef.current.value = "";
   }
@@ -44,6 +72,11 @@ export default function LessonLogTab({ user, showToast }) {
         f.key !== fileKey ? f : { ...f, rows: f.rows.map((r, i) => (i === index ? { ...r, [field]: value } : r)) },
       ),
     );
+  }
+
+  function setFileClass(fileKey, className) {
+    const value = className.toUpperCase().replace(/\s+/g, "");
+    setFiles((prev) => prev.map((f) => (f.key !== fileKey ? f : { ...f, className: value })));
   }
 
   function removeRow(fileKey, index) {
@@ -74,6 +107,32 @@ export default function LessonLogTab({ user, showToast }) {
   }
 
   const totalRows = files.reduce((n, f) => n + f.rows.length, 0);
+
+  const thiDua = useMemo(
+    () =>
+      buildThiDua({
+        files: files.map((f) => ({
+          className: f.className,
+          rows: f.rows.map((r) => ({ ...r, period: Number(r.period) || r.period, score: toScore(r.score) })),
+        })),
+        summary,
+      }),
+    [files, summary],
+  );
+  const missingClass = files.filter((f) => !f.className).length;
+  const unknownClass = files.filter((f) => f.className && classOptions.length && !classOptions.includes(f.className));
+
+  async function handleExportThiDua() {
+    if (missingClass) return showToast("Chọn lớp cho tất cả file sổ đầu bài trước khi xuất.", true);
+    setExporting(true);
+    try {
+      await exportThiDuaExcel(thiDua, { schoolName: user?.school?.name || "" });
+    } catch (err) {
+      showToast(err.message || "Không xuất được file Excel.", true);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <>
@@ -145,9 +204,83 @@ export default function LessonLogTab({ user, showToast }) {
             <button className="btn btn-light" onClick={() => setFiles([])}>
               Xoá tất cả
             </button>
-            <button className="btn btn-export" onClick={handleExport} disabled={exporting || !totalRows}>
-              {exporting ? "Đang xuất..." : "⤓ Xuất Excel"}
+            <button className="btn btn-light" onClick={handleExport} disabled={exporting || !totalRows}>
+              ⤓ Excel chi tiết
             </button>
+            <button className="btn btn-export" onClick={handleExportThiDua} disabled={exporting || !totalRows}>
+              {exporting ? "Đang xuất..." : "⤓ Xuất Excel thi đua (HT | NN)"}
+            </button>
+          </div>
+
+          <datalist id="ll-class-options">
+            {classOptions.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+
+          <div className="ll-thidua">
+            <div className="ll-thidua-head">
+              <div>
+                <h4>Tổng hợp thi đua {thiDua.week ? `tuần ${thiDua.week}` : "tuần"}</h4>
+                <p>
+                  Mỗi lớp 2 cột: <b>HT</b> = TB điểm sổ đầu bài các tiết · <b>NN</b> = TB điểm nề nếp các ngày (phiếu chấm
+                  thi đua) · <b>TB</b> = (HT + NN) / 2. Sổ chấm thang 10 được quy đổi sang thang 100.
+                </p>
+              </div>
+              <label className="field ll-week">
+                <span>Ngày trong tuần</span>
+                <DateInput
+                  value={weekDate}
+                  onChange={(e) => {
+                    setWeekTouched(true);
+                    setWeekDate(e.target.value);
+                  }}
+                />
+              </label>
+            </div>
+
+            {summaryError && <p className="bad-text">{summaryError}</p>}
+            {missingClass > 0 && <p className="bad-text">Còn {missingClass} file chưa chọn lớp.</p>}
+            {unknownClass.length > 0 && (
+              <p className="bad-text">
+                Lớp không có trong danh sách của trường: {unknownClass.map((f) => f.className).join(", ")}
+              </p>
+            )}
+
+            <div className="admin-table-wrap">
+              <table className="admin-users-table ll-thidua-table">
+                <thead>
+                  <tr>
+                    <th className="ll-narrow">Hạng</th>
+                    <th>Lớp</th>
+                    <th className="ll-narrow">HT</th>
+                    <th className="ll-narrow">NN</th>
+                    <th className="ll-narrow">TB</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...thiDua.classes]
+                    .filter((c) => c.hasLog || c.nnAvg !== null)
+                    .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
+                    .map((c) => (
+                      <tr key={c.name} className={c.rank && c.rank <= 3 ? "ll-top" : ""}>
+                        <td className="ll-center">
+                          <b>{c.rank ?? "—"}</b>
+                        </td>
+                        <td>
+                          <strong>{c.name}</strong>
+                          {!c.hasLog && <small className="ll-note"> · chưa có sổ đầu bài</small>}
+                        </td>
+                        <td className="ll-center">{fmt(c.htAvg)}</td>
+                        <td className="ll-center">{fmt(c.nnAvg)}</td>
+                        <td className="ll-center">
+                          <b>{fmt(c.tb)}</b>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className="ll-files">
@@ -165,6 +298,15 @@ export default function LessonLogTab({ user, showToast }) {
                       </small>
                     </div>
                     <div className="spacer" />
+                    <label className={"ll-class" + (!f.className ? " missing" : "")}>
+                      <span>Lớp</span>
+                      <input
+                        list="ll-class-options"
+                        value={f.className || ""}
+                        placeholder="VD: 12A1"
+                        onChange={(e) => setFileClass(f.key, e.target.value)}
+                      />
+                    </label>
                     <button
                       className="btn btn-sm btn-light"
                       onClick={() => setFiles((p) => p.filter((x) => x.key !== f.key))}

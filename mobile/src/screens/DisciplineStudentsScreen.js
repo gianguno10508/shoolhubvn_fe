@@ -40,7 +40,7 @@ export default function DisciplineStudentsScreen({ route }) {
       {loading && !data && <Loading />}
       {data && data.students.length === 0 && <Empty icon="🎉" title="Không có học sinh nào bị ghi tên" hint="Lớp giữ nề nếp tốt trong kỳ này." />}
       {data && data.students.length > 0 && (
-        <Button title="📤 Lưu lại / chia sẻ danh sách" variant="light" onPress={share} style={{ marginBottom: space.md }} />
+        <Button title="Lưu lại / chia sẻ danh sách" icon="share-outline" variant="soft" onPress={share} style={{ marginBottom: space.md }} />
       )}
       {data?.students.map((s, i) => {
         const expanded = open === i;

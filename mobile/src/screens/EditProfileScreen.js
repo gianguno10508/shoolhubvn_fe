@@ -41,7 +41,7 @@ export default function EditProfileScreen({ navigation }) {
       <Field label="Ngày sinh (dd/mm/yyyy)" value={form.birthDate} onChangeText={set("birthDate")} placeholder="05/09/2010" keyboardType="numbers-and-punctuation" />
       <Field label="Email" value={form.email} onChangeText={set("email")} autoCapitalize="none" keyboardType="email-address" />
       <Field label="Số điện thoại" value={form.phone} onChangeText={set("phone")} keyboardType="phone-pad" />
-      <Button title="Lưu thông tin" onPress={save} loading={busy} />
+      <Button title="Lưu thông tin" icon="save-outline" onPress={save} loading={busy} />
     </Screen>
   );
 }

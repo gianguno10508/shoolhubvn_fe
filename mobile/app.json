@@ -32,7 +32,8 @@
           "color": "#4F46E5",
           "defaultChannel": "default"
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }

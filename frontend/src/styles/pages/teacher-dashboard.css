@@ -37,14 +37,14 @@
   display: block;
   margin-bottom: 8px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
 .teacher-topbar h1 {
   margin: 0;
   color: var(--text);
-  font-size: 27px;
+  font-size: 1.6875rem;
   font-weight: 800;
   letter-spacing: -0.5px;
 }
@@ -52,7 +52,7 @@
 .teacher-topbar p {
   margin: 6px 0 0;
   color: var(--text-3);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 /* USER */
@@ -76,14 +76,14 @@
   border-radius: 10px;
   background: linear-gradient(135deg, #2563eb, #4f46e5);
   color: #fff;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 
 .teacher-user-info strong {
   display: block;
   color: var(--text-2);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
 }
 
@@ -91,7 +91,7 @@
   display: block;
   margin-top: 2px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .teacher-user-more {
@@ -101,7 +101,7 @@
   border-radius: 7px;
   background: transparent;
   color: var(--muted);
-  font-size: 19px;
+  font-size: 1.1875rem;
   cursor: pointer;
 }
 
@@ -150,7 +150,7 @@
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.14);
   color: var(--primary-soft-2);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: 1px;
 }
@@ -158,7 +158,7 @@
 .teacher-banner h2 {
   margin: 12px 0 6px;
   color: #fff;
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.4px;
 }
@@ -166,7 +166,7 @@
 .teacher-banner p {
   margin: 0;
   color: var(--primary-soft-2);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.6;
 }
 
@@ -187,7 +187,7 @@
   border-radius: 17px;
   background: rgba(255, 255, 255, 0.13);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  font-size: 25px;
+  font-size: 1.5625rem;
   backdrop-filter: blur(5px);
 }
 
@@ -236,7 +236,7 @@
   justify-content: center;
   flex-shrink: 0;
   border-radius: 11px;
-  font-size: 19px;
+  font-size: 1.1875rem;
 }
 
 .overview-icon.blue {
@@ -258,7 +258,7 @@
 .overview-content span {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -266,14 +266,14 @@
   display: block;
   margin: 2px 0;
   color: var(--text);
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 800;
 }
 
 .overview-content small {
   display: block;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .overview-content small b {
@@ -294,7 +294,7 @@
 
 .teacher-section-label {
   color: var(--primary);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: 1px;
 }
@@ -302,14 +302,14 @@
 .teacher-section-heading h2 {
   margin: 5px 0 3px;
   color: var(--text);
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 800;
 }
 
 .teacher-section-heading p {
   margin: 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 /* =========================================================
@@ -357,7 +357,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 14px;
-  font-size: 24px;
+  font-size: 1.5rem;
 }
 
 .teacher-module-card.orange .module-icon {
@@ -385,7 +385,7 @@
   border-radius: 50%;
   background: var(--gray-50);
   color: var(--muted);
-  font-size: 16px;
+  font-size: 1rem;
   transition:
     color 0.2s ease,
     background 0.2s ease,
@@ -402,14 +402,14 @@
   display: block;
   margin-top: 17px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
 .teacher-module-card h3 {
   margin: 4px 0 7px;
   color: var(--text);
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 800;
 }
 
@@ -417,7 +417,7 @@
   min-height: 43px;
   margin: 0;
   color: var(--text-3);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.65;
 }
 
@@ -429,7 +429,7 @@
   margin-top: 19px;
   padding-top: 13px;
   border-top: 1px solid var(--border-light);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .module-card-footer > span:first-child {
@@ -477,14 +477,14 @@
 .teacher-panel-heading h2 {
   margin: 0;
   color: var(--text);
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 800;
 }
 
 .teacher-panel-heading p {
   margin: 4px 0 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .teacher-panel-heading button {
@@ -492,7 +492,7 @@
   background: transparent;
   color: var(--primary);
   font-family: inherit;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -526,7 +526,7 @@
   justify-content: center;
   flex-shrink: 0;
   border-radius: 9px;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .activity-icon.blue {
@@ -554,7 +554,7 @@
   display: block;
   overflow: hidden;
   color: var(--text-2);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -565,7 +565,7 @@
   margin-top: 3px;
   overflow: hidden;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -573,7 +573,7 @@
 .teacher-activity time {
   flex-shrink: 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 /* =========================================================
@@ -593,7 +593,7 @@
   padding: 11px 0;
   border-bottom: 1px solid var(--border-light);
   color: var(--text-2);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   text-decoration: none;
 }
@@ -614,13 +614,13 @@
   justify-content: center;
   border-radius: 9px;
   background: var(--gray-50);
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .quick-action b {
   margin-left: auto;
   color: var(--gray-300);
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .quick-action:hover b {
@@ -643,13 +643,13 @@
 }
 
 .teacher-footer-note > span {
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 
 .teacher-footer-note p {
   margin: 0;
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.6;
 }
 
@@ -698,7 +698,7 @@
   }
 
   .teacher-topbar h1 {
-    font-size: 23px;
+    font-size: 1.4375rem;
   }
 
   .teacher-banner {
@@ -708,11 +708,11 @@
   }
 
   .teacher-banner h2 {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
 
   .teacher-banner p {
-    font-size: 12px;
+    font-size: 0.75rem;
   }
 
   .teacher-banner-decoration {
@@ -754,11 +754,11 @@
   .overview-icon {
     width: 36px;
     height: 36px;
-    font-size: 16px;
+    font-size: 1rem;
   }
 
   .overview-content strong {
-    font-size: 17px;
+    font-size: 1.0625rem;
   }
 
   .teacher-module-card {

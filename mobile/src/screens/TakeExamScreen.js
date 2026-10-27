@@ -153,9 +153,9 @@ export default function TakeExamScreen({ navigation, route }) {
         })}
 
         <Row style={{ marginTop: space.lg, gap: space.sm, flexWrap: "nowrap" }}>
-          <Button title="‹ Câu trước" variant="light" disabled={index === 0} onPress={() => setIndex(index - 1)} style={{ flex: 1 }} />
+          <Button title="Câu trước" icon="chevron-back" variant="light" disabled={index === 0} onPress={() => setIndex(index - 1)} style={{ flex: 1 }} />
           {index < paper.questions.length - 1 ? (
-            <Button title="Câu sau ›" variant="light" onPress={() => setIndex(index + 1)} style={{ flex: 1 }} />
+            <Button title="Câu sau" icon="chevron-forward" variant="soft" onPress={() => setIndex(index + 1)} style={{ flex: 1 }} />
           ) : (
             <Button title="Nộp bài" variant="success" onPress={confirmSubmit} loading={submitting} style={{ flex: 1 }} />
           )}

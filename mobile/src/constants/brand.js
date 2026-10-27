@@ -4,7 +4,7 @@ import Constants from "expo-constants";
 export const BRAND = {
   name: "SchoolHub",
   tagline: "Nền tảng quản lý trường học số",
-  developer: "vxphuongictu",
+  developer: "NVG",
   since: 2025,
   version: Constants.expoConfig?.version || "1.0.0",
 };

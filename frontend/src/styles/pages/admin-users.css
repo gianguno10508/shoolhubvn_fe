@@ -18,7 +18,7 @@
 .admin-eyebrow {
   margin-bottom: 5px;
   color: var(--primary);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: 1.6px;
 }
@@ -26,7 +26,7 @@
 .admin-page-header h2 {
   margin: 0 0 6px;
   color: var(--text);
-  font-size: 29px;
+  font-size: 1.8125rem;
   letter-spacing: -0.6px;
 }
 
@@ -60,7 +60,7 @@
 }
 
 .admin-refresh-btn > span {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 /* =========================================================
@@ -139,7 +139,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  font-size: 19px;
+  font-size: 1.1875rem;
 }
 
 .admin-stat-icon.blue {
@@ -171,7 +171,7 @@
 
 .admin-stat-card strong {
   color: var(--text);
-  font-size: 23px;
+  font-size: 1.4375rem;
 }
 
 /* =========================================================
@@ -265,7 +265,7 @@
 .admin-toolbar-title h3 {
   margin: 0 0 3px;
   color: var(--text);
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .admin-toolbar-title span {
@@ -292,7 +292,7 @@
   top: 50%;
   transform: translateY(-50%);
   color: var(--muted);
-  font-size: 19px;
+  font-size: 1.1875rem;
 }
 
 .admin-search input {
@@ -323,7 +323,7 @@
   background: transparent;
   color: var(--muted);
   cursor: pointer;
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 
 .admin-filters select,
@@ -366,7 +366,7 @@
   background: var(--gray-50);
   color: var(--text-3);
   text-align: left;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: 0.6px;
   white-space: nowrap;
@@ -685,12 +685,12 @@ form.admin-filters .btn {
 
 .admin-empty span {
   margin-bottom: 10px;
-  font-size: 30px;
+  font-size: 1.875rem;
 }
 
 .admin-empty strong {
   color: var(--text-2);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .admin-empty p {
@@ -729,7 +729,7 @@ form.admin-filters .btn {
   }
 
   .admin-page-header h2 {
-    font-size: 25px;
+    font-size: 1.5625rem;
   }
 
   .admin-stats {
@@ -748,7 +748,7 @@ form.admin-filters .btn {
   }
 
   .admin-stat-card strong {
-    font-size: 19px;
+    font-size: 1.1875rem;
   }
 
   .admin-filters {
@@ -836,7 +836,7 @@ form.admin-filters .btn {
   flex-shrink: 0;
   width: 18px;
   color: var(--muted);
-  font-size: 22px;
+  font-size: 1.375rem;
   line-height: 1;
   transition: transform var(--t-fast);
 }
@@ -905,7 +905,7 @@ form.admin-filters .btn {
 }
 
 .admin-empty-panel > span {
-  font-size: 28px;
+  font-size: 1.75rem;
 }
 
 @media (max-width: 1100px) {

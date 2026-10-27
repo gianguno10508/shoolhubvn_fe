@@ -38,7 +38,7 @@ button.assessment-menu-item:not(.active):hover {
   border-radius: 999px;
   background: var(--green-soft);
   color: var(--green-strong);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 
@@ -49,7 +49,7 @@ button.assessment-menu-item:not(.active):hover {
 
 .ai-muted {
   color: var(--text-3);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 /* Ô nhập trong form */
@@ -67,7 +67,7 @@ button.assessment-menu-item:not(.active):hover {
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .ai-exam .form-field textarea {
@@ -131,12 +131,12 @@ button.assessment-menu-item:not(.active):hover {
 }
 
 .ai-program strong {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .ai-program small {
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .ai-structure {
@@ -146,7 +146,7 @@ button.assessment-menu-item:not(.active):hover {
 .ai-structure-custom select {
   min-height: 36px;
   margin-top: 4px;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .ai-load-btn {
@@ -192,7 +192,7 @@ button.assessment-menu-item:not(.active):hover {
 
 .ai-chapter-head strong {
   flex: 1;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .ai-chapter-head em {
@@ -200,14 +200,14 @@ button.assessment-menu-item:not(.active):hover {
   border-radius: 6px;
   background: var(--surface);
   color: var(--text-3);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-style: normal;
   font-weight: 800;
 }
 
 .ai-chapter-head small {
   color: var(--primary);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -225,7 +225,7 @@ button.assessment-menu-item:not(.active):hover {
   padding: 7px 9px;
   border-radius: 8px;
   color: var(--text-2);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.4;
   cursor: pointer;
 }
@@ -262,7 +262,7 @@ button.assessment-menu-item:not(.active):hover {
 .ai-selected-count {
   margin-top: 12px;
   color: var(--text-2);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .ai-selected-count b {
@@ -288,7 +288,7 @@ button.assessment-menu-item:not(.active):hover {
 }
 
 .ai-block-head strong {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .ai-sum {
@@ -296,7 +296,7 @@ button.assessment-menu-item:not(.active):hover {
   border-radius: 999px;
   background: var(--red-soft);
   color: var(--red-strong);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 800;
 }
 
@@ -314,7 +314,7 @@ button.assessment-menu-item:not(.active):hover {
 .ai-ratio > span {
   display: block;
   margin-bottom: 6px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 
@@ -362,18 +362,18 @@ button.assessment-menu-item:not(.active):hover {
 
 .ai-preview span {
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
 .ai-preview strong {
   color: var(--primary-strong);
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 .ai-preview small {
   color: var(--text-2);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 /* Đang tạo đề */
@@ -450,7 +450,7 @@ button.assessment-menu-item:not(.active):hover {
 
 .ai-history-main small {
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 /* Kết quả */
@@ -465,13 +465,13 @@ button.assessment-menu-item:not(.active):hover {
 
 .ai-result-head h2 {
   margin: 0 0 4px;
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 
 .ai-result-head p {
   margin: 0;
   color: var(--text-3);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .ai-warnings {
@@ -484,7 +484,7 @@ button.assessment-menu-item:not(.active):hover {
   border-radius: 10px;
   background: var(--amber-soft);
   color: var(--amber-strong);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
 }
 
@@ -507,17 +507,17 @@ button.assessment-menu-item:not(.active):hover {
 
 .ai-level span {
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
 .ai-level strong {
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 .ai-level small {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .ai-level.nb { border-color: #16a34a; }
@@ -552,7 +552,7 @@ button.assessment-menu-item:not(.active):hover {
 .ai-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .ai-table th,
@@ -609,7 +609,7 @@ button.assessment-menu-item:not(.active):hover {
   display: block;
   margin-top: 3px;
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 /* Xem đề */
@@ -618,7 +618,7 @@ button.assessment-menu-item:not(.active):hover {
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.6;
 }
 
@@ -633,13 +633,13 @@ button.assessment-menu-item:not(.active):hover {
 
 .ai-paper-head span {
   color: var(--text-3);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .ai-paper h4 {
   margin: 18px 0 10px;
   color: var(--primary-strong);
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .ai-q {
@@ -653,7 +653,7 @@ button.assessment-menu-item:not(.active):hover {
 .ai-q-lesson {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .ai-options {
@@ -683,7 +683,7 @@ button.assessment-menu-item:not(.active):hover {
 
 .ai-statements em {
   margin-left: 6px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-style: normal;
   font-weight: 800;
 }
@@ -696,7 +696,7 @@ button.assessment-menu-item:not(.active):hover {
   margin-left: 4px;
   padding: 0 6px;
   border-radius: 5px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   vertical-align: middle;
 }
@@ -723,12 +723,12 @@ button.assessment-menu-item:not(.active):hover {
 
 .ai-answer-grid small {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .ai-answer-grid b {
   color: var(--primary-strong);
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .ai-tf-key {
@@ -744,7 +744,7 @@ button.assessment-menu-item:not(.active):hover {
   padding: 10px 12px;
   border-radius: 8px;
   background: var(--gray-50);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 @media (max-width: 760px) {

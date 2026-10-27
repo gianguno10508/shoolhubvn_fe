@@ -161,7 +161,7 @@
 
 .og-cloud {
   position: absolute;
-  font-size: 34px;
+  font-size: 2.125rem;
   opacity: 0.85;
   animation: og-cloud 26s linear infinite;
 }
@@ -174,7 +174,7 @@
 .og-cloud.c2 {
   top: 50px;
   left: 20%;
-  font-size: 24px;
+  font-size: 1.5rem;
   animation-duration: 38s;
 }
 
@@ -210,7 +210,7 @@
   position: absolute;
   bottom: 40px;
   z-index: 1;
-  font-size: 42px;
+  font-size: 2.625rem;
   line-height: 1;
   transform: translateX(-50%);
   transition: opacity 0.4s;
@@ -226,7 +226,7 @@
 }
 
 .og-finish {
-  font-size: 54px;
+  font-size: 3.375rem;
   transform: none;
 }
 
@@ -234,7 +234,7 @@
   position: absolute;
   bottom: 40px;
   z-index: 2;
-  font-size: 48px;
+  font-size: 3rem;
   line-height: 1;
   transform: translateX(-50%);
 }
@@ -304,7 +304,7 @@
   justify-content: center;
   background: rgba(15, 23, 42, 0.25);
   color: #fff;
-  font-size: 72px;
+  font-size: 4.5rem;
   font-weight: 900;
   text-shadow: 0 4px 18px rgba(15, 23, 42, 0.45);
 }
@@ -483,7 +483,7 @@
 
 .og-result-icon {
   display: block;
-  font-size: 56px;
+  font-size: 3.5rem;
 }
 
 .og-result h3 {
@@ -610,7 +610,7 @@
   position: absolute;
   top: 14px;
   right: 22px;
-  font-size: 38px;
+  font-size: 2.375rem;
   animation: og-spin 30s linear infinite;
 }
 
@@ -678,7 +678,7 @@
   position: absolute;
   top: 10px;
   right: 100%;
-  font-size: 28px;
+  font-size: 1.75rem;
   animation: og-trail 0.4s linear infinite;
 }
 
@@ -696,7 +696,7 @@
   left: 70px;
   z-index: 4;
   color: var(--green-strong);
-  font-size: 26px;
+  font-size: 1.625rem;
   font-weight: 900;
   white-space: nowrap;
   text-shadow:
@@ -710,7 +710,7 @@
   bottom: 70px;
   left: 50%;
   color: var(--orange);
-  font-size: 40px;
+  font-size: 2.5rem;
   animation-name: og-pop-center;
 }
 
@@ -718,7 +718,7 @@
   bottom: 100px;
   left: 50%;
   color: var(--primary-strong);
-  font-size: 28px;
+  font-size: 1.75rem;
   animation-name: og-pop-center;
 }
 
@@ -758,7 +758,7 @@
 
 @keyframes og-count {
   from {
-    font-size: 120px;
+    font-size: 7.5rem;
     opacity: 0.3;
   }
 }
@@ -822,13 +822,13 @@
 .og-progress-runner {
   position: absolute;
   top: 50%;
-  font-size: 18px;
+  font-size: 1.125rem;
   transform: translate(-50%, -60%) scaleX(-1);
   transition: left 0.9s linear;
 }
 
 .og-progress-flag {
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 /* ---------- Quyền trợ giúp ---------- */
@@ -880,7 +880,7 @@
   border: 1px solid currentColor;
   border-radius: 4px;
   font-family: inherit;
-  font-size: 11px;
+  font-size: 0.6875rem;
   opacity: 0.7;
 }
 
@@ -910,7 +910,7 @@
   justify-content: center;
   gap: 6px;
   margin: 4px 0 8px;
-  font-size: 40px;
+  font-size: 2.5rem;
   line-height: 1;
 }
 
@@ -1146,7 +1146,7 @@
   }
 
   .og-pop.combo {
-    font-size: 30px;
+    font-size: 1.875rem;
   }
 }
 
