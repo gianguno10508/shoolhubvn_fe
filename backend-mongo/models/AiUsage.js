@@ -7,7 +7,7 @@ const { Schema } = mongoose;
 const aiUsageSchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    kind: { type: String, enum: ["slides"], required: true },
+    kind: { type: String, enum: ["slides", "curriculum"], required: true }, // curriculum: AI liệt kê mục lục SGK để tạo đề
     ref: { type: Schema.Types.ObjectId, default: null }, // vd: giáo án được tạo slide
   },
   { timestamps: { createdAt: true, updatedAt: false } },

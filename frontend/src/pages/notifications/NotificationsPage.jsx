@@ -1,8 +1,9 @@
 // pages/notifications/NotificationsPage.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   deleteNotification,
+  downloadNotificationAttachment,
   emitNotificationsChanged,
   getNotificationAudiences,
   listNotifications,
@@ -13,6 +14,7 @@ import {
 } from "../../api/notifications";
 import { formatDateTimeVi, formatEventTime, timeAgo } from "../../utils/time";
 import { DateInput, TimeInput } from "../../components/DateInput";
+import { Bell, CheckCheck, Clock3, Download, Inbox, Loader2, Mail, Paperclip, PenSquare, Send, Undo2, X } from "lucide-react";
 
 /** Nhãn ngày giờ của thông báo; mờ đi khi thời điểm đã qua */
 function EventTime({ value }) {
@@ -20,8 +22,73 @@ function EventTime({ value }) {
   const past = new Date(value).getTime() < Date.now();
   return (
     <span className={"nt-when" + (past ? " past" : "")} title={past ? "Đã qua" : "Thời gian"}>
-      🕒 {formatEventTime(value)}
+      <Clock3 size={13} /> {formatEventTime(value)}
     </span>
+  );
+}
+
+const ATTACH_ACCEPT = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.rtf,.txt,.csv,.jpg,.jpeg,.png,.zip,.rar";
+const ATTACH_EXTS = ATTACH_ACCEPT.split(",").map((x) => x.slice(1));
+const MAX_FILES = 5;
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 25 * 1024 * 1024;
+
+function formatSize(bytes) {
+  if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+/** Nhãn loại tệp theo đuôi: PDF, DOC, XLS... */
+function fileKind(name) {
+  const ext = (name.split(".").pop() || "").toLowerCase();
+  if (ext === "pdf") return { label: "PDF", cls: "pdf" };
+  if (["doc", "docx", "odt", "rtf"].includes(ext)) return { label: "DOC", cls: "doc" };
+  if (["xls", "xlsx", "ods", "csv"].includes(ext)) return { label: "XLS", cls: "xls" };
+  if (["ppt", "pptx"].includes(ext)) return { label: "PPT", cls: "ppt" };
+  if (["jpg", "jpeg", "png"].includes(ext)) return { label: "ẢNH", cls: "img" };
+  if (["zip", "rar"].includes(ext)) return { label: "ZIP", cls: "zip" };
+  return { label: ext.toUpperCase().slice(0, 4) || "TỆP", cls: "" };
+}
+
+const readAsBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).replace(/^data:[^;]*;base64,/, ""));
+    reader.onerror = () => reject(new Error(`Không đọc được tệp ${file.name}.`));
+    reader.readAsDataURL(file);
+  });
+
+/** Danh sách tệp đính kèm của 1 thông báo, bấm để tải về */
+function Attachments({ notification, onError }) {
+  const [busy, setBusy] = useState(null);
+  if (!notification.attachments?.length) return null;
+
+  async function download(e, f) {
+    e.stopPropagation();
+    setBusy(f.id);
+    try {
+      await downloadNotificationAttachment(notification.id, f.id);
+    } catch (err) {
+      onError(err.message || "Không tải được tệp.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="nt-files">
+      {notification.attachments.map((f) => {
+        const kind = fileKind(f.name);
+        return (
+          <button key={f.id} type="button" className="nt-file" onClick={(e) => download(e, f)} disabled={busy === f.id} title="Tải về">
+            <span className={"nt-file-ext " + kind.cls}>{kind.label}</span>
+            <span className="nt-file-name">{f.name}</span>
+            <small>{formatSize(f.size)}</small>
+            <span className="nt-file-dl">{busy === f.id ? <Loader2 size={16} className="ai-spin-icon" /> : <Download size={16} />}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -125,7 +192,9 @@ export default function NotificationsPage() {
       {toast && <div className={"toast" + (toast.error ? " toast-error" : "")}>{toast.msg}</div>}
 
       <div className="page-head">
-        <span className="page-head-icon nt-icon">🔔</span>
+        <span className="page-head-icon nt-icon">
+          <Bell size={24} />
+        </span>
         <div>
           <h2>Thông báo</h2>
           <p>
@@ -139,7 +208,7 @@ export default function NotificationsPage() {
         <div className="spacer" />
         {canSend && (
           <button className="btn btn-primary" onClick={() => setComposing(true)}>
-            ✎ Soạn thông báo
+            <PenSquare size={16} /> Soạn thông báo
           </button>
         )}
       </div>
@@ -147,17 +216,17 @@ export default function NotificationsPage() {
       <div className="nt-toolbar">
         <div className="tabs">
           <button className={"tab" + (tab === "inbox" ? " active" : "")} onClick={() => setTab("inbox")}>
-            Hộp thư đến {unread > 0 && <span className="nt-count">{unread}</span>}
+            <Inbox size={15} /> Hộp thư đến {unread > 0 && <span className="nt-count">{unread}</span>}
           </button>
           {canSend && (
             <button className={"tab" + (tab === "sent" ? " active" : "")} onClick={() => setTab("sent")}>
-              Đã gửi
+              <Send size={15} /> Đã gửi
             </button>
           )}
         </div>
         {tab === "inbox" && unread > 0 && (
           <button className="btn btn-sm btn-light" onClick={readAll}>
-            ✓ Đánh dấu đã đọc tất cả
+            <CheckCheck size={15} /> Đánh dấu đã đọc tất cả
           </button>
         )}
       </div>
@@ -175,7 +244,9 @@ export default function NotificationsPage() {
           {inbox === null && <p className="as-empty">Đang tải...</p>}
           {inbox?.length === 0 && (
             <div className="as-empty">
-              <span>📭</span>
+              <span>
+                <Inbox size={34} />
+              </span>
               <strong>Chưa có thông báo nào</strong>
             </div>
           )}
@@ -194,6 +265,11 @@ export default function NotificationsPage() {
                       {!n.read && <span className="nt-dot" />}
                       {n.priority === "important" && <em className="nt-flag">Quan trọng</em>}
                       <strong>{n.title}</strong>
+                      {n.attachments?.length > 0 && (
+                        <span className="nt-clip" title={`${n.attachments.length} tệp đính kèm`}>
+                          <Paperclip size={13} /> {n.attachments.length}
+                        </span>
+                      )}
                     </span>
                     <EventTime value={n.eventAt} />
                     <span className="nt-item-meta">
@@ -205,7 +281,12 @@ export default function NotificationsPage() {
                 </button>
                 {open && (
                   <div className="nt-body">
-                    {n.body ? n.body.split("\n").map((line, i) => <p key={i}>{line || " "}</p>) : <p className="muted">(Không có nội dung)</p>}
+                    {n.body ? (
+                      n.body.split("\n").map((line, i) => <p key={i}>{line || " "}</p>)
+                    ) : !n.attachments?.length ? (
+                      <p className="muted">(Không có nội dung)</p>
+                    ) : null}
+                    <Attachments notification={n} onError={(msg) => showToast(msg, true)} />
                     <small>Gửi lúc {formatDateTimeVi(n.createdAt)}</small>
                   </div>
                 )}
@@ -221,7 +302,9 @@ export default function NotificationsPage() {
           {sent === null && <p className="as-empty">Đang tải...</p>}
           {sent?.length === 0 && (
             <div className="as-empty">
-              <span>✉️</span>
+              <span>
+                <Mail size={34} />
+              </span>
               <strong>Bạn chưa gửi thông báo nào</strong>
             </div>
           )}
@@ -240,6 +323,7 @@ export default function NotificationsPage() {
                       Gửi tới {n.audienceLabel} · {formatDateTimeVi(n.createdAt)}
                     </span>
                     {n.body && <span className="nt-excerpt">{n.body}</span>}
+                    <Attachments notification={n} onError={(msg) => showToast(msg, true)} />
                     <span className="nt-read">
                       <span className="as-progress-bar">
                         <span style={{ width: `${percent}%` }} />
@@ -250,7 +334,7 @@ export default function NotificationsPage() {
                     </span>
                   </span>
                   <button className="btn btn-sm btn-danger" onClick={() => revoke(n)}>
-                    Thu hồi
+                    <Undo2 size={14} /> Thu hồi
                   </button>
                 </div>
               </article>
@@ -285,8 +369,38 @@ function ComposeModal({ audiences, onClose, onSent }) {
   const [priority, setPriority] = useState("normal");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const fileInput = useRef(null);
+
+  function addFiles(list) {
+    setError("");
+    const next = [...files];
+    for (const f of list) {
+      const ext = (f.name.split(".").pop() || "").toLowerCase();
+      if (!ATTACH_EXTS.includes(ext)) {
+        setError(`Tệp “${f.name}” không được hỗ trợ. Chỉ nhận PDF, Word, Excel, PowerPoint, ảnh, TXT, ZIP.`);
+        continue;
+      }
+      if (f.size > MAX_FILE_BYTES) {
+        setError(`Tệp “${f.name}” quá lớn (tối đa 10MB mỗi tệp).`);
+        continue;
+      }
+      if (next.some((x) => x.name === f.name && x.size === f.size)) continue;
+      if (next.length >= MAX_FILES) {
+        setError(`Tối đa ${MAX_FILES} tệp đính kèm.`);
+        break;
+      }
+      if (next.reduce((sum, x) => sum + x.size, 0) + f.size > MAX_TOTAL_BYTES) {
+        setError("Tổng dung lượng tệp đính kèm tối đa 25MB.");
+        break;
+      }
+      next.push(f);
+    }
+    setFiles(next);
+    if (fileInput.current) fileInput.current.value = "";
+  }
 
   const toggle = (list, setList, v) => setList(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
@@ -298,7 +412,8 @@ function ComposeModal({ audiences, onClose, onSent }) {
     const eventAt = date ? new Date(`${date}T${time}`).toISOString() : null;
     setBusy(true);
     try {
-      const n = await sendNotification({ title, body, priority, eventAt, audience: { type, roles, classIds } });
+      const attachments = await Promise.all(files.map(async (f) => ({ name: f.name, data: await readAsBase64(f) })));
+      const n = await sendNotification({ title, body, priority, eventAt, audience: { type, roles, classIds }, attachments });
       onSent(n);
     } catch (err) {
       setError(err.message || "Không gửi được thông báo.");
@@ -310,9 +425,11 @@ function ComposeModal({ audiences, onClose, onSent }) {
     <div className="modal-backdrop" onClick={() => !busy && onClose()}>
       <form className="modal nt-compose" onClick={(e) => e.stopPropagation()} onSubmit={submit}>
         <div className="modal-head">
-          <h3>Soạn thông báo</h3>
+          <h3>
+            <PenSquare size={20} /> Soạn thông báo
+          </h3>
           <button type="button" className="nt-close" onClick={onClose} aria-label="Đóng">
-            ×
+            <X size={18} />
           </button>
         </div>
 
@@ -394,6 +511,48 @@ function ComposeModal({ audiences, onClose, onSent }) {
           </div>
           {date && time && <small className="nt-when-preview">🕒 {formatEventTime(`${date}T${time}`)}</small>}
         </div>
+        <div className="field">
+          <span>Tệp đính kèm — không bắt buộc</span>
+          <div
+            className="nt-attach-drop"
+            onClick={() => fileInput.current?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              addFiles(Array.from(e.dataTransfer.files || []));
+            }}
+          >
+            <input ref={fileInput} type="file" multiple hidden accept={ATTACH_ACCEPT} onChange={(e) => addFiles(Array.from(e.target.files || []))} />
+            <Paperclip size={20} className="nt-attach-icon" />
+            <span>
+              <b>Chọn tệp</b> hoặc kéo thả vào đây
+            </span>
+            <small>PDF, Word, Excel, PowerPoint, ảnh, ZIP · tối đa {MAX_FILES} tệp, 10MB/tệp</small>
+          </div>
+          {files.length > 0 && (
+            <div className="nt-files">
+              {files.map((f, i) => {
+                const kind = fileKind(f.name);
+                return (
+                  <div key={f.name + f.size} className="nt-file">
+                    <span className={"nt-file-ext " + kind.cls}>{kind.label}</span>
+                    <span className="nt-file-name">{f.name}</span>
+                    <small>{formatSize(f.size)}</small>
+                    <button
+                      type="button"
+                      className="nt-file-remove"
+                      onClick={() => setFiles(files.filter((_, j) => j !== i))}
+                      aria-label={`Bỏ ${f.name}`}
+                      disabled={busy}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
         <label className="nt-important">
           <input type="checkbox" checked={priority === "important"} onChange={(e) => setPriority(e.target.checked ? "important" : "normal")} />
           Đánh dấu <b>quan trọng</b>
@@ -411,7 +570,8 @@ function ComposeModal({ audiences, onClose, onSent }) {
             Hủy
           </button>
           <button className="btn btn-primary" type="submit" disabled={busy || !title.trim()}>
-            {busy ? "Đang gửi..." : "Gửi thông báo"}
+            {busy ? <Loader2 size={16} className="ai-spin-icon" /> : <Send size={16} />}
+            {busy ? (files.length ? "Đang tải tệp lên..." : "Đang gửi...") : "Gửi thông báo"}
           </button>
         </div>
       </form>

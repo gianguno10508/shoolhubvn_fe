@@ -2,6 +2,7 @@
 import { Alert, StyleSheet, Text, View } from "react-native";
 import { Body, Button, Card, Muted, Screen } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
+import AppFooter from "../components/AppFooter";
 import { colors, space } from "../theme";
 import { formatDate, ROLE_LABEL } from "../utils/format";
 
@@ -55,6 +56,7 @@ export default function AccountScreen({ navigation }) {
       <Button title="✏️ Đổi thông tin cá nhân" variant="light" onPress={() => navigation.navigate("EditProfile")} style={styles.btn} />
       <Button title="🔑 Đổi mật khẩu" variant="light" onPress={() => navigation.navigate("ChangePassword")} style={styles.btn} />
       <Button title="Đăng xuất" variant="danger" onPress={confirmLogout} style={styles.btn} />
+      <AppFooter />
     </Screen>
   );
 }

@@ -31,6 +31,16 @@ const notificationSchema = new Schema(
     },
     audienceLabel: { type: String, default: "" }, // "Toàn trường", "Lớp 10A1, 10A2"…
     recipientCount: { type: Number, default: 0 },
+
+    // Tệp đính kèm (không bắt buộc) — nội dung tệp nằm ở NotificationAttachment cùng _id
+    attachments: [
+      {
+        _id: { type: Schema.Types.ObjectId, required: true },
+        name: { type: String, required: true },
+        mimeType: { type: String, default: "" },
+        size: { type: Number, default: 0 },
+      },
+    ],
   },
   { timestamps: true },
 );

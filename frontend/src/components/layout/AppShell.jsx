@@ -5,7 +5,23 @@ import { useAuth } from "../../context/AuthContext";
 import useUnreadCount from "../../hooks/useUnreadCount";
 import { buildNav, pageTitle } from "../../utils/navigation";
 import { ROLE_LABEL, homePath, isVipLocked } from "../../utils/permissions";
+import {
+  ChevronDown,
+  ChevronsLeft,
+  ChevronsRight,
+  Crown,
+  KeyRound,
+  LifeBuoy,
+  Lock,
+  LogOut,
+  Menu,
+  Star,
+  UserRound,
+} from "lucide-react";
 import NotificationBell from "../notifications/NotificationBell";
+import BrandLogo from "../common/BrandLogo";
+import AppFooter from "./AppFooter";
+import { BRAND } from "../../constants/brand";
 
 const COLLAPSE_KEY = "tkb_sidebar_collapsed";
 
@@ -66,9 +82,9 @@ export default function AppShell() {
     <div className={"shell" + (compact ? " compact" : "") + (drawer ? " drawer-open" : "")}>
       <aside className="shell-side">
         <NavLink to={homePath(user)} className="shell-brand">
-          <span className="shell-logo">S</span>
+          <BrandLogo size={36} className="shell-logo" />
           <span className="shell-brand-text">
-            <strong>SchoolHub</strong>
+            <strong>{BRAND.name}</strong>
             <small>{user?.school?.name || "Quản trị hệ thống"}</small>
           </span>
         </NavLink>
@@ -85,9 +101,15 @@ export default function AppShell() {
                   title={compact ? item.label : undefined}
                   className={({ isActive }) => "shell-link" + (isActive ? " active" : "")}
                 >
-                  <span className="shell-icon">{item.icon}</span>
+                  <span className="shell-icon">
+                    <item.icon size={18} strokeWidth={2} />
+                  </span>
                   <span className="shell-label">{item.label}</span>
-                  {locked && item.to !== "/lien-he" && <span className="shell-lock">🔒</span>}
+                  {locked && item.to !== "/lien-he" && (
+                    <span className="shell-lock">
+                      <Lock size={12} />
+                    </span>
+                  )}
                   {item.badge === "unread" && unread > 0 && <span className="shell-badge">{unread > 99 ? "99+" : unread}</span>}
                 </NavLink>
               ))}
@@ -98,12 +120,12 @@ export default function AppShell() {
         <div className="shell-side-foot">
           {user?.school && (
             <div className={"shell-vip" + (user.isVip ? " on" : "")} title={user.isVip ? "Trường đang dùng VIP" : "Trường chưa có VIP"}>
-              <span>{user.isVip ? "★" : "☆"}</span>
+              <span className="shell-icon">{user.isVip ? <Crown size={17} /> : <Star size={17} />}</span>
               <span className="shell-label">{user.isVip ? "Trường VIP" : "Chưa có VIP"}</span>
             </div>
           )}
           <button className="shell-collapse" onClick={toggleCollapsed} title={collapsed ? "Mở rộng menu" : "Thu gọn menu"}>
-            <span className="shell-icon">{collapsed ? "»" : "«"}</span>
+            <span className="shell-icon">{collapsed ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}</span>
             <span className="shell-label">Thu gọn menu</span>
           </button>
         </div>
@@ -114,7 +136,7 @@ export default function AppShell() {
       <div className="shell-main">
         <header className="shell-top">
           <button className="shell-burger" onClick={() => setDrawer(true)} aria-label="Mở menu">
-            ☰
+            <Menu size={20} />
           </button>
           <h1 className="shell-title">{pageTitle(location.pathname)}</h1>
           <div className="spacer" />
@@ -131,7 +153,7 @@ export default function AppShell() {
                   {user?.className ? ` · ${user.className}` : ""}
                 </small>
               </span>
-              <span className="shell-caret">▾</span>
+              <ChevronDown size={15} className="shell-caret" />
             </button>
             {menuOpen && (
               <div className="shell-menu">
@@ -141,13 +163,13 @@ export default function AppShell() {
                   {user?.school && <span>{user.school.name}</span>}
                 </div>
                 <NavLink to="/ca-nhan" className="shell-menu-item" onClick={() => setMenuOpen(false)}>
-                  👤 Thông tin cá nhân & mật khẩu
+                  <UserRound size={16} /> Thông tin cá nhân & mật khẩu
                 </NavLink>
                 <NavLink to="/lien-he" className="shell-menu-item" onClick={() => setMenuOpen(false)}>
-                  💬 Liên hệ hỗ trợ
+                  <LifeBuoy size={16} /> Liên hệ hỗ trợ
                 </NavLink>
                 <button className="shell-menu-item danger" onClick={logout}>
-                  ⎋ Đăng xuất
+                  <LogOut size={16} /> Đăng xuất
                 </button>
               </div>
             )}
@@ -157,13 +179,16 @@ export default function AppShell() {
         <main className="shell-content">
           {user?.mustChangePassword && location.pathname !== "/ca-nhan" && (
             <div className="pf-banner">
-              <span>🔐</span>
+              <KeyRound size={18} />
               Bạn đang dùng mật khẩu mặc định do nhà trường cấp — hãy đổi mật khẩu để bảo mật tài khoản.
               <NavLink to="/ca-nhan">Đổi mật khẩu →</NavLink>
             </div>
           )}
-          <Outlet />
+          <div className="shell-page" key={location.pathname}>
+            <Outlet />
+          </div>
         </main>
+        {!/^\/tkb\/.+/.test(location.pathname) && <AppFooter />}
       </div>
     </div>
   );

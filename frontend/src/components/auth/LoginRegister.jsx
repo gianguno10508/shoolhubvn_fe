@@ -3,6 +3,23 @@ import { useAuth } from "../../context/AuthContext";
 import Field from "../common/Field";
 import PasswordChecklist from "../common/PasswordChecklist";
 import { passwordError } from "../../utils/passwordPolicy";
+import {
+  ArrowRight,
+  BellRing,
+  CalendarDays,
+  ClipboardCheck,
+  Eye,
+  EyeOff,
+  LockKeyhole,
+  School,
+  ShieldCheck,
+  Sparkles,
+  UserRound,
+  UserRoundPen,
+} from "lucide-react";
+import BrandLogo from "../common/BrandLogo";
+import AppFooter from "../layout/AppFooter";
+import { BRAND } from "../../constants/brand";
 
 export default function LoginRegister() {
   const { login, register } = useAuth();
@@ -95,35 +112,46 @@ export default function LoginRegister() {
       <div className="auth-container">
         {/* Brand / intro */}
         <div className="auth-intro">
-          <div className="auth-logo">
-            <span>📅</span>
+          <div className="auth-brand">
+            <BrandLogo size={52} />
+            <span>{BRAND.name}</span>
           </div>
 
           <h1>
-            Thời khóa biểu
+            Nền tảng quản lý
             <br />
-            <span>thông minh</span>
+            <span>trường học số</span>
           </h1>
 
-          <p>
-            Quản lý và xây dựng thời khóa biểu thuận tiện, nhanh chóng và hiệu
-            quả.
-          </p>
+          <p>{BRAND.description}</p>
 
           <div className="auth-features">
             <div>
-              <span>✓</span>
-              Dữ liệu được lưu riêng
+              <span>
+                <CalendarDays size={16} />
+              </span>
+              Xếp thời khóa biểu tự động, áp dụng cho cả trường
             </div>
 
             <div>
-              <span>✓</span>
-              Sử dụng trên nhiều thiết bị
+              <span>
+                <ClipboardCheck size={16} />
+              </span>
+              Giao bài tập, trộn đề, tạo đề kiểm tra với AI
             </div>
 
             <div>
-              <span>✓</span>
-              Hỗ trợ nâng cấp tài khoản VIP
+              <span>
+                <Sparkles size={16} />
+              </span>
+              Soạn giáo án và slide bài giảng bằng AI
+            </div>
+
+            <div>
+              <span>
+                <BellRing size={16} />
+              </span>
+              Thông báo tức thì tới giáo viên, học sinh trên app
             </div>
           </div>
         </div>
@@ -132,7 +160,9 @@ export default function LoginRegister() {
         <div className="auth-card">
           {/* Header */}
           <div className="auth-card-header">
-            <div className="auth-mobile-logo">📅</div>
+            <div className="auth-mobile-logo">
+              <BrandLogo size={48} />
+            </div>
 
             <span className="auth-card-label">
               {isLogin ? "CHÀO MỪNG QUAY TRỞ LẠI" : "BẮT ĐẦU SỬ DỤNG"}
@@ -154,7 +184,9 @@ export default function LoginRegister() {
               <label>Tên đăng nhập</label>
 
               <div className="auth-input-wrap">
-                <span className="auth-input-icon">👤</span>
+                <span className="auth-input-icon">
+                  <UserRound size={18} />
+                </span>
 
                 <input
                   type="text"
@@ -176,7 +208,9 @@ export default function LoginRegister() {
               </div>
 
               <div className="auth-input-wrap">
-                <span className="auth-input-icon">🔒</span>
+                <span className="auth-input-icon">
+                  <LockKeyhole size={18} />
+                </span>
 
                 <input
                   type={showPassword ? "text" : "password"}
@@ -194,7 +228,7 @@ export default function LoginRegister() {
                   tabIndex="-1"
                   aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                 >
-                  {showPassword ? "🙈" : "👁️"}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
               {!isLogin && <PasswordChecklist password={form.password} />}
@@ -207,7 +241,9 @@ export default function LoginRegister() {
                   <label>Họ và tên</label>
 
                   <div className="auth-input-wrap">
-                    <span className="auth-input-icon">✨</span>
+                    <span className="auth-input-icon">
+                      <UserRoundPen size={18} />
+                    </span>
 
                     <input
                       type="text"
@@ -224,7 +260,9 @@ export default function LoginRegister() {
                   <label>Trường học</label>
 
                   <div className="auth-input-wrap">
-                    <span className="auth-input-icon">🏫</span>
+                    <span className="auth-input-icon">
+                      <School size={18} />
+                    </span>
 
                     <input
                       type="text"
@@ -258,7 +296,7 @@ export default function LoginRegister() {
                 <>
                   {isLogin ? "Đăng nhập" : "Tạo tài khoản"}
 
-                  <span className="submit-arrow">→</span>
+                  <ArrowRight size={18} className="submit-arrow" />
                 </>
               )}
             </button>
@@ -275,11 +313,13 @@ export default function LoginRegister() {
 
           {/* Bottom note */}
           <div className="auth-security">
-            <span>🔐</span>
+            <ShieldCheck size={16} />
             <span>Thông tin tài khoản được bảo mật</span>
           </div>
         </div>
       </div>
+
+      <AppFooter compact />
     </div>
   );
 }

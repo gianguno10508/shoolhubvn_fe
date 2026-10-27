@@ -1,4 +1,7 @@
 import { useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { ClipboardCheck, Shuffle, Sparkles } from "lucide-react";
+import AiExamPanel from "./aiExam/AiExamPanel";
 
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
@@ -570,6 +573,13 @@ async function downloadAllFiles(exams, setExporting, setExportProgress) {
 export default function ShuffleExamPage() {
   const fileInputRef = useRef(null);
 
+  // Chế độ: trộn đề từ PDF hoặc tạo đề với AI (?che-do=ai)
+  const [params, setParams] = useSearchParams();
+
+  const aiMode = params.get("che-do") === "ai";
+
+  const setAiMode = (on) => setParams(on ? { "che-do": "ai" } : {}, { replace: true });
+
   const [file, setFile] = useState(null);
 
   const [questions, setQuestions] = useState([]);
@@ -683,6 +693,23 @@ export default function ShuffleExamPage() {
     processFile(droppedFile);
   }
 
+  /* Nhận phần trắc nghiệm của đề AI để trộn thành nhiều mã đề */
+  function loadAiQuestions(aiQuestions, title) {
+    setError("");
+
+    setFile({ name: `${title} (đề tạo bằng AI)`, size: 0, fromAi: true });
+
+    setQuestions(aiQuestions);
+
+    setExams([]);
+
+    setActiveExamIndex(0);
+
+    setAiMode(false);
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function removeFile() {
     setFile(null);
 
@@ -790,18 +817,19 @@ export default function ShuffleExamPage() {
           <span className="breadcrumb-arrow">/</span>
           <strong>Kiểm tra & Đánh giá</strong>
           <span className="breadcrumb-arrow">/</span>
-          <strong>Trộn đề</strong>
+          <strong>{aiMode ? "Tạo đề với AI" : "Trộn đề"}</strong>
         </div>
 
         <div className="header-main">
           <div>
             <div className="header-eyebrow">KIỂM TRA & ĐÁNH GIÁ</div>
 
-            <h1>Trộn đề kiểm tra</h1>
+            <h1>{aiMode ? "Tạo đề với AI" : "Trộn đề kiểm tra"}</h1>
 
             <p>
-              Tải đề PDF, tự động đảo câu hỏi và phương án để tạo nhiều mã đề
-              khác nhau.
+              {aiMode
+                ? "Chọn khối, môn, bộ sách và các bài; AI lập ma trận, bản đặc tả và soạn đề kèm đáp án."
+                : "Tải đề PDF, tự động đảo câu hỏi và phương án để tạo nhiều mã đề khác nhau."}
             </p>
           </div>
 
@@ -816,7 +844,7 @@ export default function ShuffleExamPage() {
           ERROR
       ================================================= */}
 
-      {error && (
+      {error && !aiMode && (
         <div className="shuffle-alert">
           <div className="alert-icon">!</div>
 
@@ -841,7 +869,9 @@ export default function ShuffleExamPage() {
 
         <aside className="shuffle-sidebar">
           <div className="sidebar-heading">
-            <div className="sidebar-logo">✓</div>
+            <div className="sidebar-logo">
+              <ClipboardCheck size={20} />
+            </div>
 
             <div>
               <strong>Kiểm tra</strong>
@@ -853,27 +883,39 @@ export default function ShuffleExamPage() {
           <div className="sidebar-label">CHỨC NĂNG</div>
 
           <div className="assessment-menu">
-            <div className="assessment-menu-item active">
-              <span className="menu-icon">🔀</span>
+            <button
+              type="button"
+              className={`assessment-menu-item ${aiMode ? "" : "active"}`}
+              onClick={() => setAiMode(false)}
+            >
+              <span className="menu-icon">
+                <Shuffle size={17} />
+              </span>
 
               <div>
                 <strong>Trộn đề</strong>
 
                 <small>Tạo nhiều mã đề</small>
               </div>
-            </div>
+            </button>
 
-            <div className="assessment-menu-item disabled">
-              <span className="menu-icon">✨</span>
+            <button
+              type="button"
+              className={`assessment-menu-item ${aiMode ? "active" : ""}`}
+              onClick={() => setAiMode(true)}
+            >
+              <span className="menu-icon">
+                <Sparkles size={17} />
+              </span>
 
               <div>
                 <strong>Tạo đề với AI</strong>
 
-                <small>Sắp ra mắt</small>
+                <small>Ma trận, đặc tả, đề</small>
               </div>
 
               <span className="coming-soon">AI</span>
-            </div>
+            </button>
           </div>
 
           <div className="menu-divider" />
@@ -884,14 +926,20 @@ export default function ShuffleExamPage() {
             <strong>Cách sử dụng</strong>
 
             <p>
-              Tải đề PDF → Kiểm tra đáp án → Chọn cấu hình → Tạo mã đề → Tải
-              file.
+              {aiMode
+                ? "Chọn chương trình & sách → Chọn bài → Cấu hình tỉ lệ, cấu trúc → Tạo đề → Tải Word hoặc trộn đề."
+                : "Tải đề PDF → Kiểm tra đáp án → Chọn cấu hình → Tạo mã đề → Tải file."}
             </p>
           </div>
         </aside>
 
         {/* MAIN */}
 
+        {aiMode ? (
+          <main className="shuffle-content">
+            <AiExamPanel onUseForShuffle={loadAiQuestions} />
+          </main>
+        ) : (
         <main className="shuffle-content">
           {/* =================================================
               STEP 1
@@ -945,7 +993,11 @@ export default function ShuffleExamPage() {
                 <div className="file-info">
                   <strong>{file.name}</strong>
 
-                  <span>{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                  <span>
+                    {file.fromAi
+                      ? "Phần trắc nghiệm của đề AI"
+                      : `${(file.size / 1024 / 1024).toFixed(2)} MB`}
+                  </span>
                 </div>
 
                 <div className="file-result">
@@ -1417,6 +1469,7 @@ export default function ShuffleExamPage() {
             </div>
           )}
         </main>
+        )}
       </div>
 
       {/* =================================================

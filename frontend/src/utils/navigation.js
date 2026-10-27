@@ -1,5 +1,19 @@
 // utils/navigation.js — menu chính theo chức danh
 import {
+  Bell,
+  BookOpenCheck,
+  CalendarDays,
+  ClipboardCheck,
+  Dices,
+  LayoutDashboard,
+  MessageCircleQuestion,
+  ShieldCheck,
+  Shuffle,
+  Sparkles,
+  Trophy,
+  Users,
+} from "lucide-react";
+import {
   canAccessDiscipline,
   canAccessSchoolUsers,
   canManageAssignments,
@@ -10,7 +24,7 @@ import {
   isLearner,
 } from "./permissions";
 
-/** Trả về các nhóm menu: [{ title, items: [{ to, label, icon, end?, badge? }] }] */
+/** Trả về các nhóm menu: [{ title, items: [{ to, label, icon (component lucide), end?, badge? }] }] */
 export function buildNav(user) {
   if (!user) return [];
   const hasSchool = !!user.schoolId;
@@ -19,41 +33,41 @@ export function buildNav(user) {
     return [
       {
         title: "Học tập",
-        items: [{ to: "/bai-tap", label: "Bài tập", icon: "📚" }],
+        items: [{ to: "/bai-tap", label: "Bài tập", icon: BookOpenCheck }],
       },
-      { title: "Liên lạc", items: [{ to: "/thong-bao", label: "Thông báo", icon: "🔔", badge: "unread" }] },
-      { title: "Hỗ trợ", items: [{ to: "/lien-he", label: "Liên hệ", icon: "💬" }] },
+      { title: "Liên lạc", items: [{ to: "/thong-bao", label: "Thông báo", icon: Bell, badge: "unread" }] },
+      { title: "Hỗ trợ", items: [{ to: "/lien-he", label: "Liên hệ", icon: MessageCircleQuestion }] },
     ];
   }
 
   const groups = [
     {
       title: "Tổng quan",
-      items: [...(hasSchool ? [{ to: "/giao-vien", label: "Trang chủ", icon: "🏠", end: true }] : [])],
+      items: [...(hasSchool ? [{ to: "/giao-vien", label: "Trang chủ", icon: LayoutDashboard, end: true }] : [])],
     },
     {
       title: "Giảng dạy",
       items: [
-        ...(canManageTimetables(user) || isAdmin(user) ? [{ to: "/tkb", label: "Thời khóa biểu", icon: "🗓️" }] : []),
-        ...(hasSchool && canManageAssignments(user) ? [{ to: "/giao-vien/bai-tap", label: "Bài tập & Tự chấm", icon: "📝" }] : []),
-        ...(hasPermission(user, "exam.manage") ? [{ to: "/giao-vien/tron-de", label: "Trộn đề kiểm tra", icon: "🔀" }] : []),
-        ...(canManageAssignments(user) ? [{ to: "/giao-vien/goi-ten", label: "Gọi tên ngẫu nhiên", icon: "🎲" }] : []),
-        ...(canMakeLessonPlans(user) ? [{ to: "/giao-vien/giao-an", label: "Giáo án AI", icon: "📖" }] : []),
-        ...(hasSchool && canAccessDiscipline(user) ? [{ to: "/thi-dua", label: "Thi đua & Nề nếp", icon: "🏆" }] : []),
+        ...(canManageTimetables(user) || isAdmin(user) ? [{ to: "/tkb", label: "Thời khóa biểu", icon: CalendarDays }] : []),
+        ...(hasSchool && canManageAssignments(user) ? [{ to: "/giao-vien/bai-tap", label: "Bài tập & Tự chấm", icon: ClipboardCheck }] : []),
+        ...(hasPermission(user, "exam.manage") ? [{ to: "/giao-vien/tron-de", label: "Trộn đề kiểm tra", icon: Shuffle }] : []),
+        ...(canManageAssignments(user) ? [{ to: "/giao-vien/goi-ten", label: "Gọi tên ngẫu nhiên", icon: Dices }] : []),
+        ...(canMakeLessonPlans(user) ? [{ to: "/giao-vien/giao-an", label: "Giáo án AI", icon: Sparkles }] : []),
+        ...(hasSchool && canAccessDiscipline(user) ? [{ to: "/thi-dua", label: "Thi đua & Nề nếp", icon: Trophy }] : []),
       ],
     },
     {
       title: "Liên lạc",
-      items: hasSchool ? [{ to: "/thong-bao", label: "Thông báo", icon: "🔔", badge: "unread" }] : [],
+      items: hasSchool ? [{ to: "/thong-bao", label: "Thông báo", icon: Bell, badge: "unread" }] : [],
     },
     {
       title: "Quản lý",
       items: [
-        ...(canAccessSchoolUsers(user) ? [{ to: "/truong/tai-khoan", label: "Tài khoản trường", icon: "👥" }] : []),
-        ...(isAdmin(user) ? [{ to: "/admin/users", label: "Quản trị hệ thống", icon: "🛡️" }] : []),
+        ...(canAccessSchoolUsers(user) ? [{ to: "/truong/tai-khoan", label: "Tài khoản trường", icon: Users }] : []),
+        ...(isAdmin(user) ? [{ to: "/admin/users", label: "Quản trị hệ thống", icon: ShieldCheck }] : []),
       ],
     },
-    { title: "Hỗ trợ", items: [{ to: "/lien-he", label: "Liên hệ & nâng cấp", icon: "💬" }] },
+    { title: "Hỗ trợ", items: [{ to: "/lien-he", label: "Liên hệ & nâng cấp", icon: MessageCircleQuestion }] },
   ];
   return groups.filter((g) => g.items.length);
 }

@@ -86,6 +86,8 @@ export const api = {
   audiences: () => apiFetch("/notifications/audiences"),
   sendNotification: (body) => apiFetch("/notifications", { method: "POST", body }),
   sentNotifications: () => apiFetch("/notifications/sent"),
+  /** Link tải tệp đính kèm (hết hạn sau ít phút) → { path, name }; ghép với BASE_URL */
+  attachmentLink: (id, fileId) => apiFetch(`/notifications/${id}/attachments/${fileId}/link`),
 
   /* ---------- Thi đua ---------- */
   disciplineConfig: () => apiFetch("/discipline/config"),

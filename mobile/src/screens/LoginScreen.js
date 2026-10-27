@@ -5,6 +5,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BASE_URL } from "../api/client";
 import { Button, ErrorBox, Field, Muted } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
+import AppFooter from "../components/AppFooter";
+import { BRAND } from "../constants/brand";
 import { colors, radius, space } from "../theme";
 
 export default function LoginScreen() {
@@ -31,9 +33,9 @@ export default function LoginScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
           <View style={styles.logo}>
-            <Text style={styles.logoIcon}>🏫</Text>
+            <Text style={styles.logoIcon}>🎓</Text>
           </View>
-          <Text style={styles.title}>SchoolHub</Text>
+          <Text style={styles.title}>{BRAND.name}</Text>
           <Muted style={styles.subtitle}>Đăng nhập bằng tài khoản nhà trường cấp cho bạn</Muted>
 
           <View style={styles.card}>
@@ -59,6 +61,7 @@ export default function LoginScreen() {
             <Button title="Đăng nhập" onPress={submit} loading={busy} />
           </View>
           <Muted style={styles.server}>Máy chủ: {BASE_URL}</Muted>
+          <AppFooter />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

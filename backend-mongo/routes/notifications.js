@@ -1,6 +1,9 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 const Notification = require("../models/Notification");
 const NotificationReceipt = require("../models/NotificationReceipt");
+const NotificationAttachment = require("../models/NotificationAttachment");
 const User = require("../models/User");
 const Class = require("../models/Class");
 const auth = require("../middleware/auth");
@@ -23,6 +26,67 @@ const ROLE_LABEL = {
   youth_union: "Đoàn thanh niên",
   student: "Học sinh",
 };
+
+/* ----- Tệp đính kèm ----- */
+
+const MAX_FILES = 5;
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 25 * 1024 * 1024;
+const FILE_TYPES = {
+  pdf: "application/pdf",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xls: "application/vnd.ms-excel",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ppt: "application/vnd.ms-powerpoint",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  odt: "application/vnd.oasis.opendocument.text",
+  ods: "application/vnd.oasis.opendocument.spreadsheet",
+  rtf: "application/rtf",
+  txt: "text/plain",
+  csv: "text/csv",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  zip: "application/zip",
+  rar: "application/vnd.rar",
+};
+// Link tải tệp: token ngắn hạn riêng (khác khoá token đăng nhập) để mở bằng trình duyệt / app mà không cần header
+const FILE_LINK_TTL = "10m";
+const fileSecret = () => `${process.env.JWT_SECRET}:notification-file`;
+
+/** Tên tệp không dấu cho header Content-Disposition (trình duyệt cũ) */
+const asciiName = (name) =>
+  name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .replace(/[^\x20-\x7e]|["\\]/g, "_");
+
+// Tải tệp qua link đã ký — đặt trước middleware đăng nhập
+router.get("/files/:token", async (req, res) => {
+  try {
+    let payload;
+    try {
+      payload = jwt.verify(req.params.token, fileSecret(), { algorithms: ["HS256"] });
+    } catch {
+      return res.status(401).json({ error: "Link tải đã hết hạn, vui lòng bấm tải lại." });
+    }
+    const file = await NotificationAttachment.findOne({ _id: payload.aid, notification: payload.nid });
+    if (!file) return res.status(404).json({ error: "Tệp không còn tồn tại (thông báo có thể đã bị thu hồi)." });
+    res.set({
+      "Content-Type": file.mimeType || "application/octet-stream",
+      "Content-Length": file.data.length,
+      "Content-Disposition": `attachment; filename="${asciiName(file.name)}"; filename*=UTF-8''${encodeURIComponent(file.name)}`,
+      "Cache-Control": "private, no-store",
+    });
+    res.end(file.data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Lỗi máy chủ khi tải tệp." });
+  }
+});
 
 router.use(auth, loadUser, (req, res, next) => {
   if (!req.currentUser.school) return res.status(400).json({ error: "Tài khoản này không thuộc trường nào." });
@@ -79,9 +143,36 @@ function toJSON(n, read) {
     audienceType: n.audience.type,
     audienceLabel: n.audienceLabel,
     recipientCount: n.recipientCount,
+    attachments: (n.attachments || []).map((a) => ({ id: a._id, name: a.name, mimeType: a.mimeType, size: a.size })),
     createdAt: n.createdAt,
     read,
   };
+}
+
+/** Đọc danh sách tệp gửi lên dạng [{ name, data (base64) }] */
+function readAttachments(list) {
+  if (list === undefined || list === null) return [];
+  if (!Array.isArray(list)) throw httpError(400, "Tệp đính kèm không hợp lệ.");
+  if (list.length > MAX_FILES) throw httpError(400, `Tối đa ${MAX_FILES} tệp đính kèm.`);
+  let total = 0;
+  return list.map((f, i) => {
+    const name = String(f?.name || "")
+      .replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_")
+      .trim()
+      .slice(0, 180);
+    const ext = name.includes(".") ? name.split(".").pop().toLowerCase() : "";
+    if (!name || !FILE_TYPES[ext]) {
+      throw httpError(400, `Tệp ${name || i + 1} không được hỗ trợ (chỉ nhận PDF, Word, Excel, PowerPoint, ảnh, TXT, ZIP...).`);
+    }
+    const base64 = typeof f?.data === "string" ? f.data.replace(/^data:[^;]*;base64,/, "") : "";
+    if (!base64 || !/^[A-Za-z0-9+/=]+$/.test(base64)) throw httpError(400, `Tệp ${name} bị lỗi dữ liệu.`);
+    const data = Buffer.from(base64, "base64");
+    if (!data.length) throw httpError(400, `Tệp ${name} rỗng.`);
+    if (data.length > MAX_FILE_BYTES) throw httpError(400, `Tệp ${name} quá lớn (tối đa 10MB mỗi tệp).`);
+    total += data.length;
+    if (total > MAX_TOTAL_BYTES) throw httpError(400, "Tổng dung lượng tệp đính kèm tối đa 25MB.");
+    return { _id: new mongoose.Types.ObjectId(), name, mimeType: FILE_TYPES[ext], size: data.length, data };
+  });
 }
 
 /* =========================================
@@ -212,10 +303,11 @@ router.post("/", async (req, res) => {
       eventAt = new Date(req.body.eventAt);
       if (Number.isNaN(eventAt.getTime())) throw httpError(400, "Ngày giờ không hợp lệ.");
     }
+    const files = readAttachments(req.body.attachments);
     const { audience, label } = await cleanAudience(user, req.body.audience, req.school._id);
     const recipientCount = await User.countDocuments(recipientFilter(req.school._id, audience, user._id));
     if (!recipientCount) throw httpError(400, "Không có ai trong nhóm người nhận đã chọn.");
-    const n = await Notification.create({
+    const n = new Notification({
       school: req.school._id,
       sender: user._id,
       senderName: user.name || user.username,
@@ -227,11 +319,26 @@ router.post("/", async (req, res) => {
       audience,
       audienceLabel: label,
       recipientCount,
+      attachments: files.map(({ _id, name, mimeType, size }) => ({ _id, name, mimeType, size })),
     });
+    // Lưu tệp trước, thông báo sau: người nhận chỉ thấy thông báo khi tệp đã sẵn sàng
+    if (files.length) {
+      await NotificationAttachment.insertMany(files.map((f) => ({ ...f, school: req.school._id, notification: n._id })));
+    }
+    try {
+      await n.save();
+    } catch (err) {
+      await NotificationAttachment.deleteMany({ notification: n._id });
+      throw err;
+    }
     res.json(toJSON(n, true));
 
     // Đẩy ngay về điện thoại của người nhận, kèm ngày giờ đã đặt (không chờ, lỗi không ảnh hưởng việc gửi)
-    const lines = [eventAt ? `🕒 ${viDateTime(eventAt)}` : "", n.body].filter(Boolean);
+    const lines = [
+      eventAt ? `🕒 ${viDateTime(eventAt)}` : "",
+      n.body,
+      files.length ? `📎 ${files.length} tệp đính kèm` : "",
+    ].filter(Boolean);
     pushToUsers(recipientFilter(req.school._id, audience, user._id), {
       title: `${n.priority === "important" ? "❗ " : "📢 "}${n.title}`,
       body: lines.join("\n").slice(0, 500) || `Thông báo từ ${n.senderName}`,
@@ -239,6 +346,30 @@ router.post("/", async (req, res) => {
     });
   } catch (err) {
     fail(res, err, "Lỗi máy chủ khi gửi thông báo.");
+  }
+});
+
+// Lấy link tải 1 tệp đính kèm (người nhận, người gửi hoặc quản lý tài khoản trường)
+router.get("/:id/attachments/:fileId/link", async (req, res) => {
+  try {
+    const user = req.currentUser;
+    const n = await Notification.findOne({ _id: req.params.id, school: req.school._id });
+    if (!n) throw httpError(404, "Không tìm thấy thông báo.");
+    const file = n.attachments.find((a) => String(a._id) === String(req.params.fileId));
+    if (!file) throw httpError(404, "Không tìm thấy tệp đính kèm.");
+    const allowed =
+      String(n.sender) === String(user._id) ||
+      user.hasPermission(P.USERS_MANAGE) ||
+      (await Notification.exists({ _id: n._id, ...inboxFilter(user) }));
+    if (!allowed) throw httpError(403, "Bạn không phải người nhận thông báo này.");
+    const token = jwt.sign({ aid: String(file._id), nid: String(n._id) }, fileSecret(), {
+      algorithm: "HS256",
+      expiresIn: FILE_LINK_TTL,
+    });
+    // Đường dẫn tính từ gốc API (VD: http://host/api) — web / app tự ghép
+    res.json({ path: `/notifications/files/${token}`, name: file.name });
+  } catch (err) {
+    fail(res, err, "Lỗi máy chủ khi lấy link tải tệp.");
   }
 });
 
@@ -269,6 +400,7 @@ router.delete("/:id", async (req, res) => {
       throw httpError(403, "Chỉ người gửi mới được thu hồi thông báo.");
     }
     await NotificationReceipt.deleteMany({ notification: n._id });
+    await NotificationAttachment.deleteMany({ notification: n._id });
     await n.deleteOne();
     res.json({ ok: true });
   } catch (err) {

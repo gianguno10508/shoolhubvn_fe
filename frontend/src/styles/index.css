@@ -14,6 +14,7 @@
 @import "./components/feedback.css";
 @import "./components/overlay.css";
 @import "./components/notifications.css";
+@import "./components/brand.css";
 
 /* Khung trang */
 @import "./layout/app-shell.css";
@@ -25,6 +26,7 @@
 @import "./pages/timetable-editor.css";
 @import "./pages/teacher-dashboard.css";
 @import "./pages/shuffle-exam.css";
+@import "./pages/ai-exam.css";
 @import "./pages/name-picker.css";
 @import "./pages/contact.css";
 @import "./pages/admin-users.css";
@@ -35,3 +37,6 @@
 @import "./pages/lesson-plans.css";
 @import "./pages/discipline.css";
 @import "./pages/profile.css";
+
+/* Hiệu ứng & chiều sâu — luôn đặt cuối */
+@import "./base/effects.css";

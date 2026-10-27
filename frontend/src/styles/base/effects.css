@@ -1,0 +1,689 @@
+/* =========================================================
+   EFFECTS — chuyển động & chiều sâu dùng chung toàn app
+   Import cuối cùng để tinh chỉnh các component đã có.
+   Tôn trọng "giảm chuyển động" của hệ điều hành (cuối file).
+========================================================= */
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes shine {
+  from {
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  to {
+    transform: translateX(220%) skewX(-20deg);
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ---------- Thanh cuộn mảnh ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-300) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--gray-300) padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--gray-400);
+}
+
+/* ---------- Nội dung trang: hiện dần khi chuyển trang ---------- */
+.shell-page {
+  animation: page-in 0.38s var(--ease) backwards;
+}
+
+.shell-content {
+  background:
+    radial-gradient(900px 380px at 100% -80px, rgba(99, 102, 241, 0.07), transparent 70%),
+    radial-gradient(700px 300px at -10% 0, rgba(37, 99, 235, 0.05), transparent 70%);
+}
+
+/* ---------- Sidebar ---------- */
+.shell-side {
+  background:
+    radial-gradient(400px 260px at 0 0, rgba(99, 102, 241, 0.22), transparent 70%),
+    linear-gradient(180deg, var(--side-bg) 0%, var(--side-bg-2) 100%);
+  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.04), 8px 0 30px rgba(15, 23, 42, 0.08);
+}
+
+.shell-logo {
+  box-shadow: none;
+  background: none;
+  width: auto;
+  height: auto;
+}
+
+.shell-brand:hover .brand-logo {
+  transform: rotate(-8deg) scale(1.06);
+}
+
+.shell-brand-text strong {
+  background: linear-gradient(90deg, #fff, #c7d2fe);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: 17px;
+}
+
+.shell-link {
+  transition:
+    background-color var(--t-fast),
+    color var(--t-fast),
+    transform var(--t-fast);
+}
+
+.shell-link .shell-icon {
+  transition: transform 0.25s var(--ease), color var(--t-fast);
+}
+
+.shell-link:hover .shell-icon {
+  transform: translateX(2px) scale(1.08);
+}
+
+.shell-link.active {
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.32), rgba(99, 102, 241, 0.08));
+  box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.22);
+}
+
+.shell-link.active .shell-icon {
+  color: #a5b4fc;
+}
+
+.shell-link.active::before {
+  background: linear-gradient(180deg, #818cf8, #c084fc);
+  box-shadow: 0 0 12px rgba(129, 140, 248, 0.8);
+}
+
+.shell-badge {
+  box-shadow: 0 0 0 2px var(--side-bg), 0 2px 8px rgba(239, 68, 68, 0.5);
+  animation: pop-in 0.4s var(--ease);
+}
+
+.shell-vip.on .shell-icon {
+  color: var(--gold);
+  filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.6));
+}
+
+.shell-lock {
+  display: inline-flex;
+}
+
+/* ---------- Thanh trên ---------- */
+.shell-top {
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02), 0 6px 20px rgba(15, 23, 42, 0.03);
+}
+
+.shell-title {
+  background: linear-gradient(90deg, var(--gray-900), var(--primary-strong));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.shell-burger {
+  color: var(--text-2);
+}
+
+.shell-avatar {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--primary-soft-2);
+  transition: box-shadow var(--t-fast);
+}
+
+.shell-user-btn:hover .shell-avatar {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--primary);
+}
+
+.shell-caret {
+  transition: transform var(--t-fast);
+}
+
+.shell-user-btn[aria-expanded="true"] .shell-caret {
+  transform: rotate(180deg);
+}
+
+.shell-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background-color var(--t-fast), padding-left var(--t-fast);
+}
+
+.shell-menu-item svg {
+  color: var(--text-3);
+}
+
+.shell-menu-item:hover {
+  padding-left: 20px;
+}
+
+.shell-menu-item.danger svg {
+  color: var(--red);
+}
+
+.pf-banner > svg {
+  flex-shrink: 0;
+}
+
+/* ---------- Nút ---------- */
+.btn-primary,
+.shuffle-page .btn-primary {
+  position: relative;
+  overflow: hidden;
+  background: var(--primary-gradient);
+}
+
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: translateX(-120%) skewX(-20deg);
+  pointer-events: none;
+}
+
+.btn-primary:hover:not(:disabled)::after {
+  animation: shine 0.75s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.32);
+  transform: translateY(-1px);
+}
+
+.btn:not(.btn-primary):hover:not(:disabled) {
+  box-shadow: var(--shadow-sm);
+}
+
+.btn svg {
+  flex-shrink: 0;
+}
+
+/* ---------- Thẻ: nổi nhẹ khi rê chuột ---------- */
+.page-head,
+.shuffle-card,
+.summary-card,
+.teacher-overview-card,
+.quick-action,
+.teacher-panel,
+.nt-item,
+.ai-history-item,
+.ai-program,
+.gh-card,
+.upgrade-card {
+  transition:
+    transform 0.25s var(--ease),
+    box-shadow 0.25s var(--ease),
+    border-color 0.25s var(--ease);
+}
+
+.summary-card:hover,
+.teacher-overview-card:hover,
+.ai-history-item:hover,
+.ai-program:hover,
+.gh-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.shuffle-card:hover,
+.teacher-panel:hover,
+.nt-item:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Tiêu đề trang: vệt sáng trang trí + icon gradient */
+.page-head {
+  position: relative;
+  overflow: hidden;
+  animation: rise-in 0.45s var(--ease) backwards;
+}
+
+.page-head::after {
+  content: "";
+  position: absolute;
+  top: -60px;
+  right: -40px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.14), transparent 70%);
+  pointer-events: none;
+}
+
+.page-head > * {
+  position: relative;
+  z-index: 1;
+}
+
+.page-head-icon {
+  transition: transform 0.35s var(--ease);
+}
+
+.page-head:hover .page-head-icon {
+  transform: rotate(-6deg) scale(1.06);
+}
+
+/* Danh sách: các mục hiện lần lượt */
+.nt-list > *,
+.ai-history > *,
+.summary-grid > * {
+  animation: rise-in 0.4s var(--ease) backwards;
+}
+
+.nt-list > :nth-child(2),
+.ai-history > :nth-child(2),
+.summary-grid > :nth-child(2) { animation-delay: 0.04s; }
+.nt-list > :nth-child(3),
+.ai-history > :nth-child(3),
+.summary-grid > :nth-child(3) { animation-delay: 0.08s; }
+.nt-list > :nth-child(4),
+.ai-history > :nth-child(4) { animation-delay: 0.12s; }
+.nt-list > :nth-child(5),
+.ai-history > :nth-child(5) { animation-delay: 0.16s; }
+.nt-list > :nth-child(n + 6),
+.ai-history > :nth-child(n + 6) { animation-delay: 0.2s; }
+
+.shuffle-card {
+  animation: rise-in 0.45s var(--ease) backwards;
+}
+
+/* ---------- Ô nhập ---------- */
+input,
+select,
+textarea {
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast),
+    background-color var(--t-fast);
+}
+
+/* ---------- Tab ---------- */
+.tab {
+  transition:
+    background-color var(--t-fast),
+    color var(--t-fast),
+    box-shadow var(--t-fast);
+}
+
+/* ---------- Modal ---------- */
+.modal {
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
+}
+
+/* ---------- Trộn đề / tạo đề AI ---------- */
+.shuffle-header {
+  position: relative;
+  overflow: hidden;
+}
+
+.shuffle-header::after {
+  content: "";
+  position: absolute;
+  top: -120px;
+  right: -60px;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.12), transparent 70%);
+  pointer-events: none;
+}
+
+.header-main h1 {
+  background: linear-gradient(90deg, var(--gray-900), var(--primary-strong) 70%, var(--purple));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.assessment-menu-item {
+  transition: background-color var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+}
+
+.assessment-menu-item:not(.active):hover {
+  transform: translateX(3px);
+}
+
+.coming-soon {
+  background: var(--brand-gradient);
+  color: #fff;
+}
+
+.ai-preview > div {
+  background: linear-gradient(135deg, var(--primary-soft), #f5f3ff);
+  transition: transform 0.25s var(--ease);
+}
+
+.ai-preview > div:hover {
+  transform: translateY(-2px);
+}
+
+.ai-preview strong {
+  animation: pop-in 0.35s var(--ease);
+}
+
+/* ---------- Giảm chuyển động ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Icon SVG (lucide) trong các thành phần ---------- */
+.tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.modal-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.modal-head h3 svg {
+  color: var(--primary);
+}
+
+.as-empty > span svg {
+  color: var(--gray-300);
+}
+
+.page-head-icon svg {
+  color: var(--amber-strong);
+}
+
+.nt-icon svg {
+  animation: bell-ring 2.8s ease-in-out infinite;
+  transform-origin: 50% 10%;
+}
+
+@keyframes bell-ring {
+  0%,
+  86%,
+  100% {
+    transform: rotate(0);
+  }
+  89% {
+    transform: rotate(14deg);
+  }
+  92% {
+    transform: rotate(-12deg);
+  }
+  95% {
+    transform: rotate(6deg);
+  }
+}
+
+.nt-clip,
+.nt-when {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nt-file-dl {
+  display: inline-flex;
+  transition: transform var(--t-fast);
+}
+
+button.nt-file:hover .nt-file-dl {
+  transform: translateY(2px);
+}
+
+.nt-file-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nt-attach-icon {
+  color: var(--primary);
+  transition: transform 0.3s var(--ease);
+}
+
+.nt-attach-drop:hover .nt-attach-icon {
+  transform: rotate(-15deg) scale(1.1);
+}
+
+.nt-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-spin-icon {
+  animation: spin-icon 0.9s linear infinite;
+}
+
+@keyframes spin-icon {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ai-spinner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-color: transparent;
+  animation: none;
+  color: var(--primary);
+}
+
+.ai-spinner::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 4px solid var(--primary-soft-2);
+  border-top-color: var(--primary);
+  border-right-color: var(--purple);
+  border-radius: 50%;
+  animation: spin-icon 0.9s linear infinite;
+}
+
+.ai-spinner svg {
+  animation: pop-in 1.2s ease-in-out infinite alternate;
+}
+
+.ai-warnings span {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.ai-warnings svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ai-history-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  order: -1;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--primary-soft), #f5f3ff);
+  color: var(--primary);
+}
+
+.menu-icon svg,
+.sidebar-logo svg {
+  color: inherit;
+}
+
+.assessment-menu-item.active .menu-icon {
+  color: var(--primary);
+  box-shadow: var(--shadow-xs);
+}
+
+.sidebar-logo {
+  background: var(--brand-gradient) !important;
+  color: #fff !important;
+}
+
+/* ---------- Trang chủ giáo viên ---------- */
+.overview-icon.blue { color: var(--primary); }
+.overview-icon.orange { color: var(--orange); }
+.overview-icon.purple { color: var(--purple); }
+.overview-icon.green { color: var(--green); }
+
+.teacher-module-card .module-icon { color: var(--primary); }
+.teacher-module-card.orange .module-icon { color: var(--orange); }
+.teacher-module-card.green .module-icon { color: var(--green); }
+.teacher-module-card.purple .module-icon { color: var(--purple); }
+.teacher-module-card.teal .module-icon { background: #f0fdfa; color: var(--teal); }
+
+.teacher-module-card {
+  transition:
+    transform 0.3s var(--ease),
+    box-shadow 0.3s var(--ease),
+    border-color 0.3s var(--ease);
+}
+
+.teacher-module-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(79, 70, 229, 0.12);
+  border-color: var(--primary-soft-2);
+}
+
+.teacher-module-card .module-icon {
+  transition: transform 0.35s var(--ease);
+}
+
+.teacher-module-card:hover .module-icon {
+  transform: scale(1.1) rotate(-6deg);
+}
+
+.module-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.module-open svg {
+  transition: transform var(--t-fast);
+}
+
+.teacher-module-card:hover .module-open svg {
+  transform: translateX(3px);
+}
+
+.teacher-banner-decoration div {
+  color: #fff;
+  animation: float-y 5s ease-in-out infinite;
+}
+
+.teacher-banner-decoration div:nth-child(2) { animation-delay: -1.6s; }
+.teacher-banner-decoration div:nth-child(3) { animation-delay: -3.2s; }
+
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.quick-action {
+  transition: color var(--t-fast), padding-left 0.2s var(--ease);
+}
+
+.quick-action:hover {
+  padding-left: 6px;
+}
+
+.quick-action-icon {
+  color: var(--primary);
+  transition: background-color var(--t-fast), color var(--t-fast);
+}
+
+.quick-action:hover .quick-action-icon {
+  background: var(--primary);
+  color: #fff;
+}
+
+.quick-action-arrow {
+  margin-left: auto;
+  color: var(--gray-300);
+  transition: color var(--t-fast), transform var(--t-fast);
+}
+
+.quick-action:hover .quick-action-arrow {
+  color: var(--primary);
+  transform: translateX(3px);
+}
+
+.teacher-footer-note > span {
+  display: flex;
+  color: var(--amber);
+}
+
+.teacher-overview > *,
+.teacher-module-grid > * {
+  animation: rise-in 0.45s var(--ease) backwards;
+}
+
+.teacher-overview > :nth-child(2),
+.teacher-module-grid > :nth-child(2) { animation-delay: 0.05s; }
+.teacher-overview > :nth-child(3),
+.teacher-module-grid > :nth-child(3) { animation-delay: 0.1s; }
+.teacher-overview > :nth-child(4),
+.teacher-module-grid > :nth-child(4) { animation-delay: 0.15s; }
+.teacher-module-grid > :nth-child(n + 5) { animation-delay: 0.2s; }

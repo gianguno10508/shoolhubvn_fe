@@ -11,6 +11,7 @@ const disciplineRoutes = require("./routes/discipline");
 const dashboardRoutes = require("./routes/dashboard");
 const notificationRoutes = require("./routes/notifications");
 const lessonPlanRoutes = require("./routes/lessonPlans");
+const examAiRoutes = require("./routes/examAi");
 const myTimetableRoutes = require("./routes/myTimetable");
 const { startDailyReminders } = require("./utils/dailyReminders");
 
@@ -37,6 +38,8 @@ app.use((req, res, next) => {
 app.use(cors({ origin: process.env.CLIENT_ORIGIN || "*" }));
 // Giáo án AI nhận nhiều ảnh SGK (base64) nên cần giới hạn lớn hơn — đặt trước express.json chung
 app.use("/api/lesson-plans", express.json({ limit: "45mb" }), lessonPlanRoutes);
+// Thông báo kèm tệp đính kèm (base64, tối đa 25MB) — cũng cần giới hạn lớn hơn
+app.use("/api/notifications", express.json({ limit: "40mb" }), notificationRoutes);
 app.use(express.json({ limit: "5mb" }));
 
 app.use("/api/auth", authRoutes);
@@ -46,8 +49,8 @@ app.use("/api/school", schoolRoutes);
 app.use("/api/assignments", assignmentRoutes);
 app.use("/api/discipline", disciplineRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/notifications", notificationRoutes);
 app.use("/api/my-timetable", myTimetableRoutes);
+app.use("/api/exam-ai", examAiRoutes);
 
 app.get("/", (req, res) => res.send("TKB backend (MongoDB) đang chạy ✅"));
 

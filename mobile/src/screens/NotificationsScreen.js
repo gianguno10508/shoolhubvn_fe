@@ -1,8 +1,8 @@
 // screens/NotificationsScreen.js — hộp thư đến + thông báo đã gửi (người được gửi)
 import { useCallback, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { api } from "../api/client";
+import { api, BASE_URL } from "../api/client";
 import { Badge, Body, Button, Card, Empty, ErrorBox, Loading, Muted, Row, Screen, Segmented } from "../components/ui";
 import { colors, space } from "../theme";
 import { formatDateTime, formatEventTime, formatReceived } from "../utils/format";
@@ -13,6 +13,44 @@ function EventTime({ value }) {
   return (
     <View style={[styles.when, past && styles.whenPast]}>
       <Text style={[styles.whenText, past && styles.whenTextPast]}>🕒 {formatEventTime(value)}</Text>
+    </View>
+  );
+}
+
+function formatSize(bytes) {
+  if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+/** Tệp đính kèm: bấm để mở link tải bằng trình duyệt của máy (tự tải về / mở bằng ứng dụng phù hợp) */
+function Attachments({ notification }) {
+  const [busy, setBusy] = useState(null);
+  if (!notification.attachments?.length) return null;
+
+  async function open(f) {
+    setBusy(f.id);
+    try {
+      const { path } = await api.attachmentLink(notification.id, f.id);
+      await Linking.openURL(`${BASE_URL}${path}`);
+    } catch (err) {
+      Alert.alert("Không tải được tệp", err.message || "Vui lòng thử lại.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <View style={styles.files}>
+      {notification.attachments.map((f) => (
+        <Pressable key={f.id} onPress={() => open(f)} disabled={busy === f.id} style={({ pressed }) => [styles.file, pressed && { opacity: 0.6 }]}>
+          <Text style={styles.fileExt}>{(f.name.split(".").pop() || "").toUpperCase().slice(0, 4)}</Text>
+          <Text style={styles.fileName} numberOfLines={1}>
+            {f.name}
+          </Text>
+          <Text style={styles.fileSize}>{busy === f.id ? "Đang mở..." : formatSize(f.size)}</Text>
+          <Text style={styles.fileDl}>⬇</Text>
+        </Pressable>
+      ))}
     </View>
   );
 }
@@ -102,14 +140,18 @@ export default function NotificationsScreen({ navigation }) {
                   </Row>
                   <Muted>🕘 {formatReceived(n.createdAt)}</Muted>
                 </Row>
-                <Text style={[styles.title, !n.read && { fontWeight: "800" }]}>{n.title}</Text>
+                <Text style={[styles.title, !n.read && { fontWeight: "800" }]}>
+                  {n.title}
+                  {n.attachments?.length ? <Text style={styles.clip}>{`  📎 ${n.attachments.length}`}</Text> : null}
+                </Text>
                 <EventTime value={n.eventAt} />
                 <Muted>
                   {n.senderName} · {n.senderRoleLabel} → {n.audienceLabel}
                 </Muted>
                 {expanded ? (
                   <View style={styles.body}>
-                    <Body>{n.body || "(Không có nội dung)"}</Body>
+                    {n.body || !n.attachments?.length ? <Body>{n.body || "(Không có nội dung)"}</Body> : null}
+                    <Attachments notification={n} />
                     <Muted style={{ marginTop: space.sm }}>Gửi lúc {formatDateTime(n.createdAt)}</Muted>
                   </View>
                 ) : n.body ? (
@@ -137,6 +179,7 @@ export default function NotificationsScreen({ navigation }) {
                 <Muted>
                   Gửi tới {n.audienceLabel} · {formatDateTime(n.createdAt)}
                 </Muted>
+                <Attachments notification={n} />
                 <View style={styles.bar}>
                   <View style={[styles.barFill, { width: `${percent}%` }]} />
                 </View>
@@ -166,4 +209,32 @@ const styles = StyleSheet.create({
   whenTextPast: { color: colors.muted },
   bar: { height: 6, backgroundColor: "#E5E7EB", borderRadius: 3, overflow: "hidden", marginVertical: 6 },
   barFill: { height: 6, backgroundColor: colors.success },
+  clip: { fontSize: 13, fontWeight: "600", color: colors.muted },
+  files: { marginTop: space.sm, gap: 6 },
+  file: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    backgroundColor: "#fff",
+  },
+  fileExt: {
+    minWidth: 40,
+    paddingVertical: 3,
+    paddingHorizontal: 4,
+    borderRadius: 6,
+    overflow: "hidden",
+    backgroundColor: colors.primarySoft,
+    color: colors.primaryDark,
+    fontSize: 11,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  fileName: { flex: 1, color: colors.text, fontWeight: "600" },
+  fileSize: { color: colors.muted, fontSize: 12 },
+  fileDl: { color: colors.primary, fontWeight: "800" },
 });

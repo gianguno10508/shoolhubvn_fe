@@ -13,6 +13,26 @@ import {
   hasPermission,
 } from "../utils/permissions";
 import { timeAgo } from "../utils/time";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Bell,
+  BookOpen,
+  ClipboardCheck,
+  Dices,
+  FilePlus2,
+  FileSpreadsheet,
+  GraduationCap,
+  Inbox,
+  Lightbulb,
+  Megaphone,
+  PencilLine,
+  Shuffle,
+  Sparkles,
+  Trophy,
+  UserPlus,
+  Users,
+} from "lucide-react";
 
 const canSendNotice = (user) =>
   hasPermission(user, "notification.send_school") || hasPermission(user, "notification.send_class");
@@ -27,7 +47,7 @@ function buildModules(user, d, unread) {
   return [
     canAccessDiscipline(user) && {
       id: "thi-dua",
-      icon: "🏆",
+      icon: Trophy,
       title: "Thi đua & Nề nếp",
       subtitle: "Quản lý nề nếp học sinh",
       description:
@@ -42,7 +62,7 @@ function buildModules(user, d, unread) {
     },
     canManageAssignments(user) && {
       id: "bai-tap",
-      icon: "📝",
+      icon: ClipboardCheck,
       title: "Bài tập & Tự chấm",
       subtitle: "Giao bài trực tuyến",
       description: "Giao bài trắc nghiệm từ file PDF. Học sinh làm bài trực tuyến và được hệ thống chấm điểm tự động.",
@@ -52,7 +72,7 @@ function buildModules(user, d, unread) {
     },
     hasSchoolLessonPlans(user) && {
       id: "giao-an",
-      icon: "📖",
+      icon: Sparkles,
       title: "Giáo án AI",
       subtitle: "Soạn giáo án từ ảnh SGK",
       description: "Chụp ảnh các trang sách giáo khoa, AI soạn kế hoạch bài dạy theo mẫu Công văn 5512. Sửa và xuất Word.",
@@ -62,7 +82,7 @@ function buildModules(user, d, unread) {
     },
     canAccessSchoolUsers(user) && {
       id: "hoc-sinh",
-      icon: "👥",
+      icon: Users,
       title: "Quản lý học sinh",
       subtitle: "Tài khoản & danh sách",
       description: "Tạo tài khoản, quản lý thông tin và theo dõi danh sách học sinh thuộc các lớp phụ trách.",
@@ -72,7 +92,7 @@ function buildModules(user, d, unread) {
     },
     {
       id: "thong-bao",
-      icon: "🔔",
+      icon: Bell,
       title: "Thông báo",
       subtitle: "Nhắn tin nội bộ",
       description: canSendNotice(user)
@@ -84,17 +104,17 @@ function buildModules(user, d, unread) {
     },
     {
       id: "tron-de",
-      icon: "📊",
+      icon: FileSpreadsheet,
       title: "Kiểm tra & Đánh giá",
       subtitle: "Đề kiểm tra & trộn đề",
-      description: "Tải đề PDF, tự động đảo câu hỏi và phương án để tạo nhiều mã đề, xuất PDF / Word / đáp án Excel.",
+      description: "Trộn đề PDF thành nhiều mã đề, hoặc tạo ma trận, bản đặc tả và đề kiểm tra kèm đáp án với AI.",
       path: "/giao-vien/tron-de",
       color: "purple",
-      stats: "Trộn đề ngay trên trình duyệt",
+      stats: "Trộn đề · Tạo đề với AI",
     },
     canManageAssignments(user) && {
       id: "goi-ten",
-      icon: "🎲",
+      icon: Dices,
       title: "Gọi tên ngẫu nhiên",
       subtitle: "Trò chơi gọi học sinh",
       description:
@@ -120,13 +140,13 @@ export default function TeacherPage() {
   const [unread] = useUnreadCount(!!user?.schoolId);
   const modules = buildModules(user, data, unread);
   const quickActions = [
-    canManageAssignments(user) && { icon: "➕", title: "Giao bài mới", path: "/giao-vien/bai-tap/moi" },
-    canAccessDiscipline(user) && { icon: "🏆", title: "Xem / chấm thi đua", path: "/thi-dua" },
-    canSendNotice(user) && { icon: "📣", title: "Gửi thông báo", path: "/thong-bao" },
-    canAccessSchoolUsers(user) && { icon: "👤", title: "Tạo tài khoản học sinh", path: "/truong/tai-khoan" },
-    hasSchoolLessonPlans(user) && { icon: "📖", title: "Soạn giáo án AI", path: "/giao-vien/giao-an" },
-    hasPermission(user, "exam.manage") && { icon: "📄", title: "Trộn đề kiểm tra", path: "/giao-vien/tron-de" },
-    canManageAssignments(user) && { icon: "🎲", title: "Gọi tên ngẫu nhiên", path: "/giao-vien/goi-ten" },
+    canManageAssignments(user) && { icon: FilePlus2, title: "Giao bài mới", path: "/giao-vien/bai-tap/moi" },
+    canAccessDiscipline(user) && { icon: Trophy, title: "Xem / chấm thi đua", path: "/thi-dua" },
+    canSendNotice(user) && { icon: Megaphone, title: "Gửi thông báo", path: "/thong-bao" },
+    canAccessSchoolUsers(user) && { icon: UserPlus, title: "Tạo tài khoản học sinh", path: "/truong/tai-khoan" },
+    hasSchoolLessonPlans(user) && { icon: Sparkles, title: "Soạn giáo án AI", path: "/giao-vien/giao-an" },
+    hasPermission(user, "exam.manage") && { icon: Shuffle, title: "Trộn đề kiểm tra", path: "/giao-vien/tron-de" },
+    canManageAssignments(user) && { icon: Dices, title: "Gọi tên ngẫu nhiên", path: "/giao-vien/goi-ten" },
   ].filter(Boolean);
   const displayName = user?.name || user?.username || "Thầy/Cô";
   const myClass = data?.discipline?.myClass;
@@ -179,9 +199,15 @@ export default function TeacherPage() {
             </div>
 
             <div className="teacher-banner-decoration">
-              <div>🎓</div>
-              <div>📚</div>
-              <div>✏️</div>
+              <div>
+                <GraduationCap size={30} />
+              </div>
+              <div>
+                <BookOpen size={30} />
+              </div>
+              <div>
+                <PencilLine size={30} />
+              </div>
             </div>
           </section>
 
@@ -192,7 +218,7 @@ export default function TeacherPage() {
           <section className="teacher-overview">
             {[
               {
-                icon: "👥",
+                icon: Users,
                 color: "blue",
                 label: data?.students.scope === "class" ? `Học sinh lớp ${data.user.className}` : "Học sinh",
                 value: data?.students.count,
@@ -203,7 +229,7 @@ export default function TeacherPage() {
                 ),
               },
               {
-                icon: "📝",
+                icon: ClipboardCheck,
                 color: "orange",
                 label: data?.assignments.scope === "school" ? "Bài tập toàn trường" : "Bài tập đã giao",
                 value: data?.assignments.total,
@@ -214,7 +240,7 @@ export default function TeacherPage() {
                 ),
               },
               {
-                icon: "📥",
+                icon: Inbox,
                 color: "purple",
                 label: "Lượt nộp bài",
                 value: data?.assignments.submissionsThisWeek,
@@ -222,7 +248,7 @@ export default function TeacherPage() {
               },
               myClass
                 ? {
-                    icon: "🏆",
+                    icon: Trophy,
                     color: "green",
                     label: "Thi đua tuần",
                     value: myClass.score,
@@ -233,7 +259,7 @@ export default function TeacherPage() {
                     ),
                   }
                 : {
-                    icon: "🏆",
+                    icon: Trophy,
                     color: "green",
                     label: "Thi đua",
                     value: data?.discipline.classesTracked,
@@ -245,7 +271,9 @@ export default function TeacherPage() {
                   },
             ].map((s) => (
               <div className="teacher-overview-card" key={s.label}>
-                <div className={`overview-icon ${s.color}`}>{s.icon}</div>
+                <div className={`overview-icon ${s.color}`}>
+                  <s.icon size={22} />
+                </div>
                 <div className="overview-content">
                   <span>{s.label}</span>
                   <strong>{data ? (s.value ?? 0) : "…"}</strong>
@@ -278,9 +306,13 @@ export default function TeacherPage() {
                   className={`teacher-module-card ${module.color}`}
                 >
                   <div className="module-card-header">
-                    <div className="module-icon">{module.icon}</div>
+                    <div className="module-icon">
+                      <module.icon size={24} />
+                    </div>
 
-                    <span className="module-arrow">↗</span>
+                    <span className="module-arrow">
+                      <ArrowUpRight size={18} />
+                    </span>
                   </div>
 
                   <span className="module-subtitle">{module.subtitle}</span>
@@ -292,7 +324,9 @@ export default function TeacherPage() {
                   <div className="module-card-footer">
                     <span>{module.stats}</span>
 
-                    <span className="module-open">Mở chức năng →</span>
+                    <span className="module-open">
+                      Mở chức năng <ArrowRight size={14} />
+                    </span>
                   </div>
                 </Link>
               ))}
@@ -354,11 +388,13 @@ export default function TeacherPage() {
                     to={action.path}
                     className="quick-action"
                   >
-                    <span className="quick-action-icon">{action.icon}</span>
+                    <span className="quick-action-icon">
+                      <action.icon size={18} />
+                    </span>
 
                     <span>{action.title}</span>
 
-                    <b>→</b>
+                    <ArrowRight size={16} className="quick-action-arrow" />
                   </Link>
                 ))}
               </div>
@@ -368,7 +404,9 @@ export default function TeacherPage() {
           {/* FOOTER INFO */}
 
           <div className="teacher-footer-note">
-            <span>💡</span>
+            <span>
+              <Lightbulb size={18} />
+            </span>
 
             <p>
               <strong>Mẹo:</strong> Thầy/Cô có thể sử dụng các thao tác nhanh để
